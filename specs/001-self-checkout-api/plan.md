@@ -6,8 +6,8 @@
 
 ## Summary
 
-Implement the full self-checkout contract as a single-process Spring Boot monolith, holding
-catalog, inventory, transactions, and analytics in memory. The design problem this week is
+Implement the full self-checkout contract as a single-process Spring Boot monolith, with MySQL
+as the durable system of record for catalog, inventory, transactions, and analytics. The design problem this week is
 not structure but concurrency: scans never gate on stock, so a basket can outrun the shelf,
 and completion has to be all-or-nothing across every SKU in that basket.
 
@@ -31,12 +31,14 @@ Full decision records with alternatives: [research.md](./research.md).
 **Language/Version**: Java 21 (project floor per README; required for the harness)
 
 **Primary Dependencies**: Spring Boot 3.x — `spring-boot-starter-web` (embedded Tomcat,
-synchronous MVC), `spring-boot-starter-validation`, `spring-boot-starter-test`. No datastore
-driver, no messaging, no ORM. Exact patch release pinned in `pom.xml` at implementation time.
+synchronous MVC), `spring-boot-starter-validation`, `spring-boot-starter-jdbc`,
+`spring-boot-starter-test`, MySQL Connector/J, and Flyway for versioned schema migrations.
+No messaging or ORM. Exact versions are pinned in `pom.xml` at implementation time.
 
-**Storage**: In-memory only — `ConcurrentHashMap` keyed by SKU for inventory and by
-transaction id for transactions. No persistence; state is seeded at startup and discarded at
-shutdown (R3).
+**Storage**: MySQL 8 / InnoDB. Catalog items, inventory, transactions, transaction lines and
+claims, scan events, popularity snapshots, and inventory movements are persisted in normalized
+tables. Flyway creates the schema and deterministic catalog seed data. MySQL remains the
+authoritative state and is never reset by a service restart.
 
 **Testing**: JUnit 5 with `@SpringBootTest` + MockMvc for contract conformance, plus two
 first-class correctness suites — a concurrency invariant test and a per-SKU reconciliation
@@ -74,7 +76,7 @@ Checked against constitution v1.0.1.
 |---|---|---|
 | **I. API Contract is Authoritative** | PASS | Every operation, payload, and status code comes from `spec/self-checkout-openapi.yaml`, including the newly documented `INSUFFICIENT_STOCK` reason for the existing 409. Gate 1 contract tests cover all three conflict reasons. No endpoint, status code, or schema is added. |
 | **II. Test Harness Consistency** | PASS | `load-client/` and `mockserver/` are untouched. Measurement comes from the harness as provided, varying only its documented flags. The implementation lives in its own directory and serves 8080 so no flag change is needed to reach it. |
-| **III. Architecture Isolation** | PASS | A new top-level `monolith/` directory with its own `pom.xml`, Maven wrapper, and `build.sh`/`run.sh`. No shared parent POM, no code borrowed from any other week, nothing added to the repo root that later weeks must inherit. |
+| **III. Architecture Isolation** | PASS | A new top-level `monolith/` directory with its own `pom.xml`, Maven wrapper, `build.sh`/`run.sh`, migrations, and database configuration. No shared parent POM, no code borrowed from any other week, nothing added to the repo root that later weeks must inherit. |
 | **IV. Inventory Correctness** | PASS | Stock moves only at completion (FR-015). Claims are granted atomically under `stock >= reserved` and the basket's decrement is applied as one step under sorted-order locks (FR-016, FR-017, R5). The invariant is verified *under load* by a dedicated concurrency test and re-checked against the stress run's final state at Gate 4 — not inferred from functional tests. |
 | **V. Evidence-Based Evaluation** | PASS | Normal and stress run reports committed to `monolith/reports/`, with notes naming the architecture and reporting mean alongside p95/p99. Deterministic catalog seeding (R11) is what makes the popularity cross-check meaningful across weeks. |
 | **Mock server is not a design precedent** | PASS | The mock server informs *behavior* only — what the contract means by example. The design here departs from it on the substance: an explicit claim model with a documented insufficient-stock outcome, where the mock server has no claim concept at all. Using concurrent maps for storage is not inheritance of its architecture; its architectural deficiency is the absent atomicity, not the data structure. |
@@ -87,9 +89,10 @@ brief governs *what* to build, so the instruction stands. Nothing is invalidated
 measurements exist yet, no weekly reports are committed, so there is no comparability to
 break. Noting it here rather than leaving the record silent.
 
-**Post-Phase 1 re-check**: PASS, unchanged. The Phase 1 design introduced no new dependency,
-no new API surface, and no new persistence. `contracts/` documents the existing contract rather
-than extending it, and the claim entity in `data-model.md` is marked internal in line with
+**Post-Phase 1 re-check**: PASS, updated for the MySQL design. The Phase 1 design introduces
+JDBC, MySQL, Flyway, and durable persistence but no new API surface. `contracts/` documents the
+existing contract rather than extending it, and the claim entity in `data-model.md` is marked
+internal in line with
 FR-031. The one behavior added during re-sync — cancelling a transaction refused for
 insufficient stock (R6) — uses the `CANCELLED` status the contract already defines and adds no
 operation.
@@ -131,8 +134,8 @@ monolith/                                  # this week's implementation, self-co
 │   ├── analytics/                         # scan sequence, ring buffer, window snapshots
 │   └── config/                            # seeding and window configuration properties
 ├── src/main/resources/
-│   └── application.yaml                   # port 8080, catalogSize, stockPerItem, threshold,
-│                                          # windowSize, slideInterval
+│   ├── application.yaml                   # port, MySQL connection settings, catalog/window defaults
+│   └── db/migration/                       # versioned Flyway schema and seed migrations
 └── src/test/java/edu/northeastern/cs6510/selfcheckout/
     ├── contract/                          # one class per operation, all documented outcomes
     ├── concurrency/                       # oversubscription + reconciliation under load
@@ -144,9 +147,9 @@ independently buildable and re-measurable later (Principle III) and so the repo 
 free for the weeks that follow.
 
 Packages group code by domain — `catalog`, `inventory`, `transaction`, `analytics` — for
-navigability, **not** as enforced layers. There is no controller/service/repository stack, no
-interface-per-class indirection, and no repository abstraction over the concurrent maps:
-domain code calls domain code directly in one address space. That restraint is deliberate.
+navigability, **not** as enforced layers. There is no controller/service/repository stack or
+interface-per-class indirection. Thin JDBC stores keep SQL and row mapping local to each domain
+while domain code calls domain code directly in one address space. That restraint is deliberate.
 Introducing layering now would spend the layered week's distinguishing feature early and blur
 the comparison the semester is built on. The one boundary that *is* enforced is `api/` —
 controllers and DTOs are the only code that knows about HTTP, which keeps FR-030's

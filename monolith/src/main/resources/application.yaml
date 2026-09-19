@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: self-checkout-monolith
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/self_checkout?createDatabaseIfNotExist=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:self_checkout}
+    password: ${DB_PASSWORD:self_checkout}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+
+self-checkout:
+  catalog-size: ${CATALOG_SIZE:2000}
+  stock-per-item: ${STOCK_PER_ITEM:10000}
+  low-stock-threshold: ${LOW_STOCK_THRESHOLD:50}
+  window-size: ${WINDOW_SIZE:1000}
+  slide-interval: ${SLIDE_INTERVAL:500}
