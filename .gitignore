@@ -13,3 +13,6 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+
+# Layered server build output
+layered-server/out/

@@ -1,3 +1,12 @@
+<!--
+Sync Impact Report
+- Version change: 1.0.1 → 1.1.0
+- Modified principles: III. Architecture Isolation → III. Layered Architecture & Isolation
+- Added sections: None
+- Removed sections: None
+- Follow-up TODOs: None
+-->
+
 # Self-Checkout Semester Project Constitution
 
 ## Core Principles
@@ -21,13 +30,21 @@ provided; only its documented CLI flags may vary from run to run.
 Rationale: An instrument that never changes is what makes week-to-week numbers
 comparable.
 
-### III. Architecture Isolation
+### III. Layered Architecture & Isolation
 
-Implementations SHOULD remain independently buildable and runnable, and SHOULD NOT depend on 
-application code from other weeks unless explicitly required by the assigned architecture.
+This week's server implementation MUST use a layered architecture with distinct API,
+transactions, analytics, and database-access layers. The API layer owns HTTP and OpenAPI
+translation; the transactions layer owns checkout workflows and inventory updates; the
+analytics layer owns reporting and ranking calculations; and the database-access layer owns
+persistence queries and storage concerns. Dependencies MUST flow through these layer
+boundaries: API code MUST NOT access persistence directly, and analytics code MUST NOT
+duplicate transaction or database-access responsibilities. Implementations MUST remain
+independently buildable and runnable and MUST NOT depend on application code from other weeks
+unless the assigned architecture explicitly requires it.
 
-Rationale: Each architecture is the unit of comparison, so it has to be runnable in
-isolation and re-measurable later.
+Rationale: Explicit boundaries make the server's responsibilities testable, allow internal
+changes without altering the API contract, and preserve each weekly architecture as an
+independent unit of comparison.
 
 ### IV. Inventory Correctness
 
@@ -97,4 +114,4 @@ the reports MUST be present before a week counts as complete. Complexity in an
 implementation SHOULD be justified by the week's assigned architecture; complexity that
 serves neither the architecture nor the contract SHOULD be removed.
 
-**Version**: 1.0.1 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-17
+**Version**: 1.1.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-25
