@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import selfcheckout.analytics.AnalyticsService;
 import selfcheckout.domain.CatalogItem;
+import selfcheckout.domain.CompletionResult;
 import selfcheckout.domain.LowStockAlert;
 import selfcheckout.domain.PopularItem;
 import selfcheckout.domain.Receipt;
@@ -36,7 +37,7 @@ public final class SelfCheckoutRoutes implements HttpHandler {
             ApiResponses.error(exchange, 404, "NOT_FOUND", "No such route");
         } catch (TransactionService.Invalid invalid) { ApiResponses.error(exchange, 400, "INVALID_REQUEST", invalid.getMessage());
         } catch (TransactionService.NotFound notFound) { ApiResponses.error(exchange, 404, "NOT_FOUND", notFound.getMessage());
-        } catch (TransactionService.Conflict conflict) { ApiResponses.error(exchange, 409, "TRANSACTION_NOT_OPEN", conflict.getMessage());
+        } catch (TransactionService.Conflict conflict) { ApiResponses.error(exchange, 409, conflict.error(), conflict.getMessage());
         } catch (Exception failure) { ApiResponses.error(exchange, 500, "INTERNAL_ERROR", "Unexpected server error"); }
     }
     private void start(HttpExchange ex) throws IOException { Transaction tx = transactions.start(Json.stringField(body(ex), "stationId")); ApiResponses.send(ex, 201, transaction(tx, 0.0)); }
@@ -45,9 +46,15 @@ public final class SelfCheckoutRoutes implements HttpHandler {
         ApiResponses.send(ex, 200, "{\"transactionId\":" + Json.quote(result.transactionId()) + ",\"sku\":" + Json.quote(result.sku()) + ",\"name\":" + Json.quote(result.name()) + ",\"unitPrice\":" + result.unitPrice() + ",\"itemCount\":" + result.itemCount() + ",\"runningTotal\":" + result.runningTotal() + "}");
     }
     private void complete(HttpExchange ex, String id) throws IOException {
-        Receipt receipt = transactions.complete(id); StringBuilder lines = new StringBuilder();
+        CompletionResult result = transactions.complete(id); Receipt receipt = result.receipt(); StringBuilder lines = new StringBuilder();
         for (int i = 0; i < receipt.lines().size(); i++) { ReceiptLine line = receipt.lines().get(i); if (i > 0) lines.append(','); lines.append("{\"sku\":").append(Json.quote(line.sku())).append(",\"name\":").append(Json.quote(line.name())).append(",\"unitPrice\":").append(line.unitPrice()).append(",\"quantity\":").append(line.quantity()).append('}'); }
-        ApiResponses.send(ex, 200, "{\"transactionId\":" + Json.quote(receipt.transactionId()) + ",\"stationId\":" + Json.quote(receipt.stationId()) + ",\"itemCount\":" + receipt.itemCount() + ",\"totalAmount\":" + receipt.totalAmount() + ",\"startedAt\":" + Json.quote(receipt.startedAt().toString()) + ",\"completedAt\":" + Json.quote(receipt.completedAt().toString()) + ",\"lines\":[" + lines + "]}");
+        StringBuilder body = new StringBuilder("{\"transactionId\":").append(Json.quote(receipt.transactionId())).append(",\"stationId\":").append(Json.quote(receipt.stationId())).append(",\"itemCount\":").append(receipt.itemCount()).append(",\"totalAmount\":").append(receipt.totalAmount()).append(",\"startedAt\":").append(Json.quote(receipt.startedAt().toString())).append(",\"completedAt\":").append(Json.quote(receipt.completedAt().toString())).append(",\"lines\":[").append(lines).append(']');
+        if (!result.unavailableItems().isEmpty()) {
+            StringBuilder unavailable = new StringBuilder();
+            for (int i = 0; i < result.unavailableItems().size(); i++) { var item = result.unavailableItems().get(i); if (i > 0) unavailable.append(','); unavailable.append("{\"sku\":").append(Json.quote(item.sku())).append(",\"name\":").append(Json.quote(item.name())).append(",\"quantity\":").append(item.quantity()).append('}'); }
+            body.append(",\"unavailableItems\":[").append(unavailable).append(']');
+        }
+        ApiResponses.send(ex, 200, body.append('}').toString());
     }
     private void status(HttpExchange ex, String id) throws IOException { Transaction tx = transactions.status(id); ApiResponses.send(ex, 200, transaction(tx, transactions.runningTotal(tx))); }
     private void lowStock(HttpExchange ex) throws IOException {

@@ -25,17 +25,34 @@ data-access layer.
 requirement exists. State in request handlers was rejected because it violates the API/data-access
 boundary.
 
-### Atomic completion
+### Atomic partial completion
 
-**Decision**: Complete a transaction through one transaction-layer operation that validates the
-open transaction and atomically verifies and decrements every required inventory quantity before
-marking it complete.
+**Decision**: Complete a transaction through one transaction-layer operation that, under the
+data-access inventory lock, determines the fulfillable quantity for each scanned SKU, decrements
+only those quantities, and removes only fulfilled units from the open basket. A transaction becomes
+completed only when no scanned units remain; otherwise it stays open for a later attempt.
 
-**Rationale**: This prevents partial completion, double completion, and overselling during
-concurrent traffic.
+**Rationale**: This meets the constitution's partial-completion rule while preserving non-negative
+inventory and preventing duplicate sales during concurrent traffic. It also handles a basket with
+multiple units of one SKU: available units are fulfilled and only the shortage remains.
 
-**Alternatives considered**: Independent check-then-decrement operations and decrement-on-scan
-were rejected because they respectively risk overselling and violate the contract.
+**Alternatives considered**: All-or-nothing completion was rejected because it conflicts with the
+constitution. Independent check-then-decrement operations and decrement-on-scan were rejected
+because they respectively risk overselling and violate the contract.
+
+### Receipt-compatible unavailable-item notice
+
+**Decision**: Return the documented receipt fields for fulfilled lines and include an optional
+`unavailableItems` detail containing each retained SKU and quantity. The transaction status remains
+open when any units remain in its basket.
+
+**Rationale**: The original OpenAPI receipt schema has no `additionalProperties: false` constraint,
+so the optional detail is schema-compatible while preserving every documented field. It gives the
+customer an explicit account of unavailable items as required by the constitution.
+
+**Alternatives considered**: Returning a 409 for stock shortages was rejected because it would
+block available lines. Encoding shortages only in a message or asking the customer to infer them
+from omitted receipt lines was rejected because it does not explicitly identify retained items.
 
 ### Hopping-window analytics
 

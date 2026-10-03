@@ -32,6 +32,15 @@ curl "http://localhost:8080/inventory/low-stock"
 Use the returned transaction identifier to scan an existing SKU and then complete it. Compare all
 response fields and status codes with [the authoritative contract](../../spec/self-checkout-openapi.yaml).
 
+## Partial-completion check
+
+Start a small local catalog with one unit of stock per SKU. First complete a transaction containing
+one unit of `SKU-000001` so that SKU is exhausted. Then start a second transaction, scan
+`SKU-000001` and `SKU-000002`, and complete it. Expected outcome: the receipt contains
+`SKU-000002`; `unavailableItems` identifies `SKU-000001`; and a transaction-status check shows the
+second transaction remains open with the unavailable unit retained. A later completion must succeed
+if stock becomes available, without charging the already fulfilled unit again.
+
 ## Normal workload
 
 Run the supplied load client without changing it:

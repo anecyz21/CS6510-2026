@@ -11,7 +11,17 @@ results with earlier weeks using the same workload and hardware configuration.
 | --- | --- | --- | --- | --- |
 | Normal: 10 stations, 60 seconds | 0.2137 / 0.3281 ms | 0.2243 / 0.3694 ms | 0.2247 / 0.3478 ms | 0 |
 | Stress: 200 stations, 180 seconds | 3.8809 / 5.2893 ms | 3.9229 / 5.3369 ms | 3.9101 / 5.3123 ms | 0 |
+| Normal: 10 stations, 60 seconds (2026-10-03) | 0.2218 / 0.3649 ms | 0.2313 / 0.3837 ms | 0.2402 / 0.3956 ms | 0 |
+| Stress: 200 stations, 180 seconds (2026-10-03) | 3.6503 / 4.4907 ms | 3.6721 / 4.5201 ms | 3.6842 / 4.5184 ms | 0 |
 
 The normal report is `report-20260925-201100.json`; the stress report is
 `report-20260925-201440.json`. Both runs used a 2,000-item catalog and 100,000,000 initial units
 per SKU so workload measurements were not dominated by intentional inventory exhaustion.
+
+The 2026-10-03 reports are `report-20261003-030757.json` (normal) and
+`report-20261003-031103.json` (stress). Their mean latencies were 0.1707 / 0.1704 / 0.1885 ms for
+start, scan, and complete in the normal run, and 2.2566 / 2.2732 / 2.2808 ms in stress. Throughput
+was 4,649.8 transactions/second normally and 7,040.2 transactions/second under stress, with zero
+errors in each operation. Both runs used a 2,000-item catalog and 100,000,000 initial units per
+SKU; low-stock alerts were empty and the popularity ranking retained the expected skew toward the
+lowest-numbered SKUs.

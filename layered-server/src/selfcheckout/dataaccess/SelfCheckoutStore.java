@@ -5,6 +5,7 @@ import selfcheckout.domain.LowStockAlert;
 import selfcheckout.domain.Transaction;
 
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface SelfCheckoutStore {
@@ -12,6 +13,13 @@ public interface SelfCheckoutStore {
     CatalogItem findItem(String sku);
     Transaction createTransaction(String stationId);
     Transaction findTransaction(String transactionId);
-    boolean decrementIfAvailable(Map<String, Integer> quantities);
+    Fulfillment fulfillAvailable(Map<String, Integer> quantities);
     List<LowStockAlert> lowStock(int threshold);
+
+    record Fulfillment(Map<String, Integer> fulfilled, Map<String, Integer> unavailable) {
+        public Fulfillment {
+            fulfilled = Map.copyOf(new LinkedHashMap<>(fulfilled));
+            unavailable = Map.copyOf(new LinkedHashMap<>(unavailable));
+        }
+    }
 }

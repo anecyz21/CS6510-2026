@@ -1,7 +1,7 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.1 → 1.1.0
-- Modified principles: III. Architecture Isolation → III. Layered Architecture & Isolation
+- Version change: 1.1.0 → 1.2.0
+- Modified principles: IV. Inventory Correctness → IV. Inventory Correctness & Partial Completion
 - Added sections: None
 - Removed sections: None
 - Follow-up TODOs: None
@@ -46,17 +46,23 @@ Rationale: Explicit boundaries make the server's responsibilities testable, allo
 changes without altering the API contract, and preserve each weekly architecture as an
 independent unit of comparison.
 
-### IV. Inventory Correctness
+### IV. Inventory Correctness & Partial Completion
 
 Stock is decremented when a transaction completes, not when an item is scanned. For every
 SKU, the drop in stock across a run MUST equal the number of completed line items for that
 SKU, and stock MUST never go negative. Any check-then-decrement MUST be atomic with
 respect to concurrent completions, and the invariant MUST be verified under stress load
-rather than inferred from functional tests.
+rather than inferred from functional tests. When one or more scanned items are unavailable
+at completion, the transaction MUST complete every independently available line item,
+MUST NOT decrement stock for unavailable items, and MUST retain each unavailable item in
+the basket for a later attempt. The completion response or customer-facing flow MUST
+identify each unavailable item; an unavailable line item MUST NOT cause otherwise
+available items to be rejected.
 
 Rationale: An implementation can pass every functional test and still sell the last unit
 of an item twice once stations run concurrently, which is the failure mode this project
-is built to expose.
+is built to expose. Completing the available portion also prevents a single outage or
+stock shortage from unnecessarily blocking the customer's remaining purchase.
 
 ### V. Evidence-Based Evaluation
 
@@ -114,4 +120,4 @@ the reports MUST be present before a week counts as complete. Complexity in an
 implementation SHOULD be justified by the week's assigned architecture; complexity that
 serves neither the architecture nor the contract SHOULD be removed.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-25
+**Version**: 1.2.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-10-03

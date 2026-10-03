@@ -14,9 +14,22 @@ The server has four responsibility layers:
 ## Request traces
 
 `POST /transactions/{id}/complete` flows from `SelfCheckoutRoutes` to
-`TransactionService.complete`, then to `SelfCheckoutStore.decrementIfAvailable`. The API layer
-does not import or call the data-access package.
+`TransactionService.complete`, then to `SelfCheckoutStore.fulfillAvailable`. Data access computes
+the fulfillable quantity for each SKU while holding its inventory lock. The transaction layer
+removes fulfilled units, retains unavailable units in the open basket, and returns a
+receipt-compatible result. The API layer serializes the optional `unavailableItems` detail and does
+not import or call the data-access package.
 
 `GET /analytics/popular-items` flows from `SelfCheckoutRoutes` to
 `AnalyticsService.popularItems`. Ranking remains owned by analytics; neither API nor analytics
 changes transaction lifecycle state.
+
+## Partial-checkout boundary review
+
+- API imports transaction and analytics services plus domain response values; it has no data-access
+  imports.
+- Transactions own lifecycle transitions and call the data-access fulfillment boundary; they do not
+  encode HTTP responses.
+- Analytics records successful scans and calculates rankings only; partial completion does not give
+  it transaction-state authority.
+- Data access owns stock mutation and returns domain-oriented quantities, never HTTP objects.

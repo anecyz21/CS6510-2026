@@ -15,8 +15,9 @@
 | sku | Associated catalog item | Must reference a catalog item |
 | quantity | Current sellable units | Integer greater than or equal to zero |
 
-The data-access layer owns inventory reads and atomic changes. Completion first verifies all
-required quantities and then applies the complete set as one outcome; it never partially decrements.
+The data-access layer owns inventory reads and atomic changes. For each completion, it determines
+the fulfillable quantity per SKU while holding the inventory mutation boundary, decrements only
+those units, and never allows quantity below zero.
 
 ## Transaction
 
@@ -26,16 +27,29 @@ required quantities and then applies the complete set as one outcome; it never p
 | stationId | Checkout station identifier | Non-empty |
 | status | Lifecycle state | `OPEN`, `COMPLETED`, or `CANCELLED` |
 | startedAt | Creation timestamp | Set when created |
-| lines | Scanned item units | May grow only while open |
+| lines | Pending scanned item units | May grow only while open; fulfilled units are removed at completion |
 
 ```text
-OPEN --complete with non-empty basket and sufficient inventory--> COMPLETED
+OPEN --complete with all units fulfilled------------------------> COMPLETED
+OPEN --complete with some or no units fulfilled----------------> OPEN (retains unavailable units)
 OPEN --cancel (if supported internally)------------------------> CANCELLED
 COMPLETED or CANCELLED --scan or complete----------------------> rejected (409)
 ```
 
 Only the transactions layer changes transaction state. Completion is rejected when the transaction
-is missing, not open, empty, or lacks sufficient inventory.
+is missing, not open, or empty. Insufficient stock is not a rejection condition: each unavailable
+unit remains in the basket for a later attempt.
+
+## Completion Result
+
+| Field | Description | Validation |
+| --- | --- | --- |
+| receipt | Documented receipt fields for fulfilled units | Includes only units whose stock was decremented |
+| unavailableItems | Optional list of retained item shortages | One entry per SKU with a positive retained quantity |
+
+An unavailable-item entry identifies the SKU, display name, and retained quantity. The API layer
+encodes this as an optional extension to the receipt response; clients that only consume documented
+receipt fields remain compatible.
 
 ## Scan Event and Scan Window
 

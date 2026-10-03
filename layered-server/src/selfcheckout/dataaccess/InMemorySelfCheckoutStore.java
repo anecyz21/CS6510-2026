@@ -41,13 +41,19 @@ public final class InMemorySelfCheckoutStore implements SelfCheckoutStore {
         return transaction;
     }
     public Transaction findTransaction(String id) { return transactions.get(id); }
-    public boolean decrementIfAvailable(Map<String, Integer> quantities) {
+    public Fulfillment fulfillAvailable(Map<String, Integer> quantities) {
         synchronized (inventoryLock) {
+            Map<String, Integer> fulfilled = new LinkedHashMap<>();
+            Map<String, Integer> unavailable = new LinkedHashMap<>();
             for (var entry : quantities.entrySet()) {
-                if (stock.getOrDefault(entry.getKey(), 0) < entry.getValue()) return false;
+                int requested = entry.getValue();
+                int available = stock.getOrDefault(entry.getKey(), 0);
+                int sold = Math.min(requested, available);
+                if (sold > 0) fulfilled.put(entry.getKey(), sold);
+                if (sold < requested) unavailable.put(entry.getKey(), requested - sold);
             }
-            quantities.forEach((sku, count) -> stock.computeIfPresent(sku, (ignored, current) -> current - count));
-            return true;
+            fulfilled.forEach((sku, count) -> stock.computeIfPresent(sku, (ignored, current) -> current - count));
+            return new Fulfillment(fulfilled, unavailable);
         }
     }
     public List<LowStockAlert> lowStock(int threshold) {

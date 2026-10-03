@@ -1,6 +1,6 @@
 # Implementation Plan: Layered Server Architecture
 
-**Branch**: `002-layered-architecture` | **Date**: 2026-09-25 | **Spec**: [spec.md](spec.md)
+**Branch**: `002-layered-architecture` | **Date**: 2026-10-03 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/002-layered-architecture/spec.md`
 
@@ -10,7 +10,9 @@ Build this week's self-checkout server as an independently runnable Java 21 serv
 explicit layers: API, transactions, analytics, and data access. Preserve the shared OpenAPI
 contract and its synchronous behavior. The transactions layer owns checkout and atomic inventory
 completion; analytics owns hopping-window popular-item rankings; data access owns in-memory state
-and atomic mutation primitives; and the API layer owns routing, JSON translation, and HTTP errors.
+and atomic partial-fulfillment primitives; and the API layer owns routing, JSON translation, and
+HTTP errors. A completion purchases every available unit, retains unavailable units in the open
+basket, and identifies the retained units in a receipt-compatible response.
 
 ## Technical Context
 
@@ -29,8 +31,10 @@ and atomic mutation primitives; and the API layer owns routing, JSON translation
 **Performance Goals**: Complete 10 stations for 60 seconds with zero start, scan, or completion
 errors; record p95 and p99 for normal and stress runs
 
-**Constraints**: Preserve OpenAPI behavior; do not modify the contract, load client, or mock server;
-never allow negative inventory; keep layer dependencies unidirectional
+**Constraints**: Preserve all documented OpenAPI fields and behavior; do not modify the contract,
+load client, or mock server; never allow negative inventory; keep layer dependencies
+unidirectional. The OpenAPI receipt schema permits optional response properties, so an optional
+unavailable-items detail can satisfy the constitution without replacing any documented field.
 
 **Scale/Scope**: Fixed startup catalog; concurrent checkout stations; one standalone weekly server
 
@@ -43,7 +47,8 @@ never allow negative inventory; keep layer dependencies unidirectional
 | Preserve the OpenAPI contract and synchronous behavior | The contract map retains all seven endpoints and maps each to an API handler. | Pass |
 | Use the unmodified measurement harness | Quickstart uses the supplied load client; no harness changes are planned. | Pass |
 | Keep API, transactions, analytics, and data access distinct | The source layout and responsibility map define exactly these four layers. | Pass |
-| Protect inventory under concurrency | Completion coordinates atomic inventory mutation through data access. | Pass |
+| Protect inventory under concurrency | Completion coordinates atomic per-SKU fulfillment through data access, decrementing only units that can be sold. | Pass |
+| Partially complete mixed-stock baskets | A receipt-compatible result lists fulfilled lines and optional unavailable-item details; fulfilled units are removed while unavailable units remain open. | Pass |
 | Commit normal and stress evidence | Quickstart requires reports in `layered-server/reports/`. | Pass |
 
 ## Project Structure

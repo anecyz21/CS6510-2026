@@ -29,6 +29,9 @@ that the returned transaction and receipt information match the documented behav
    documented transaction and receipt results.
 2. **Given** a completed transaction, **When** the customer retrieves its status, **Then** the
    server returns the documented transaction state without exposing internal responsibilities.
+3. **Given** a basket containing both available and unavailable scanned items, **When** the
+   customer completes the transaction, **Then** available items are purchased, unavailable items
+   remain in the basket, and the customer is told which items could not be purchased.
 
 ---
 
@@ -78,8 +81,10 @@ finding direct public-to-data access or duplicated analytics responsibilities.
   not bypass transaction or data-access responsibilities.
 - Concurrent completion attempts for the last available unit never produce negative stock or sell
   more units than available.
-- A failed completion leaves inventory and analytics consistent with the documented transaction
-  outcome.
+- A completion with an unavailable line item purchases all independently available line items,
+  leaves unavailable line items in the basket, and identifies them to the customer.
+- A completion where every scanned item is unavailable purchases no items, retains the entire
+  basket, and identifies every unavailable item to the customer.
 - A popular-items request before enough scans have occurred returns the documented empty or
   partial ranking behavior.
 
@@ -108,11 +113,17 @@ finding direct public-to-data access or duplicated analytics responsibilities.
   requires it.
 - **FR-010**: The normal and stress workload reports MUST be recorded with the implementation and
   include mean, p95, and p99 latency for each measured operation.
+- **FR-011**: When completion finds one or more unavailable scanned items, the server MUST
+  complete every independently available line item and MUST NOT reject those items because another
+  line item is unavailable.
+- **FR-012**: Completion MUST NOT decrement stock for an unavailable item, MUST retain each
+  unavailable item in the customer's basket for a later attempt, and MUST identify each
+  unavailable item in the customer-facing completion result.
 
 ### Key Entities
 
-- **Transaction**: A customer checkout session containing scanned items, completion state, and
-  receipt outcome.
+- **Transaction**: A customer checkout session containing scanned items, completed items,
+  unavailable items retained in the basket, completion state, and receipt outcome.
 - **Inventory Item**: A catalog item with its stock quantity and low-stock state.
 - **Scan Window**: The bounded, ordered set of recent scans used to calculate popular-item
   rankings.
@@ -133,12 +144,18 @@ finding direct public-to-data access or duplicated analytics responsibilities.
   required responsibilities are identifiable with non-overlapping ownership.
 - **SC-005**: Normal and stress workload reports include mean, p95, and p99 latency for every
   measured operation and identify the layered architecture style.
+- **SC-006**: In checkout tests containing a mix of available and unavailable items, 100% of
+  available items complete, 0 unavailable items reduce stock, and the completion result identifies
+  every unavailable item while retaining it in the basket.
 
 ## Assumptions
 
 - The existing OpenAPI contract, load client, and mock server remain unchanged.
 - The layered architecture applies to this week's server implementation; client-facing behavior is
   unchanged from the shared contract.
+- The documented customer-facing completion flow can identify unavailable items without changing
+  the shared contract; if the contract cannot express this outcome, a contract amendment is needed
+  before implementation.
 - The existing workload defaults define the normal run, while the stress workload uses a higher
   concurrency setting and is documented with its report.
 - The implementation keeps all required responsibilities within the weekly server project unless

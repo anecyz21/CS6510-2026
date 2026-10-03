@@ -34,3 +34,7 @@
 - The required responsibility boundaries are architecture constraints imposed by the project
   constitution. The specification intentionally describes ownership and observable review
   outcomes, without prescribing languages, frameworks, data stores, or code structure.
+- The partial-completion requirements reflect Constitution v1.2.0: an unavailable line item
+  cannot block independently available items, remains in the basket, and is identified to the
+  customer. The specification records the contract-amendment dependency if this outcome cannot
+  be represented by the existing customer-facing flow.

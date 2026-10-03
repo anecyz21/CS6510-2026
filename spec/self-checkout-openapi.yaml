@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Self-Checkout System API
-  version: "1.1.0"
+  version: "1.0.0"
   description: |
     Shared API contract for the semester-long self-checkout project.
 
@@ -143,15 +143,6 @@ paths:
         Finalizes the transaction. For every scanned unit, the corresponding
         SKU's stock is decremented by one. Payment is assumed to always
         succeed in this simulation — there is no payment failure path.
-
-
-        Completion is all-or-nothing: either every scanned unit is fulfilled
-        and stock is decremented for all of them, or nothing changes at all.
-        There is no partial fulfillment. Because scans are never gated on
-        stock availability, a basket may hold more units of a SKU than the
-        store can supply once concurrent transactions have claimed the
-        remaining inventory; that case is reported as INSUFFICIENT_STOCK
-        (see the 409 response below).
       parameters:
         - $ref: "#/components/parameters/TransactionId"
       responses:
@@ -169,38 +160,12 @@ paths:
                 $ref: "#/components/schemas/ApiError"
         "409":
           description: >
-            Transaction cannot be completed. The `error` field distinguishes
-            the reasons:
-
-
-            - `TRANSACTION_NOT_OPEN` — already completed or cancelled.
-
-            - `EMPTY_BASKET` — no units have been scanned.
-
-            - `INSUFFICIENT_STOCK` — one or more scanned SKUs cannot be
-              fulfilled from available stock, because other transactions have
-              claimed the remaining inventory. No receipt is issued, the
-              transaction remains open, and no stock is decremented.
+            Transaction cannot be completed (already completed/cancelled, or
+            basket is empty)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
-              examples:
-                transactionNotOpen:
-                  summary: Already completed or cancelled
-                  value:
-                    error: "TRANSACTION_NOT_OPEN"
-                    message: "Transaction tx-4821 is already completed."
-                emptyBasket:
-                  summary: Nothing scanned
-                  value:
-                    error: "EMPTY_BASKET"
-                    message: "Transaction tx-4821 has no scanned items."
-                insufficientStock:
-                  summary: Stock claimed by other transactions
-                  value:
-                    error: "INSUFFICIENT_STOCK"
-                    message: "SKU-000123 has 1 unit available but 2 were scanned."
 
   /transactions/{transactionId}:
     get:
