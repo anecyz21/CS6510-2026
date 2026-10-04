@@ -1,7 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 → 1.2.0
-- Modified principles: IV. Inventory Correctness → IV. Inventory Correctness & Partial Completion
+- Version change: 1.2.0 → 1.3.0
+- Modified principles: III. Layered Architecture & Isolation →
+  III. Layered Architecture, Isolation & Pipeline Composition;
+  V. Evidence-Based Evaluation → V. Evidence-Based Evaluation & Submission Artifacts;
+  Development Workflow & Quality Gates (added pipeline-composition gate)
 - Added sections: None
 - Removed sections: None
 - Follow-up TODOs: None
@@ -30,7 +33,7 @@ provided; only its documented CLI flags may vary from run to run.
 Rationale: An instrument that never changes is what makes week-to-week numbers
 comparable.
 
-### III. Layered Architecture & Isolation
+### III. Layered Architecture, Isolation & Pipeline Composition
 
 This week's server implementation MUST use a layered architecture with distinct API,
 transactions, analytics, and database-access layers. The API layer owns HTTP and OpenAPI
@@ -45,6 +48,17 @@ unless the assigned architecture explicitly requires it.
 Rationale: Explicit boundaries make the server's responsibilities testable, allow internal
 changes without altering the API contract, and preserve each weekly architecture as an
 independent unit of comparison.
+
+The windowed-analytics functionality MUST be implemented as a small, composable
+pipeline of filters connected by internal pipes. Each filter MUST have one named,
+documented purpose and MUST communicate only through the adjacent pipe; the HTTP-facing
+analytics layer MUST NOT embed the pipeline's batching, windowing, or ranking work.
+Pipes MAY use threads with blocking queues, embedded asynchronous messaging, or an
+equivalent language-native mechanism, provided synchronous API responses remain
+contract-conformant and lifecycle shutdown does not lose accepted scans.
+
+Rationale: Separating ingest, window management, aggregation, and publication exposes
+the naturally stream-oriented analytics work without weakening the stable synchronous API.
 
 ### IV. Inventory Correctness & Partial Completion
 
@@ -64,13 +78,17 @@ of an item twice once stations run concurrently, which is the failure mode this 
 is built to expose. Completing the available portion also prevents a single outage or
 stock shortage from unnecessarily blocking the customer's remaining purchase.
 
-### V. Evidence-Based Evaluation
+### V. Evidence-Based Evaluation & Submission Artifacts
 
 Every submission includes the load client's timestamped JSON reports for a normal run and
-a stress run, committed alongside that week's code. Analysis MUST report p95 and p99 latency 
-in addition to mean latency and SHOULD compare results against previous weeks using comparable 
-hardware and workload configurations. The popular-items ranking is expected to hold steady
-across weeks; a ranking that moves materially MUST be explained.
+a stress run, committed alongside that week's code and reachable from the submitted
+repository URL. For the pipeline week, those reports MUST result from the default client
+parameters and from `--stations=100 --duration=120`, respectively. Analysis MUST report
+p95 and p99 latency in addition to mean latency and SHOULD compare results against
+previous weeks using comparable hardware and workload configurations. The popular-items
+ranking is expected to hold steady across weeks; a ranking that moves materially MUST be
+explained. Submission notes MUST name every analytics filter, state its single purpose,
+and identify the pipe mechanism and filter order.
 
 Rationale: Tail latency is where lock contention, network hops, and orchestration overhead
 actually surface, and a mean hides exactly those effects.
@@ -82,7 +100,7 @@ actually surface, and a mean hides exactly those effects.
 
 ## Development Workflow & Quality Gates
 
-A week's implementation is submittable once all five gates pass, in order:
+A week's implementation is submittable once all six gates pass, in order:
 
 1. **Contract conformance** — every endpoint responds with the documented shape and status
    codes. Behavior MAY be cross-checked against the mock server.
@@ -94,6 +112,9 @@ A week's implementation is submittable once all five gates pass, in order:
 5. **Reports committed** — the JSON reports from gates 2 and 3 are committed under that
    week's `reports/` directory, with notes naming the architecture style and the latency
    and throughput deltas against the previous week.
+6. **Pipeline composition** — the windowed-analytics filters and their ordered pipes are
+documented, and a shutdown test or equivalent evidence shows that accepted scans are not
+lost while the pipeline drains.
 
 Changes to the contract, the load client, or the mock server fall outside this workflow
 and require an amendment first.
@@ -115,9 +136,9 @@ removed, redefined incompatibly, or a quality gate is dropped; MINOR when a prin
 section is added or guidance is materially expanded; PATCH for clarifications and wording
 that leave obligations intact.
 
-**Compliance** is reviewed at each weekly submission: the five gates above MUST pass and
+**Compliance** is reviewed at each weekly submission: the six gates above MUST pass and
 the reports MUST be present before a week counts as complete. Complexity in an
 implementation SHOULD be justified by the week's assigned architecture; complexity that
 serves neither the architecture nor the contract SHOULD be removed.
 
-**Version**: 1.2.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-10-03
+**Version**: 1.3.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-10-03

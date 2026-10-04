@@ -15,6 +15,7 @@ public final class LayeredServerApplication {
         var analytics = new AnalyticsService(1000, 500, store::findItem);
         var transactions = new TransactionService(store, analytics);
         var server = SelfCheckoutServer.create(port, transactions, analytics, threshold);
+        Runtime.getRuntime().addShutdownHook(new Thread(analytics::close, "analytics-shutdown"));
         server.start();
         System.out.println("Layered self-checkout server listening on port " + port);
     }

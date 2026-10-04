@@ -7,6 +7,16 @@ results with earlier weeks using the same workload and hardware configuration.
 
 ## Recorded results
 
+## Pipeline submission reports
+
+Generate a fresh pair after building the pipeline implementation:
+
+- Default workload: omit `--stations` and `--duration` (defaults are 10 stations for 60 seconds).
+- Required stress workload: `--stations=100 --duration=120`.
+
+The older 200-station/180-second reports below are retained as historical measurements and are not
+substitutes for the required stress artifact.
+
 | Workload | Start p95 / p99 | Scan p95 / p99 | Complete p95 / p99 | Errors |
 | --- | --- | --- | --- | --- |
 | Normal: 10 stations, 60 seconds | 0.2137 / 0.3281 ms | 0.2243 / 0.3694 ms | 0.2247 / 0.3478 ms | 0 |

@@ -24,6 +24,25 @@ not import or call the data-access package.
 `AnalyticsService.popularItems`. Ranking remains owned by analytics; neither API nor analytics
 changes transaction lifecycle state.
 
+## Windowed analytics pipeline
+
+The system has a three-stage pipeline:
+
+```text
+ingest (assigns ordered scan sequence numbers)
+  -> window (retains the most recent 1,000 scans and emits updates at scan 1 and every 500 scans)
+  -> rank-and-publish (counts, sorts, and atomically publishes one complete popularity snapshot)
+```
+
+The pipes are unbounded Java `LinkedBlockingQueue` instances. Each stage has one dedicated worker,
+so FIFO queue order is the global scan order. `TransactionService` submits a scan only after it has
+validated the transaction and added the SKU to the basket; the request thread does not wait for
+ranking. Readers receive the previous complete snapshot while a newer one is being calculated.
+
+During orderly shutdown, analytics stops accepting new scans, then forwards a terminal message
+through each pipe only after all preceding messages are processed. The application shutdown hook
+waits for the workers to drain, so accepted scans are not silently discarded.
+
 ## Partial-checkout boundary review
 
 - API imports transaction and analytics services plus domain response values; it has no data-access

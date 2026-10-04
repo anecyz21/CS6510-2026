@@ -16,3 +16,6 @@ Thumbs.db
 
 # Layered server build output
 layered-server/out/
+load-client/out/
+build/
+.gradle/
