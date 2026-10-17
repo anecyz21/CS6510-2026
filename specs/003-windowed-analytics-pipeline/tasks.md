@@ -219,3 +219,9 @@ ranking with a deterministic 1,500-scan case.
 - [ ] T026 Make pipeline worker failure release downstream workers and make close complete without deadlock in `layered-server/src/selfcheckout/analytics/AnalyticsService.java` per FR-006 and Constitution III (partial).
 - [ ] T027 Generate and commit newly timestamped default and `--stations=100 --duration=120` JSON reports under `layered-server/reports/`, then index both in `layered-server/reports/README.md` per FR-007 and SC-004 (missing).
 - [ ] T028 Run the completed test suite via `layered-server/test.sh` and record the final commands and pass results in `layered-server/README.md` per the plan test-execution decision (partial).
+
+## Phase 8: Convergence
+
+- [ ] T029 Extend `layered-server/test/selfcheckout/integration/AnalyticsConcurrencyCheck.java` to submit and account for at least 10,000 accepted scans exactly once, while concurrent reads observe only complete snapshots, per SC-002 (partial).
+- [ ] T030 Generate and commit timestamped default and `--stations=100 --duration=120` JSON reports under `layered-server/reports/`, then index both in `layered-server/reports/README.md`, per FR-007 and SC-004 (missing).
+- [ ] T031 Run the completed analytics and inventory checks via `layered-server/test.sh` and record the final commands and passing results in `layered-server/README.md`, per the plan test-execution decision (partial).

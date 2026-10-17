@@ -1,0 +1,9 @@
+server:
+  port: "${SERVER_PORT:8084}"
+spring:
+  application: { name: analytics-service }
+  datasource:
+    url: "${DB_URL:jdbc:mysql://localhost:3306/analytics}"
+    username: "${DB_USERNAME:analytics_service}"
+    password: "${DB_PASSWORD:analytics_service}"
+  flyway: { enabled: true }

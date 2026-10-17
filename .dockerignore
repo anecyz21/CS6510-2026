@@ -1,0 +1,6 @@
+target/
+**/target/
+.git/
+.env*
+*.log
+deployment/reports/

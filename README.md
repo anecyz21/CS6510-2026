@@ -16,10 +16,13 @@ self-checkout-project/
 │   ├── src/*.java                   ← the load-testing client (zero dependencies)
 │   ├── build.sh
 │   └── run.sh
-└── mockserver/
+├── mockserver/
     ├── MockServer.java              ← optional reference server (see below)
     ├── build.sh
     └── run.sh
+├── monolith/                         ← monolithic implementation
+├── layered-server/                   ← layered implementation
+└── domain-services/                  ← services, deployment assets, and service tests
 ```
 
 ## The API contract (`spec/self-checkout-openapi.yaml`)

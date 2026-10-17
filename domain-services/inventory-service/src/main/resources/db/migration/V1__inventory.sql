@@ -1,0 +1,3 @@
+CREATE TABLE inventory_positions (sku VARCHAR(64) PRIMARY KEY, initial_stock INT NOT NULL, available_stock INT NOT NULL, reserved_stock INT NOT NULL DEFAULT 0, CHECK(initial_stock >= 0), CHECK(available_stock >= 0), CHECK(reserved_stock >= 0), CHECK(reserved_stock <= available_stock));
+CREATE TABLE inventory_movements (movement_id BIGINT AUTO_INCREMENT PRIMARY KEY, sku VARCHAR(64) NOT NULL, transaction_id VARCHAR(64), quantity_delta INT NOT NULL, stock_after INT NOT NULL, occurred_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6));
+CREATE VIEW low_stock AS SELECT sku, available_stock FROM inventory_positions;

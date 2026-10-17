@@ -1,0 +1,9 @@
+server:
+  port: "${SERVER_PORT:8082}"
+spring:
+  application: { name: checkout-service }
+  datasource:
+    url: "${DB_URL:jdbc:mysql://localhost:3306/checkout}"
+    username: "${DB_USERNAME:checkout_service}"
+    password: "${DB_PASSWORD:checkout_service}"
+  flyway: { enabled: true }

@@ -1,0 +1,9 @@
+server:
+  port: "${SERVER_PORT:8081}"
+spring:
+  application: { name: catalog-service }
+  datasource:
+    url: "${DB_URL:jdbc:mysql://localhost:3306/catalog}"
+    username: "${DB_USERNAME:catalog_service}"
+    password: "${DB_PASSWORD:catalog_service}"
+  flyway: { enabled: true }

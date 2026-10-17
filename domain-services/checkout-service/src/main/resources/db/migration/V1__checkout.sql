@@ -1,0 +1,3 @@
+CREATE TABLE checkout_transactions (transaction_id VARCHAR(64) PRIMARY KEY, station_id VARCHAR(255) NOT NULL, status VARCHAR(16) NOT NULL, started_at TIMESTAMP(6) NOT NULL, completed_at TIMESTAMP(6) NULL, CHECK (CHAR_LENGTH(TRIM(station_id)) > 0), CHECK (status IN ('OPEN', 'COMPLETED', 'CANCELLED')));
+CREATE TABLE basket_lines (transaction_id VARCHAR(64) NOT NULL, sku VARCHAR(64) NOT NULL, quantity INT NOT NULL, unit_price_cents BIGINT NOT NULL, PRIMARY KEY(transaction_id, sku), CHECK(quantity > 0), CHECK(unit_price_cents >= 0));
+CREATE TABLE accepted_scan_events (scan_id BIGINT AUTO_INCREMENT PRIMARY KEY, transaction_id VARCHAR(64) NOT NULL, sku VARCHAR(64) NOT NULL, accepted_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6));
