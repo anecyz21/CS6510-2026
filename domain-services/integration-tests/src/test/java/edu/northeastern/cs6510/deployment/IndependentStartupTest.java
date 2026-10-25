@@ -10,8 +10,8 @@ class IndependentStartupTest {
     for (String service : new String[]{"catalog-service", "checkout-service", "inventory-service", "analytics-service"}) {
       String config=Files.readString(Path.of("..", service, "src/main/resources/application.yml"));
       assertTrue(config.contains("datasource:"));
-      String source=Files.walk(Path.of("..", service, "src/main/java")).filter(p->p.toString().endsWith(".java")).map(p->{try{return Files.readString(p);}catch(Exception e){throw new RuntimeException(e);}}).reduce("",String::concat);
-      assertTrue(source.contains("/actuator/health"));
+      // Health and readiness come from Spring Boot actuator (application.yml), not hand-written controllers.
+      assertTrue(config.contains("readiness:"));
     }
   }
 }

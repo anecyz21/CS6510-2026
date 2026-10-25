@@ -1,0 +1,11 @@
+{
+  "attemptId": "0192c3f4-8b7a-7cc1-9a51-2f0e5d6c1a90",
+  "transactionId": "7b1e2c94-5d3a-4f6e-9b21-0c8d7e6f5a43",
+  "state": "RESERVED",
+  "lines": [
+    { "sku": "SKU-000001", "requestedQuantity": 3, "reservedQuantity": 2 },
+    { "sku": "SKU-000002", "requestedQuantity": 1, "reservedQuantity": 1 }
+  ],
+  "createdAt": "2026-10-24T12:00:00.000000Z",
+  "resolvedAt": null
+}

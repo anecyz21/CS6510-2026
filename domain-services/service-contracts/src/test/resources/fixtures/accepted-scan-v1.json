@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "eventId": "0192c3f4-8b7a-7cc1-9a51-2f0e5d6c1a90",
+  "eventType": "AcceptedScan",
+  "transactionId": "7b1e2c94-5d3a-4f6e-9b21-0c8d7e6f5a43",
+  "stationId": "station-17",
+  "sku": "SKU-000001",
+  "acceptedAt": "2026-10-24T12:00:00.123456Z",
+  "outboxId": 18342
+}

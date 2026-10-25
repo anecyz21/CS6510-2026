@@ -149,77 +149,77 @@ story depends on these.
 
 ### Build modules and transport contracts
 
-- [ ] T014 Update the Maven reactor:
+- [X] T014 Update the Maven reactor:
   - In `{DS}/pom.xml`, remove `<module>shared-db</module>` and delete the `{DS}/shared-db/` directory (F11). Add `<module>service-contracts</module>` before the services. Add `dependencyManagement` entries for `org.testcontainers:testcontainers-bom:1.20.4` (scope `import`) and `org.springframework.kafka:spring-kafka` (Boot-managed version).
   - Create `{DS}/service-contracts/pom.xml` (artifactId `service-contracts`, jar). Its only compile dependency is `com.fasterxml.jackson.core:jackson-annotations`. Add test dependencies `jackson-databind`, `jackson-datatype-jsr310` and `junit-jupiter`. It must have **no** JDBC, Spring or persistence dependency.
-- [ ] T015 [P] Create the Catalog v1 records in `{SC}/catalog/v1/` and their fixtures in `{SC_FIX}/`:
+- [X] T015 [P] Create the Catalog v1 records in `{SC}/catalog/v1/` and their fixtures in `{SC_FIX}/`:
   - `CatalogVersionV1(long catalogVersion, Instant updatedAt, int activeItemCount)`, fixture `catalog-version-v1.json`;
   - `ProductV1(long catalogVersion, String sku, String name, long priceCents)`, fixture `product-v1.json`;
   - `ProductPageV1(long catalogVersion, List<ProductPageV1.Item> items, String nextAfterSku)`, with `Item(String sku, String name, long priceCents)`, fixture `product-page-v1.json`.
   Copy fixture content from the examples in `specs/004-domain-services/contracts/catalog-internal-api.md`.
-- [ ] T016 [P] Create the Inventory v1 records in `{SC}/inventory/v1/` and their fixtures in `{SC_FIX}/`:
+- [X] T016 [P] Create the Inventory v1 records in `{SC}/inventory/v1/` and their fixtures in `{SC_FIX}/`:
   - `ReserveRequestV1(String transactionId, List<ReserveLineV1> lines)` and `ReserveLineV1(String sku, int quantity)`, fixture `reserve-request-v1.json`;
   - `ReservationV1(String attemptId, String transactionId, ReservationStateV1 state, List<ReservationLineV1> lines, Instant createdAt, Instant resolvedAt)` and `ReservationLineV1(String sku, int requestedQuantity, int reservedQuantity)`, fixture `reservation-v1.json`;
   - enum `ReservationStateV1 { RESERVED, COMMITTED, RELEASED, CANCELLED }`;
   - `InternalErrorV1(String error, String message, ReservationV1 reservation)`, where `reservation` is nullable and is used by the 409 bodies.
   Copy fixture content from `specs/004-domain-services/contracts/inventory-internal-api.md`.
-- [ ] T017 [P] Create `{SC}/events/v1/AcceptedScanV1.java`:
+- [X] T017 [P] Create `{SC}/events/v1/AcceptedScanV1.java`:
   - Record `(int schemaVersion, String eventId, String eventType, String transactionId, String stationId, String sku, Instant acceptedAt, long outboxId)`.
   - Constants `TOPIC = "checkout.accepted-scans.v1"`, `EVENT_TYPE = "AcceptedScan"` and `SCHEMA_VERSION = 1`.
   - Fixture `{SC_FIX}/accepted-scan-v1.json`, copied from `specs/004-domain-services/contracts/accepted-scan-event.md`.
-- [ ] T018 Create `domain-services/service-contracts/src/test/java/edu/northeastern/cs6510/contracts/FixtureCompatibilityTest.java`. For every fixture in `{SC_FIX}/`, it:
+- [X] T018 Create `domain-services/service-contracts/src/test/java/edu/northeastern/cs6510/contracts/FixtureCompatibilityTest.java`. For every fixture in `{SC_FIX}/`, it:
   - (a) deserializes the fixture into its record with an `ObjectMapper` that has `JavaTimeModule` registered and `FAIL_ON_UNKNOWN_PROPERTIES=false`;
   - (b) re-serializes it and asserts that every fixture field is present with an equal value;
   - (c) adds an unknown field `"futureField": 1` and asserts that deserialization still succeeds (R16 compatibility rule).
 
 ### Private-store topology
 
-- [ ] T019 Rewrite `{DEP}/docker-compose.yml` for private stores (R2, R3, R9, R17):
+- [X] T019 Rewrite `{DEP}/docker-compose.yml` for private stores (R2, R3, R9, R17):
   - **Databases**: four `mysql:8.4` services, `catalog-db`, `checkout-db`, `inventory-db` and `analytics-db`, published on `127.0.0.1:3311`, `3312`, `3313` and `3314`. Each has its own named volume. Each sets `MYSQL_DATABASE` (`catalog`, `checkout`, `inventory` or `analytics`), `MYSQL_USER` (`<name>_service`), `MYSQL_PASSWORD: ${<NAME>_DB_PASSWORD}` and `MYSQL_ROOT_PASSWORD: ${<NAME>_DB_ROOT_PASSWORD}`, plus a `mysqladmin ping` healthcheck. The image's entrypoint therefore creates exactly one owner database and one owner account per instance.
   - **Kafka**: `kafka` service on `apache/kafka:3.8.1`, single-node KRaft (`KAFKA_PROCESS_ROLES: broker,controller`) with volume `kafka-data`. Listeners are `PLAINTEXT://kafka:29092` for the internal network and `PLAINTEXT_HOST://localhost:9092`, published on `127.0.0.1:9092` for operators and tests. Set `KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"`, `KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1` and `KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1`.
   - **Applications**: `catalog` (8081), `checkout` (8082), `inventory` (8083) and `analytics` (8084), published on `127.0.0.1` only for operator and test access to `/internal/**` and `/actuator`. Each has `DB_URL` pointing at its own instance only, `DB_USERNAME`, `DB_PASSWORD` and `DB_POOL_SIZE` (default 10), plus `CATALOG_URL=http://catalog:8081` where applicable, `INVENTORY_URL=http://inventory:8083` (checkout) and `KAFKA_BOOTSTRAP=kafka:29092` (checkout, analytics).
   - **Startup ordering**: each application's `depends_on` lists **only its own database** (`condition: service_healthy`).
   - **Healthchecks** use `wget -qO- http://localhost:<port>/actuator/health/readiness`, and every application sets `stop_grace_period: 25s`.
   - **Gateway**: `gateway` on `8080:8080` with no `depends_on` and the four `SERVICES_*_URL` variables.
-- [ ] T020 [P] Rewrite `{DEP}/services.env.example` with placeholder keys `CATALOG_DB_PASSWORD`, `CATALOG_DB_ROOT_PASSWORD`, `CHECKOUT_DB_PASSWORD`, `CHECKOUT_DB_ROOT_PASSWORD`, `INVENTORY_DB_PASSWORD`, `INVENTORY_DB_ROOT_PASSWORD`, `ANALYTICS_DB_PASSWORD` and `ANALYTICS_DB_ROOT_PASSWORD`, each set to `change-me`. Delete `{DEP}/mysql/init/001-service-boundaries.sql` and `{DEP}/scripts/grant-cross-domain-interfaces.sh` (R2).
-- [ ] T021 [P] Rewrite the operator scripts for the new topology:
+- [X] T020 [P] Rewrite `{DEP}/services.env.example` with placeholder keys `CATALOG_DB_PASSWORD`, `CATALOG_DB_ROOT_PASSWORD`, `CHECKOUT_DB_PASSWORD`, `CHECKOUT_DB_ROOT_PASSWORD`, `INVENTORY_DB_PASSWORD`, `INVENTORY_DB_ROOT_PASSWORD`, `ANALYTICS_DB_PASSWORD` and `ANALYTICS_DB_ROOT_PASSWORD`, each set to `change-me`. Delete `{DEP}/mysql/init/001-service-boundaries.sql` and `{DEP}/scripts/grant-cross-domain-interfaces.sh` (R2).
+- [X] T021 [P] Rewrite the operator scripts for the new topology:
   - `{DEP}/scripts/check-readiness.sh`: wait up to 180 s for every `*-db` healthcheck and for each app's `/actuator/health/readiness` to be `UP` on ports 8081–8084, plus gateway `/actuator/health` on 8080. Print a per-service status and exit non-zero on timeout.
   - `{DEP}/scripts/start-services.sh`: run `mvn -q -f domain-services/pom.xml -DskipTests package`, then `docker compose --env-file {DEP}/services.env up -d --build`, then `check-readiness.sh`.
   - Create `{DEP}/scripts/reset.sh`: `docker compose ... down -v` (removing every database volume and `kafka-data`), then `up -d --build`, then `check-readiness.sh`.
 
 ### Common service configuration and error mapping
 
-- [ ] T022 In each `src/main/resources/application.yml` of catalog-, checkout-, inventory- and analytics-service:
+- [X] T022 In each `src/main/resources/application.yml` of catalog-, checkout-, inventory- and analytics-service:
   - set `spring.datasource.url/username/password` from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`, with no committed real passwords (FR-028);
   - set `spring.datasource.hikari.maximum-pool-size: ${DB_POOL_SIZE:10}`;
   - set `server.shutdown: graceful` and `spring.lifecycle.timeout-per-shutdown-phase: 20s`;
   - set `management.endpoint.health.probes.enabled: true`, `management.endpoint.health.group.readiness.include: readinessState,db` and `management.endpoint.health.show-details: always`;
   - set `management.endpoints.web.exposure.include: health,metrics`.
   Readiness covers only the service's own database, and Flyway finishes before readiness (R17).
-- [ ] T023 [P] Create `{CAT}/api/ApiError.java` (record `error`, `message`), `{CAT}/api/ApiException.java` (runtime exception carrying `HttpStatus`, `code` and `message`) and `{CAT}/api/ApiExceptionHandler.java` (`@RestControllerAdvice` that maps `ApiException` to its status and an `ApiError` body). Any other exception becomes `500` with `ApiError("INTERNAL_ERROR", "Unexpected error.")` and no stack trace.
-- [ ] T024 [P] Create `{CHK}/api/ApiError.java`, `{CHK}/api/ApiException.java` and `{CHK}/api/ApiExceptionHandler.java`, following the T023 pattern. Add static factories in `ApiException`: `transactionNotFound(id)` (404 `TRANSACTION_NOT_FOUND`), `transactionNotOpen(id)` (409 `TRANSACTION_NOT_OPEN`), `transactionBusy(id)` (409 `TRANSACTION_BUSY`), `emptyBasket(id)` (409 `EMPTY_BASKET`), `insufficientStock(id)` (409 `INSUFFICIENT_STOCK`), `skuNotFound(sku)` (404 `SKU_NOT_FOUND`) and `serviceUnavailable(what)` (503 `SERVICE_UNAVAILABLE`).
-- [ ] T025 [P] Create `{INV}/api/ApiError.java`, `{INV}/api/ApiException.java` and `{INV}/api/ApiExceptionHandler.java`, following the T023 pattern. The handler also maps `InternalErrorV1`-carrying exceptions to their status with the `InternalErrorV1` body, for the internal 409s.
-- [ ] T026 [P] Create `{ANA}/api/ApiError.java`, `{ANA}/api/ApiException.java` and `{ANA}/api/ApiExceptionHandler.java`, following the T023 pattern.
+- [X] T023 [P] Create `{CAT}/api/ApiError.java` (record `error`, `message`), `{CAT}/api/ApiException.java` (runtime exception carrying `HttpStatus`, `code` and `message`) and `{CAT}/api/ApiExceptionHandler.java` (`@RestControllerAdvice` that maps `ApiException` to its status and an `ApiError` body). Any other exception becomes `500` with `ApiError("INTERNAL_ERROR", "Unexpected error.")` and no stack trace.
+- [X] T024 [P] Create `{CHK}/api/ApiError.java`, `{CHK}/api/ApiException.java` and `{CHK}/api/ApiExceptionHandler.java`, following the T023 pattern. Add static factories in `ApiException`: `transactionNotFound(id)` (404 `TRANSACTION_NOT_FOUND`), `transactionNotOpen(id)` (409 `TRANSACTION_NOT_OPEN`), `transactionBusy(id)` (409 `TRANSACTION_BUSY`), `emptyBasket(id)` (409 `EMPTY_BASKET`), `insufficientStock(id)` (409 `INSUFFICIENT_STOCK`), `skuNotFound(sku)` (404 `SKU_NOT_FOUND`) and `serviceUnavailable(what)` (503 `SERVICE_UNAVAILABLE`).
+- [X] T025 [P] Create `{INV}/api/ApiError.java`, `{INV}/api/ApiException.java` and `{INV}/api/ApiExceptionHandler.java`, following the T023 pattern. The handler also maps `InternalErrorV1`-carrying exceptions to their status with the `InternalErrorV1` body, for the internal 409s.
+- [X] T026 [P] Create `{ANA}/api/ApiError.java`, `{ANA}/api/ApiException.java` and `{ANA}/api/ApiExceptionHandler.java`, following the T023 pattern.
 
 ### Owner migrations that remove cross-store objects
 
-- [ ] T027 [P] Create `{CAT_DB}/V3__private_store.sql`. It runs `DROP VIEW active_items;` and creates `catalog_metadata` (`id TINYINT PRIMARY KEY CHECK (id = 1)`, `catalog_version BIGINT NOT NULL`, `updated_at TIMESTAMP(6) NOT NULL`) with the row `(1, 1, CURRENT_TIMESTAMP(6))`. Data-model rule: "Incremented by any migration or seed that changes item rows. Starts at 1."
-- [ ] T028 [P] Create `{CHK_DB}/V4__private_store_and_projection.sql`:
+- [X] T027 [P] Create `{CAT_DB}/V3__private_store.sql`. It runs `DROP VIEW active_items;` and creates `catalog_metadata` (`id TINYINT PRIMARY KEY CHECK (id = 1)`, `catalog_version BIGINT NOT NULL`, `updated_at TIMESTAMP(6) NOT NULL`) with the row `(1, 1, CURRENT_TIMESTAMP(6))`. Data-model rule: "Incremented by any migration or seed that changes item rows. Starts at 1."
+- [X] T028 [P] Create `{CHK_DB}/V4__private_store_and_projection.sql`:
   - `DROP VIEW accepted_scan_outbox;` (the V2 cross-store view; the name is reused by a table in T100).
   - `ALTER TABLE basket_lines ADD COLUMN name VARCHAR(255) NOT NULL DEFAULT '';`
   - Create `catalog_projection` (`sku VARCHAR(64) PRIMARY KEY`, `name VARCHAR(255) NOT NULL`, `price_cents BIGINT NOT NULL`, `catalog_version BIGINT NOT NULL`, `CHECK (price_cents >= 0)`).
   - Create `projection_state` (`id TINYINT PRIMARY KEY CHECK (id = 1)`, `catalog_version BIGINT NULL`, `loaded_at TIMESTAMP(6) NULL`, `last_verified_at TIMESTAMP(6) NULL`) with the row `(1, NULL, NULL, NULL)`. Data-model rule: "NULL ⇒ never loaded (`EMPTY`)".
-- [ ] T029 [P] Create `{INV_DB}/V5__private_store.sql`:
+- [X] T029 [P] Create `{INV_DB}/V5__private_store.sql`:
   1. `DROP PROCEDURE IF EXISTS fulfill_checkout;` and `DROP VIEW low_stock;`.
   2. Drop the four V1 `CHECK` constraints on `inventory_positions`. Confirm their generated names with `SHOW CREATE TABLE`; they are expected to be `inventory_positions_chk_1`…`_4`.
   3. `ALTER TABLE inventory_positions RENAME COLUMN available_stock TO physical_stock;`
   4. Add `CONSTRAINT chk_initial_nonneg CHECK (initial_stock >= 0)`, `CONSTRAINT chk_physical_ge_reserved CHECK (physical_stock >= reserved_stock)` and `CONSTRAINT chk_reserved_nonneg CHECK (reserved_stock >= 0)`.
   Then update every `available_stock` reference in `{INV}/InventoryApplication.java` to `physical_stock`.
-- [ ] T030 [P] Create `{ANA_DB}/V3__private_store.sql` with `DROP VIEW published_popularity;`. Then remove the cross-store `OutboxConsumer` poller of `checkout.accepted_scan_outbox` (finding F1) from `{ANA}/AnalyticsApplication.java`. Popular items keeps serving its existing tables until US4.
+- [X] T030 [P] Create `{ANA_DB}/V3__private_store.sql` with `DROP VIEW published_popularity;`. Then remove the cross-store `OutboxConsumer` poller of `checkout.accepted_scan_outbox` (finding F1) from `{ANA}/AnalyticsApplication.java`. Popular items keeps serving its existing tables until US4.
 
 ### Catalog internal v1 API
 
-- [ ] T031 Implement Catalog internal v1 as specified in `specs/004-domain-services/contracts/catalog-internal-api.md`:
+- [X] T031 Implement Catalog internal v1 as specified in `specs/004-domain-services/contracts/catalog-internal-api.md`:
   - Add a `service-contracts` dependency to `{DS}/catalog-service/pom.xml`.
   - Create `{CAT}/internal/CatalogInternalController.java` and add these queries to `{CAT}/CatalogRepository.java`:
     - `GET /internal/v1/catalog-version` returns `CatalogVersionV1` from `catalog_metadata`, with `activeItemCount` = `COUNT(*) WHERE active = TRUE`.
@@ -229,19 +229,19 @@ story depends on these.
 
 ### Checkout catalog projection and scan path (R6)
 
-- [ ] T032 [P] Create `{CHK}/catalog/CatalogClient.java`:
+- [X] T032 [P] Create `{CHK}/catalog/CatalogClient.java`:
   - It uses a JDK `HttpClient` through Spring `RestClient` with `JdkClientHttpRequestFactory`. Snapshot calls use a 300 ms connect and 2 s read timeout; `lookup(sku)` uses a 300 ms total budget. The base URL comes from `CATALOG_URL`.
   - Methods: `version()`, `page(afterSku, limit)` and `lookup(sku)`.
   - `lookup` returns a sealed result `Found(ProductV1)` / `NotFound` / `Unavailable(reason)`. A transport error or a `5xx` is `Unavailable`, never `NotFound` (FR-029).
   - Add a `service-contracts` dependency to `{DS}/checkout-service/pom.xml`.
-- [ ] T033 Create `{CHK}/catalog/CatalogProjection.java`:
+- [X] T033 Create `{CHK}/catalog/CatalogProjection.java`:
   - It holds a volatile immutable `Map<String, ProjectedProduct(name, priceCents)>`.
   - `state()` returns `EMPTY` when `projection_state.catalog_version IS NULL`, `CURRENT` when `now − last_verified_at ≤ catalog.projection.max-staleness` (default `60s`), and `STALE` otherwise.
   - It loads from `catalog_projection` at startup.
   - `upsertSingle(ProductV1)` inserts or updates one row and then the map; it is used by the stale or empty miss path.
   - `replaceAll(version, items)` runs in **one** local transaction: `DELETE FROM catalog_projection`, a batch `INSERT`, then `UPDATE projection_state SET catalog_version=?, loaded_at=now, last_verified_at=now`. It swaps the map only after commit.
   - `markVerified()` updates `last_verified_at`.
-- [ ] T034 Create `{CHK}/catalog/CatalogProjectionLoader.java`:
+- [X] T034 Create `{CHK}/catalog/CatalogProjectionLoader.java`:
   - It is `@Scheduled(fixedDelayString = "${catalog.projection.poll-interval:15s}")` and also runs once at `ApplicationReadyEvent` on the scheduler thread, so it never blocks readiness.
   - Each cycle:
     - Call `version()`. On failure, change nothing; the projection may become `STALE`.
@@ -249,11 +249,11 @@ story depends on these.
     - Otherwise, page every product with `limit=1000`. If any page's `catalogVersion` differs from the first page's, discard the load and restart, at most 3 times per cycle. After a complete load at a single version, call `replaceAll`.
   - A truncated projection (0 rows with a non-null version) triggers a full reload (rebuild rule).
   - Add `@EnableScheduling` to `{CHK}/CheckoutApplication.java`.
-- [ ] T035 Create `{CHK}/scan/ProductLookup.java`, which returns `Accept(price, name)`, `UnknownSku` or `Unverifiable` per the policy table in `catalog-internal-api.md`:
+- [X] T035 Create `{CHK}/scan/ProductLookup.java`, which returns `Accept(price, name)`, `UnknownSku` or `Unverifiable` per the policy table in `catalog-internal-api.md`:
   - **Projection hit**: accept at the projected price, whatever the projection state.
   - **Miss while `CURRENT`**: `UnknownSku`.
   - **Miss while `STALE` or `EMPTY`**: call `CatalogClient.lookup` once. `Found` calls `upsertSingle` and accepts; `NotFound` is `UnknownSku`; `Unavailable` is `Unverifiable`.
-- [ ] T036 Create `{CHK}/scan/ScanService.java` and move the scan logic out of `{CHK}/CheckoutService.java`. Order of operations:
+- [X] T036 Create `{CHK}/scan/ScanService.java` and move the scan logic out of `{CHK}/CheckoutService.java`. Order of operations:
   1. Resolve the product with `ProductLookup` **before** opening any transaction.
   2. If the result is `UnknownSku` or `Unverifiable`, first read the transaction status without a lock, so that `404 TRANSACTION_NOT_FOUND` and `409 TRANSACTION_NOT_OPEN` take precedence. Then throw `skuNotFound` or `serviceUnavailable("catalog")`.
   3. Otherwise, in one local transaction:
@@ -263,31 +263,31 @@ story depends on these.
      - read `itemCount` and `runningTotal` with one aggregate query.
   4. Return the existing public scan response shape.
   Retry deadlock and lock-wait victims up to the existing `MAX_SCAN_ATTEMPTS`, incrementing `checkout.db.retries{operation=scan}` on each retry. Update `{CHK}/api/CheckoutController.java` to call `ScanService`.
-- [ ] T037 Refactor `{CHK}/CheckoutService.java`, `{CHK}/CheckoutRepository.java` and `{CHK}/api/CheckoutController.java`:
+- [X] T037 Refactor `{CHK}/CheckoutService.java`, `{CHK}/CheckoutRepository.java` and `{CHK}/api/CheckoutController.java`:
   - `POST /transactions` and `GET /transactions/{id}` keep their public shapes and use `ApiException` (the GET reports `status`, `itemCount` and `runningTotal` from the basket).
   - Delete the `inventory.fulfill_checkout` call and every SQL string that names another schema.
   - `POST /transactions/{id}/complete` temporarily throws `ApiException.serviceUnavailable("completion")` until T059 replaces it.
 
 ### Gateway pass-through (R12, FR-005)
 
-- [ ] T038 Create `{GW}/UpstreamProxy.java`:
+- [X] T038 Create `{GW}/UpstreamProxy.java`:
   - `forward(service, HttpMethod, path, query, body, contentType)` uses a JDK `HttpClient` with a 1 s connect and 8 s read timeout (R9). It returns the upstream status, `Content-Type` and body **unchanged**, including every 4xx.
   - A `ConnectException`, `HttpTimeoutException` or `IOException` becomes `503` with body `{"error":"SERVICE_UNAVAILABLE","message":"<service> service is unavailable."}`.
   - Delete `{GW}/CheckoutClient.java` and `{GW}/HttpCheckoutClient.java`. Rewrite `{GW}/CheckoutRouteHandler.java` and `{GW}/ReadModelRouteHandler.java` to keep only the existing gateway validations (`MISSING_STATION_ID`, `MISSING_SKU`, `INVALID_LIMIT`) and then proxy.
   - Route only the seven public operations. `/internal/**` is never routed.
   - `{DS}/api-gateway/pom.xml` keeps no JDBC, Flyway, MySQL or Kafka dependency.
-  - **No POST stall (baseline defect F12)**: the baseline gateway added about 40 ms to every forwarded POST with a body at low concurrency. Prefer sending each forwarded request body as a single `BodyPublishers.ofByteArray` with a known `Content-Length`, not as a streamed body. The cause of F12 is not confirmed, so the verification below decides, not this choice.
-  - **Verify on the running stack**: run one normal workload (`load-client/run.sh --stations=10 --duration=60`). From each service's `/actuator/metrics/http.server.requests?tag=uri:…` read the mean server time (`TOTAL_TIME / COUNT`) for the gateway routes `/transactions` and `/transactions/{transactionId}/items`, and for the matching Checkout routes.
-  - **Pass condition**: the gateway's mean minus Checkout's mean is at most **5 ms** for both start and scan. The baseline gap was about 36.5 ms for start and 44.2 ms for scan.
-  - **Record**: save the numbers in `{DEP}/reports/redesign/GATEWAY-HOP.md`. If the check fails, find and fix the cause before any measured run (T119); do not report the stall as an architecture result.
-- [ ] T039 Update `{GW_TEST}/CheckoutContractTest.java` and `{GW_TEST}/ReadModelContractTest.java` to use a local `com.sun.net.httpserver.HttpServer` stub. Assert that:
+  - **No POST stall (baseline defect F12)**: the baseline showed about 40 ms extra on every forwarded POST with a body at low concurrency. The Phase 3 investigation found the cause outside the gateway: Docker Desktop's forwarding of a port published on all interfaces (`8080:8080`). Keep the gateway port published exactly as in the baseline so both topologies carry the same artifact.
+  - **Verify inside the Docker network**: run `{DEP}/tools/HopProbe.java` (compiled with `javac --release 21`) inside the gateway container against `http://localhost:8080` and `http://checkout:8082`, 500 scans each, three times. Also run one normal workload (`load-client/run.sh --stations=10 --duration=60`) and record both services' `http.server.requests` means for start and scan.
+  - **Pass condition**: inside the Docker network, the gateway's mean scan time minus Checkout's is at most **5 ms**. The host-side gap caused by the binding is recorded but is not a gateway defect.
+  - **Record**: save the numbers in `{DEP}/reports/redesign/GATEWAY-HOP.md`. Do not report the binding artifact as an architecture result.
+- [X] T039 Update `{GW_TEST}/CheckoutContractTest.java` and `{GW_TEST}/ReadModelContractTest.java` to use a local `com.sun.net.httpserver.HttpServer` stub. Assert that:
   - (a) an upstream `409 {"error":"TRANSACTION_BUSY",…}` passes through with the same status and body;
   - (b) a closed upstream port yields `503 SERVICE_UNAVAILABLE`;
   - (c) `MISSING_SKU` and `MISSING_STATION_ID` are still produced by the gateway without calling upstream.
 
 ### System-test support
 
-- [ ] T040 Update `{DS}/integration-tests/pom.xml` with test dependencies `org.testcontainers:junit-jupiter`, `mysql`, `kafka`, `toxiproxy` (BOM 1.20.4), `com.fasterxml.jackson.core:jackson-databind`, `jackson-datatype-jsr310` and `service-contracts`. Create:
+- [X] T040 Update `{DS}/integration-tests/pom.xml` with test dependencies `org.testcontainers:junit-jupiter`, `mysql`, `kafka`, `toxiproxy` (BOM 1.20.4), `com.fasterxml.jackson.core:jackson-databind`, `jackson-datatype-jsr310` and `service-contracts`. Create:
   - `{IT}/support/Stack.java`:
     - **Endpoints**: gateway URL `http://localhost:8080`; ops base URLs `http://127.0.0.1:8081`–`8084`; owner JDBC URLs `jdbc:mysql://127.0.0.1:331{1..4}/<db>`, with credentials read from `domain-services/deployment/services.env` or environment variables.
     - **Compose control**: `compose(String... args)`, which runs `docker compose -f domain-services/deployment/docker-compose.yml --env-file domain-services/deployment/services.env …` through `ProcessBuilder`. Helpers `stop`, `start`, `pause`, `unpause`, `kill` and `awaitReady(service, Duration)`.
@@ -747,7 +747,7 @@ failures included.
       - **F5**: the gateway turns every upstream 4xx into a 500, versus pass-through with typed `ApiError` codes. *Effect*: none with adequate stock, where no 4xx is expected. Any baseline 500s must be examined for masked 4xx before they are compared.
       - **F6**: completion runs as one Checkout transaction that calls the `inventory.fulfill_checkout` procedure, with one cumulative receipt row per transaction, versus the saga with per-attempt receipts. *Effect*: the architectural change under test; complete-latency differences are attributable to it.
       - **F9**: Checkout uses a Hikari pool of 10 with up to 8 scan deadlock retries, versus the pool size chosen in T118. *Effect*: a configuration difference, quantified from the `hikaricp.*` and `checkout.db.retries` observations.
-      - **F12** (found by the baseline measurement, `{DEP}/reports/baseline/OBSERVATIONS.md`): at low concurrency the gateway adds about 40 ms to every forwarded POST that carries a body (start and scan), but not to complete, which has no body. The gateway forwards with an untuned `RestClient.create(url)`. In the baseline normal runs, gateway server time was about 47.5 ms per scan against 3.3 ms in Checkout. The stall disappears under stress, where the gap is about 2.3 ms. The cause is inferred to be Nagle's algorithm interacting with delayed TCP acknowledgements, not confirmed. The redesign gateway must not reproduce it (checked in T038). *Effect*: dominates normal-load start and scan latency in the baseline, so any normal-load improvement is attributed to this fix first. Negligible for the SC-009 stress targets.
+      - **F12** (found by the baseline measurement, `{DEP}/reports/baseline/OBSERVATIONS.md`; cause found in Phase 3, `{DEP}/reports/redesign/GATEWAY-HOP.md`): at low concurrency about 40 ms is added to every POST with a body (start and scan) that reaches the gateway from a Java client on the Windows host, but not to complete, which has no body. In the baseline normal runs, gateway server time was about 47.5 ms per scan against 3.3 ms in Checkout. The stall disappears under stress, where the gap is about 2.3 ms. The cause is Docker Desktop's port forwarding for the all-interfaces `8080:8080` binding, not gateway code: binding `127.0.0.1:8080:8080` reduced the same request from 48.5 ms to 6.2 ms, and inside the Docker network the gateway adds 1–2 ms. Both topologies publish port 8080 the same way, so it affects baseline and redesign equally. *Effect*: dominates normal-load start and scan latency in both topologies; it is not an architecture difference and does not affect the SC-009 stress targets.
 
       F7 (shared instance) is covered by the topology row. F8 (inadequate stock) is removed for both topologies by the 1,000,000-unit provisioning. F10 and F11 have no runtime effect, so they are listed once with "no runtime effect". If any baseline observation contradicts a row's *Effect* text, T120 corrects that row by hand.
   - Never drop failed requests or runs.

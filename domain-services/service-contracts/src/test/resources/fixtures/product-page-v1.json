@@ -1,0 +1,5 @@
+{
+  "catalogVersion": 1,
+  "items": [ { "sku": "SKU-000001", "name": "Catalog item 1", "priceCents": 101 } ],
+  "nextAfterSku": "SKU-000500"
+}

@@ -59,6 +59,14 @@ MySQL statement digests.
 
 ### Normal load: the gateway hop dominates scan latency
 
+> **Correction (2026-10-25, Phase 3).** The cause inferred below is wrong. The stall does not
+> come from the gateway's HTTP client. It comes from Docker Desktop's port forwarding for a port
+> published on all interfaces (`8080:8080`), when a Java client on the Windows host POSTs a body.
+> With the gateway published as `127.0.0.1:8080:8080`, the same request took 6.2 ms instead of
+> 48.5 ms; inside the Docker network the gateway adds 1–2 ms. The measured numbers below stand;
+> only their explanation changes. Evidence:
+> [`../redesign/GATEWAY-HOP.md`](../redesign/GATEWAY-HOP.md).
+
 | Per request, mean (ms) | Start | Scan | Complete |
 |---|---:|---:|---:|
 | Load client (end to end) | 46.7 | 48.2 | 9.1 |
@@ -152,10 +160,11 @@ The other two stress runs differ by less than 0.5 percentage points.
 
 ## Additional observations
 
-- **Gateway POST stall (new finding).** At low concurrency the gateway adds about 40 ms to every
-  forwarded POST that carries a body. This is not in research's list of findings. It should be
-  added to the *Known baseline functional defects* table in `COMPARISON.md` (task T117) and
-  checked in the redesign gateway (task T038).
+- **Gateway POST stall (new finding, F12).** At low concurrency, about 40 ms is added to every
+  forwarded POST that carries a body. It is listed as F12 in task T117. The cause was later found
+  to be Docker Desktop's forwarding of the all-interfaces `8080:8080` binding, not the gateway (see
+  the correction above). Because both topologies publish port 8080 the same way, it affects them
+  equally.
 - **Comparison with the historical 2026-10-16 stress run.** That run had a scan p95 of 260.8 ms at
   1,554 scans/s. With adequate stock, every completion now purchases its whole basket and locks
   more inventory rows, and this baseline is slower: 295.5 ms at 1,355 scans/s. That run's

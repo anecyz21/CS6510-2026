@@ -1,34 +1,171 @@
+# Private-store microservice topology (004 research R2, R3, R9, R17).
+#
+# Each service owns one MySQL instance that contains only its own database and owner account,
+# created by the image entrypoint from services.env. No account exists on another service's
+# instance, so cross-store access fails at authentication. Start with:
+#   docker compose -f domain-services/deployment/docker-compose.yml \
+#     --env-file domain-services/deployment/services.env up -d --build
+#
+# Database ports 3311-3314, application ports 8081-8084 and Kafka 9092 are published on
+# 127.0.0.1 for operators and tests only. Set CATALOG_HOST_PORT, CHECKOUT_HOST_PORT,
+# INVENTORY_HOST_PORT or ANALYTICS_HOST_PORT (environment or services.env) when a default host port
+# is taken; services still reach each other on their fixed internal ports. The gateway (8080) is the single public surface and
+# never routes /internal/**.
+
+x-mysql-health: &mysql-health
+  # -h 127.0.0.1 forces TCP, which the entrypoint's temporary init server does not listen on, so
+  # the container turns healthy only after initialization has finished.
+  test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+  interval: 5s
+  timeout: 3s
+  retries: 40
+
+x-app-health: &app-health
+  interval: 5s
+  timeout: 3s
+  retries: 36
+  start_period: 20s
+
 services:
-  mysql:
+  catalog-db:
     image: mysql:8.4
-    environment: { MYSQL_ROOT_PASSWORD: root }
-    # Keep the workstation's existing 3306 owner untouched; service-to-service traffic stays on mysql:3306.
-    ports: ["3307:3306"]
-    volumes: ["./mysql/init:/docker-entrypoint-initdb.d:ro"]
-    healthcheck: { test: ["CMD-SHELL", "mysqladmin ping -h localhost -proot --silent"], interval: 5s, timeout: 3s, retries: 30 }
+    environment:
+      MYSQL_DATABASE: ${CATALOG_DB_NAME:-catalog}
+      MYSQL_USER: ${CATALOG_DB_USERNAME:-catalog_service}
+      MYSQL_PASSWORD: ${CATALOG_DB_PASSWORD:?set CATALOG_DB_PASSWORD in services.env}
+      MYSQL_ROOT_PASSWORD: ${CATALOG_DB_ROOT_PASSWORD:?set CATALOG_DB_ROOT_PASSWORD in services.env}
+    ports: ["127.0.0.1:3311:3306"]
+    volumes: ["catalog-data:/var/lib/mysql"]
+    healthcheck: *mysql-health
+
+  checkout-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${CHECKOUT_DB_NAME:-checkout}
+      MYSQL_USER: ${CHECKOUT_DB_USERNAME:-checkout_service}
+      MYSQL_PASSWORD: ${CHECKOUT_DB_PASSWORD:?set CHECKOUT_DB_PASSWORD in services.env}
+      MYSQL_ROOT_PASSWORD: ${CHECKOUT_DB_ROOT_PASSWORD:?set CHECKOUT_DB_ROOT_PASSWORD in services.env}
+    ports: ["127.0.0.1:3312:3306"]
+    volumes: ["checkout-data:/var/lib/mysql"]
+    healthcheck: *mysql-health
+
+  inventory-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${INVENTORY_DB_NAME:-inventory}
+      MYSQL_USER: ${INVENTORY_DB_USERNAME:-inventory_service}
+      MYSQL_PASSWORD: ${INVENTORY_DB_PASSWORD:?set INVENTORY_DB_PASSWORD in services.env}
+      MYSQL_ROOT_PASSWORD: ${INVENTORY_DB_ROOT_PASSWORD:?set INVENTORY_DB_ROOT_PASSWORD in services.env}
+    ports: ["127.0.0.1:3313:3306"]
+    volumes: ["inventory-data:/var/lib/mysql"]
+    healthcheck: *mysql-health
+
+  analytics-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${ANALYTICS_DB_NAME:-analytics}
+      MYSQL_USER: ${ANALYTICS_DB_USERNAME:-analytics_service}
+      MYSQL_PASSWORD: ${ANALYTICS_DB_PASSWORD:?set ANALYTICS_DB_PASSWORD in services.env}
+      MYSQL_ROOT_PASSWORD: ${ANALYTICS_DB_ROOT_PASSWORD:?set ANALYTICS_DB_ROOT_PASSWORD in services.env}
+    ports: ["127.0.0.1:3314:3306"]
+    volumes: ["analytics-data:/var/lib/mysql"]
+    healthcheck: *mysql-health
+
+  kafka:
+    image: apache/kafka:3.8.1
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://:29092,CONTROLLER://:29093,PLAINTEXT_HOST://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    ports: ["127.0.0.1:9092:9092"]
+    volumes: ["kafka-data:/var/lib/kafka/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 18
+
   catalog:
     build: ../catalog-service
-    environment: { DB_URL: jdbc:mysql://mysql:3306/catalog, DB_USERNAME: catalog_service, DB_PASSWORD: catalog_service }
-    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health"], interval: 10s, timeout: 3s, retries: 12 }
-    depends_on: { mysql: { condition: service_healthy } }
+    environment:
+      DB_URL: jdbc:mysql://catalog-db:3306/${CATALOG_DB_NAME:-catalog}
+      DB_USERNAME: ${CATALOG_DB_USERNAME:-catalog_service}
+      DB_PASSWORD: ${CATALOG_DB_PASSWORD}
+      DB_POOL_SIZE: ${CATALOG_DB_POOL_SIZE:-10}
+    ports: ["127.0.0.1:${CATALOG_HOST_PORT:-8081}:8081"]
+    depends_on: { catalog-db: { condition: service_healthy } }
+    healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness"] }
+    stop_grace_period: 25s
+
   checkout:
     build: ../checkout-service
-    environment: { DB_URL: jdbc:mysql://mysql:3306/checkout, DB_USERNAME: checkout_service, DB_PASSWORD: checkout_service }
-    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health"], interval: 10s, timeout: 3s, retries: 12 }
-    depends_on: { mysql: { condition: service_healthy } }
+    environment:
+      DB_URL: jdbc:mysql://checkout-db:3306/${CHECKOUT_DB_NAME:-checkout}?rewriteBatchedStatements=true
+      DB_USERNAME: ${CHECKOUT_DB_USERNAME:-checkout_service}
+      DB_PASSWORD: ${CHECKOUT_DB_PASSWORD}
+      DB_POOL_SIZE: ${CHECKOUT_DB_POOL_SIZE:-10}
+      CATALOG_URL: http://catalog:8081
+      INVENTORY_URL: http://inventory:8083
+      KAFKA_BOOTSTRAP: kafka:29092
+    ports: ["127.0.0.1:${CHECKOUT_HOST_PORT:-8082}:8082"]
+    depends_on: { checkout-db: { condition: service_healthy } }
+    healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health/readiness"] }
+    stop_grace_period: 25s
+
   inventory:
     build: ../inventory-service
-    environment: { DB_URL: jdbc:mysql://mysql:3306/inventory, DB_USERNAME: inventory_service, DB_PASSWORD: inventory_service }
-    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health"], interval: 10s, timeout: 3s, retries: 12 }
-    depends_on: { mysql: { condition: service_healthy } }
+    environment:
+      DB_URL: jdbc:mysql://inventory-db:3306/${INVENTORY_DB_NAME:-inventory}
+      DB_USERNAME: ${INVENTORY_DB_USERNAME:-inventory_service}
+      DB_PASSWORD: ${INVENTORY_DB_PASSWORD}
+      DB_POOL_SIZE: ${INVENTORY_DB_POOL_SIZE:-10}
+      CATALOG_URL: http://catalog:8081
+      LOW_STOCK_THRESHOLD: ${LOW_STOCK_THRESHOLD:-10}
+    ports: ["127.0.0.1:${INVENTORY_HOST_PORT:-8083}:8083"]
+    depends_on: { inventory-db: { condition: service_healthy } }
+    healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health/readiness"] }
+    stop_grace_period: 25s
+
   analytics:
     build: ../analytics-service
-    environment: { DB_URL: jdbc:mysql://mysql:3306/analytics, DB_USERNAME: analytics_service, DB_PASSWORD: analytics_service }
-    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health"], interval: 10s, timeout: 3s, retries: 12 }
-    depends_on: { mysql: { condition: service_healthy } }
+    environment:
+      DB_URL: jdbc:mysql://analytics-db:3306/${ANALYTICS_DB_NAME:-analytics}
+      DB_USERNAME: ${ANALYTICS_DB_USERNAME:-analytics_service}
+      DB_PASSWORD: ${ANALYTICS_DB_PASSWORD}
+      DB_POOL_SIZE: ${ANALYTICS_DB_POOL_SIZE:-10}
+      CATALOG_URL: http://catalog:8081
+      KAFKA_BOOTSTRAP: kafka:29092
+    ports: ["127.0.0.1:${ANALYTICS_HOST_PORT:-8084}:8084"]
+    depends_on: { analytics-db: { condition: service_healthy } }
+    healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health/readiness"] }
+    stop_grace_period: 25s
+
   gateway:
     build: ../api-gateway
     ports: ["8080:8080"]
-    depends_on: [catalog, checkout, inventory, analytics]
-    environment: { SERVICES_CATALOG_URL: http://catalog:8081, SERVICES_CHECKOUT_URL: http://checkout:8082, SERVICES_INVENTORY_URL: http://inventory:8083, SERVICES_ANALYTICS_URL: http://analytics:8084 }
-    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health"], interval: 10s, timeout: 3s, retries: 12 }
+    environment:
+      SERVICES_CATALOG_URL: http://catalog:8081
+      SERVICES_CHECKOUT_URL: http://checkout:8082
+      SERVICES_INVENTORY_URL: http://inventory:8083
+      SERVICES_ANALYTICS_URL: http://analytics:8084
+    healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health"] }
+    stop_grace_period: 25s
+
+volumes:
+  catalog-data:
+  checkout-data:
+  inventory-data:
+  analytics-data:
+  kafka-data:

@@ -1,24 +1,45 @@
 package edu.northeastern.cs6510.gateway;
 
-import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClient;
 
-/** The gateway is the only HTTP caller between the public contract and domain services. */
+/** The three public read routes, forwarded unchanged (query string included) to their owners. */
 @RestController
 public class ReadModelRouteHandler {
-  private final RestClient catalog;
-  private final RestClient inventory;
-  private final RestClient analytics;
-  public ReadModelRouteHandler(@Value("${services.catalog-url:http://localhost:8081}") String catalogUrl,
-      @Value("${services.inventory-url:http://localhost:8083}") String inventoryUrl,
-      @Value("${services.analytics-url:http://localhost:8084}") String analyticsUrl) {
-    catalog=RestClient.create(catalogUrl); inventory=RestClient.create(inventoryUrl); analytics=RestClient.create(analyticsUrl);
+  private final UpstreamProxy proxy;
+
+  public ReadModelRouteHandler(UpstreamProxy proxy) { this.proxy = proxy; }
+
+  @GetMapping("/items")
+  ResponseEntity<byte[]> items(HttpServletRequest request) {
+    return proxy.forward(UpstreamProxy.Service.CATALOG, HttpMethod.GET, pathAndQuery(request), null, null);
   }
-  @SuppressWarnings("unchecked") @GetMapping("/items") Map<String,Object> items(){ return catalog.get().uri("/items").retrieve().body(Map.class); }
-  @SuppressWarnings("unchecked") @GetMapping("/inventory/low-stock") Map<String,Object> lowStock(@RequestParam(defaultValue="10") int threshold){ return inventory.get().uri("/inventory/low-stock?threshold={threshold}",threshold).retrieve().body(Map.class); }
-  @SuppressWarnings("unchecked") @GetMapping("/analytics/popular-items") Map<String,Object> popular(@RequestParam(defaultValue="10") int limit){ return analytics.get().uri("/analytics/popular-items?limit={limit}",limit).retrieve().body(Map.class); }
+
+  @GetMapping("/inventory/low-stock")
+  ResponseEntity<byte[]> lowStock(HttpServletRequest request) {
+    return proxy.forward(UpstreamProxy.Service.INVENTORY, HttpMethod.GET, pathAndQuery(request), null, null);
+  }
+
+  @GetMapping("/analytics/popular-items")
+  ResponseEntity<byte[]> popular(HttpServletRequest request) {
+    String limit = request.getParameter("limit");
+    if (limit != null) {
+      int value;
+      try {
+        value = Integer.parseInt(limit.trim());
+      } catch (NumberFormatException notANumber) {
+        return GatewayValidation.badRequest("INVALID_LIMIT", "limit must be a positive integer.");
+      }
+      if (value < 1) return GatewayValidation.badRequest("INVALID_LIMIT", "limit must be at least 1.");
+    }
+    return proxy.forward(UpstreamProxy.Service.ANALYTICS, HttpMethod.GET, pathAndQuery(request), null, null);
+  }
+
+  private static String pathAndQuery(HttpServletRequest request) {
+    String query = request.getQueryString();
+    return request.getRequestURI() + (query == null ? "" : "?" + query);
+  }
 }

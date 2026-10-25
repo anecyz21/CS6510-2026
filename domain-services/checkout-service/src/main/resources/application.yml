@@ -1,16 +1,31 @@
 server:
   port: "${SERVER_PORT:8082}"
+  shutdown: graceful
 spring:
   application: { name: checkout-service }
   datasource:
-    url: "${DB_URL:jdbc:mysql://localhost:3306/checkout}"
-    username: "${DB_USERNAME:checkout_service}"
-    password: "${DB_PASSWORD:checkout_service}"
-    # Recorded explicitly for the baseline; equals the Spring Boot default.
-    hikari: { maximum-pool-size: 10 }
+    # Credentials come only from deployment configuration (FR-028); nothing is defaulted here.
+    url: "${DB_URL}"
+    username: "${DB_USERNAME}"
+    password: "${DB_PASSWORD}"
+    hikari: { maximum-pool-size: "${DB_POOL_SIZE:10}" }
   flyway: { enabled: true }
+  lifecycle: { timeout-per-shutdown-phase: 20s }
 management:
+  endpoint:
+    health:
+      probes: { enabled: true }
+      show-details: always
+      # Readiness covers this service's own database only; Flyway has finished before it can be UP.
+      group:
+        readiness:
+          include: readinessState,db
   endpoints:
     web:
       exposure:
         include: health,metrics
+catalog:
+  url: "${CATALOG_URL:http://localhost:8081}"
+  projection:
+    poll-interval: 15s
+    max-staleness: 60s
