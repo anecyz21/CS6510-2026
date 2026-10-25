@@ -5,17 +5,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.dao.CannotAcquireLockException;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.stream.Collectors;
 
 @Service
 public class CheckoutService {
   private final CheckoutRepository repository;
   private final TransactionTemplate transactions;
+  private final Counter scanRetries;
   private static final int MAX_SCAN_ATTEMPTS = 8;
 
-  public CheckoutService(CheckoutRepository repository, PlatformTransactionManager transactionManager) {
+  public CheckoutService(CheckoutRepository repository, PlatformTransactionManager transactionManager, MeterRegistry meters) {
     this.repository = repository;
     this.transactions = new TransactionTemplate(transactionManager);
+    this.scanRetries = Counter.builder("checkout.db.retries").tag("operation", "scan").register(meters);
   }
   public CheckoutRepository.Transaction start(String stationId) { return repository.start(stationId); }
   public CheckoutRepository.Transaction get(String transactionId) { return repository.transaction(transactionId); }
@@ -30,6 +34,7 @@ public class CheckoutService {
         if (result != null) return result;
       } catch (CannotAcquireLockException deadlock) {
         if (attempt == MAX_SCAN_ATTEMPTS) throw deadlock;
+        scanRetries.increment();
         try { Thread.sleep(Math.min(250L, 15L << (attempt - 1))); } catch (InterruptedException interrupted) {
           Thread.currentThread().interrupt();
           throw deadlock;
