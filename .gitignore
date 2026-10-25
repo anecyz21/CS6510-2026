@@ -6,6 +6,8 @@ target/
 .env
 .env.*
 !.env.example
+# Domain-services deployment credentials; services.env.example stays tracked
+domain-services/deployment/services.env
 *.log
 .DS_Store
 Thumbs.db

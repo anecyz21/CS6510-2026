@@ -1,5 +1,11 @@
 # Error Code Catalog
 
+> **Superseded by
+> [`specs/004-domain-services/contracts/public-api-amendment.md`](../../004-domain-services/contracts/public-api-amendment.md)**
+> (OpenAPI `1.2.0`). This catalog records feature 001 as it was designed. The current error
+> catalog, including `TRANSACTION_BUSY` and `SERVICE_UNAVAILABLE`, and the current
+> `INSUFFICIENT_STOCK` semantics are in that document.
+
 **Contract**: [`spec/self-checkout-openapi.yaml`](../../../spec/self-checkout-openapi.yaml)
 v1.1.0 | **Index**: [README.md](./README.md)
 
@@ -25,6 +31,11 @@ documented `error` values for the completion conflict grew.
 | `EMPTY_BASKET` | 409 | Completing a transaction with no scanned units | FR-012 |
 | `INSUFFICIENT_STOCK` | 409 | Completing a transaction in which one or more scanned units hold no claim | FR-013 |
 
+> **Superseded**: scans no longer claim stock. Stock is reserved during completion, and
+> `INSUFFICIENT_STOCK` is now returned only when **none** of the remaining units is available.
+> Available units are purchased and the rest stay in the open basket. See
+> [public-api-amendment.md A2](../../004-domain-services/contracts/public-api-amendment.md#a2-completion-409-insufficient_stock-approved).
+
 ## Notes on the 409 family
 
 The three conflict codes share a status code and are distinguished **only** by `error`, which is
@@ -37,6 +48,11 @@ client mistake. Its guarantees on refusal (FR-013):
 - no receipt is issued,
 - no SKU's physical stock changes,
 - the transaction is not marked completed.
+
+> **Superseded**: the refusal is no longer terminal, and the transaction is not cancelled. Under
+> [public-api-amendment.md A2](../../004-domain-services/contracts/public-api-amendment.md#a2-completion-409-insufficient_stock-approved),
+> an `INSUFFICIENT_STOCK` refusal leaves the basket open and unchanged, so the completion may be
+> retried later. Scan-time claims no longer exist: stock is reserved during completion.
 
 **The refusal is terminal.** Claims are taken only at scan time, so a unit that failed to
 obtain one can never acquire it later, and no operation removes a unit from a basket — meaning

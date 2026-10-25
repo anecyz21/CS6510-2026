@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Self-Checkout System API
-  version: "1.0.0"
+  version: "1.2.0"
   description: |
     Shared API contract for the semester-long self-checkout project.
 
@@ -75,6 +75,15 @@ paths:
                   - sku: "SKU-000124"
                     name: "Sourdough Loaf"
                     price: 3.40
+        "503":
+          description: >
+            The service owning this operation, or data it requires, is
+            temporarily unavailable; no business effect was confirmed. Retry
+            later.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 
   /transactions:
     post:
@@ -95,6 +104,15 @@ paths:
                 $ref: "#/components/schemas/Transaction"
         "400":
           description: Invalid request (e.g. missing stationId)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: >
+            The service owning this operation, or data it requires, is
+            temporarily unavailable; no business effect was confirmed. Retry
+            later.
           content:
             application/json:
               schema:
@@ -129,7 +147,22 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
         "409":
-          description: Transaction is not open (already completed or cancelled)
+          description: >
+            `TRANSACTION_NOT_OPEN` when the transaction is completed or
+            cancelled; `TRANSACTION_BUSY` when a completion of this transaction
+            is still being processed. A busy scan is rejected immediately, is
+            not queued, does not change the basket, and does not count toward
+            popular items; the client may scan again after the completion call
+            returns.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: >
+            The service owning this operation, or data it requires, is
+            temporarily unavailable; no business effect was confirmed. Retry
+            later.
           content:
             application/json:
               schema:
@@ -140,14 +173,33 @@ paths:
       tags: [transactions]
       summary: Complete the transaction, take payment, and decrement stock
       description: >
-        Finalizes the transaction. For every scanned unit, the corresponding
-        SKU's stock is decremented by one. Payment is assumed to always
-        succeed in this simulation — there is no payment failure path.
+        Purchases every scanned unit that is currently available and
+        decrements each purchased SKU's stock by the purchased quantity. Units
+        that are unavailable at completion time are not charged and remain in
+        the open basket for a later completion call; no shortage fields are
+        added to the response. The transaction becomes `COMPLETED` only when
+        its basket is empty after a purchase. Each successful call returns a
+        receipt for the units purchased by **that call only**: `lines`,
+        `itemCount` and `totalAmount` exclude purchases from earlier calls on
+        the same transaction, while `transactionId`, `stationId` and
+        `startedAt` stay those of the transaction and `completedAt` is the time
+        this purchase was finalized. Payment is assumed to always succeed.
+
+
+        If a completion call arrives while a previous completion of the same
+        transaction is still being processed, it does not start a second
+        purchase; it waits, within the same deadline, for that purchase's
+        result and returns it (`200`, `409 INSUFFICIENT_STOCK`, or `503`).
+        Once a purchase has finished, the server cannot distinguish a retry of
+        a lost response from a new completion request: a later call purchases
+        only units still in the basket and never re-sells purchased units.
       parameters:
         - $ref: "#/components/parameters/TransactionId"
       responses:
         "200":
-          description: Transaction completed
+          description: >
+            Available units purchased (the transaction may remain OPEN if some
+            units were unavailable)
           content:
             application/json:
               schema:
@@ -160,8 +212,28 @@ paths:
                 $ref: "#/components/schemas/ApiError"
         "409":
           description: >
-            Transaction cannot be completed (already completed/cancelled, or
-            basket is empty)
+            Transaction cannot be completed: `TRANSACTION_NOT_OPEN` (already
+            completed or cancelled), `EMPTY_BASKET` (no scanned units remain),
+            or `INSUFFICIENT_STOCK` (none of the remaining units is available;
+            no receipt is issued, no stock changes, and the basket stays open
+            and unchanged so the call may be retried later).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: >
+            The purchase outcome could not be confirmed within the server's
+            completion deadline (default 5 seconds) because a dependency was
+            unavailable. This is **not** a cancellation: the server keeps the
+            attempt and finishes or safely abandons it in the background
+            without ever selling a unit twice. A later call returns the result
+            of the transaction's current state — `409 TRANSACTION_NOT_OPEN` if
+            the purchase finished and emptied the basket, a receipt for any
+            units still in the basket, or `503` again while the dependency is
+            still unavailable. Also returned when the service owning this
+            operation, or data it requires, is temporarily unavailable; no
+            business effect was confirmed. Retry later.
           content:
             application/json:
               schema:
@@ -189,6 +261,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
+        "503":
+          description: >
+            The service owning this operation, or data it requires, is
+            temporarily unavailable; no business effect was confirmed. Retry
+            later.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 
   /inventory/low-stock:
     get:
@@ -210,6 +291,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LowStockResponse"
+        "503":
+          description: >
+            The service owning this operation, or data it requires, is
+            temporarily unavailable; no business effect was confirmed. Retry
+            later.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 
   /analytics/popular-items:
     get:
@@ -230,6 +320,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PopularItemsResponse"
+        "503":
+          description: >
+            The service owning this operation, or data it requires, is
+            temporarily unavailable; no business effect was confirmed. Retry
+            later.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 
 components:
   parameters:
