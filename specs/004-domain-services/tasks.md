@@ -97,15 +97,15 @@ reconciliation output, and all were produced from tag `baseline/service-based-v1
 
 **⚠️ GATE**: Do not start Phase 3 until T013 is committed (plan ordering constraint 2).
 
-- [ ] T006 [US5] Make an instrumentation-only change:
+- [X] T006 [US5] Make an instrumentation-only change:
   - Add `org.springframework.boot:spring-boot-starter-actuator` to `{DS}/catalog-service/pom.xml`, `{DS}/checkout-service/pom.xml`, `{DS}/inventory-service/pom.xml`, `{DS}/analytics-service/pom.xml` and `{DS}/api-gateway/pom.xml`.
   - In each service's `src/main/resources/application.yml`, add `management.endpoints.web.exposure.include: health,metrics` and `management.metrics.distribution.percentiles-histogram.http.server.requests: true`.
   - In the four domain services only, set `spring.datasource.hikari.maximum-pool-size: 10` explicitly. This records the current default and changes nothing.
   - Change no business code and no other configuration value.
-- [ ] T007 [US5] In `{DS}/checkout-service/src/main/java/edu/northeastern/cs6510/checkout/CheckoutService.java`, inject `MeterRegistry` and increment the counter `checkout.db.retries` with tag `operation=scan` inside the existing deadlock-retry `catch`. Do not change `MAX_SCAN_ATTEMPTS`, the backoff or any control flow.
-- [ ] T008 [US5] Run `mvn -q -f domain-services/pom.xml -DskipTests package`. Commit only T006 and T007 with the message "instrumentation-only: actuator + retry counter for baseline". Then create the annotated tag `baseline/service-based-v1` on that commit. Do not push without the user's approval.
-- [ ] T009 [P] [US5] Create `{DEP}/provisioning/measured-stock-baseline.sql` for the **baseline schema**, where `inventory.inventory_positions` has columns `initial_stock`, `available_stock` and `reserved_stock`. It runs `UPDATE inventory_positions SET initial_stock = 1000000, available_stock = 1000000, reserved_stock = 0;` and is idempotent. Add a header comment saying it runs with the inventory owner credentials after Flyway.
-- [ ] T010 [P] [US5] Create `{DEP}/scripts/capture-observations.sh`. Use bash with `curl` and `jq`, and add a comment that `jq` is a prerequisite.
+- [X] T007 [US5] In `{DS}/checkout-service/src/main/java/edu/northeastern/cs6510/checkout/CheckoutService.java`, inject `MeterRegistry` and increment the counter `checkout.db.retries` with tag `operation=scan` inside the existing deadlock-retry `catch`. Do not change `MAX_SCAN_ATTEMPTS`, the backoff or any control flow.
+- [X] T008 [US5] Run `mvn -q -f domain-services/pom.xml -DskipTests package`. Commit only T006 and T007 with the message "instrumentation-only: actuator + retry counter for baseline". Then create the annotated tag `baseline/service-based-v1` on that commit. Do not push without the user's approval.
+- [X] T009 [P] [US5] Create `{DEP}/provisioning/measured-stock-baseline.sql` for the **baseline schema**, where `inventory.inventory_positions` has columns `initial_stock`, `available_stock` and `reserved_stock`. It runs `UPDATE inventory_positions SET initial_stock = 1000000, available_stock = 1000000, reserved_stock = 0;` and is idempotent. Add a header comment saying it runs with the inventory owner credentials after Flyway.
+- [X] T010 [P] [US5] Create `{DEP}/scripts/capture-observations.sh`. Use bash with `curl` and `jq`, and add a comment that `jq` is a prerequisite.
   - Arguments: `--out DIR`, `--topology baseline|redesign`, `--interval 5` and `--duration SECONDS`.
   - Output: one file, `DIR/observations-<UTC timestamp>.json`, containing:
     - (a) `git rev-parse HEAD` of the measured tree, the topology, pool sizes from `/actuator/metrics/hikaricp.connections.max`, the stock seed file name and the timeout settings;
@@ -114,7 +114,7 @@ reconciliation output, and all were produced from tag `baseline/service-based-v1
     - (d) `docker stats --no-stream --format '{{json .}}'` samples every interval;
     - (e) redesign only: `outboxPending` and `consumerLag` from the ops exports.
   - Baseline reads MySQL through `127.0.0.1:3307` as root (password `root`). Redesign reads each instance on ports 3311–3314 with the `*_DB_ROOT_PASSWORD` values from `{DEP}/services.env`.
-- [ ] T011 [P] [US5] Create `{DEP}/scripts/run-measurement.sh`:
+- [X] T011 [P] [US5] Create `{DEP}/scripts/run-measurement.sh`:
   - Arguments: `--topology baseline|redesign`, `--compose-file PATH`, `--stock-sql PATH`, `--runs 3`, `--profile normal|stress` and `--report-dir DIR`.
   - For each run:
     1. `docker compose -f PATH down -v`, then `up -d --build`, then wait for readiness.
@@ -124,11 +124,11 @@ reconciliation output, and all were produced from tag `baseline/service-based-v1
     5. Run reconciliation: the baseline uses `domain-services/integration-tests/scripts/reconcile-inventory.sql` from the baseline tree, and the redesign uses `{DEP}/scripts/reconcile.sh --wait-settled 60`.
     6. Save the reconciliation output as `DIR/reconciliation-<timestamp>.txt`.
   - Use only documented load-client flags.
-- [ ] T012 [US5] Execute the baseline:
+- [X] T012 [US5] Execute the baseline:
   - Run `git worktree add ../cs6510-baseline baseline/service-based-v1`.
   - Run `run-measurement.sh --topology baseline --compose-file ../cs6510-baseline/domain-services/deployment/docker-compose.yml --stock-sql {DEP}/provisioning/measured-stock-baseline.sql`, 3 times with `--profile normal` and 3 times with `--profile stress`, all with `--report-dir {DEP}/reports/baseline`.
   - Commit the 6 reports, 6 observation files and 6 reconciliation outputs. If any run has errors, keep it and explain it. Never delete a failed run.
-- [ ] T013 [US5] Write `{DEP}/reports/baseline/OBSERVATIONS.md`. It confirms or rejects each R14 bottleneck hypothesis with numbers from the observation files:
+- [X] T013 [US5] Write `{DEP}/reports/baseline/OBSERVATIONS.md`. It confirms or rejects each R14 bottleneck hypothesis with numbers from the observation files:
   - Checkout pool wait at 200 stations with 10 connections;
   - shared-instance contention;
   - two queries per scan plus a cross-schema read;
