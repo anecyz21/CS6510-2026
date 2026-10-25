@@ -557,35 +557,35 @@ access is denied, and the gateway is transport-only (FR-001–FR-005, FR-027, FR
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T082 [P] [US3] Create `{IT}/boundaries/PrivateStoreAccessTest.java`:
+- [X] T082 [P] [US3] Create `{IT}/boundaries/PrivateStoreAccessTest.java`:
   - For each service account (`catalog_service`, `checkout_service`, `inventory_service`, `analytics_service`) and each **other** instance port (3311–3314), assert that the JDBC connection fails with an access-denied or authentication error (SC-002).
   - On each owner's own instance, assert that `SHOW DATABASES` lists only its own database plus `information_schema` and `performance_schema`.
   - Assert that none of the former cross-store objects exists on any instance: `active_items`, `low_stock`, `published_popularity`, procedure `fulfill_checkout`, and a **view** named `accepted_scan_outbox`.
   - Delete `{IT}/boundaries/DatabasePermissionTest.java`.
-- [ ] T083 [P] [US3] Create `{IT}/boundaries/ModuleBoundaryTest.java`, a static check run from the repository root. It asserts that:
+- [X] T083 [P] [US3] Create `{IT}/boundaries/ModuleBoundaryTest.java`, a static check run from the repository root. It asserts that:
   - (a) each domain module's `pom.xml` depends on no other domain module, only on `service-contracts`;
   - (b) no `.java` or `.sql` file under a service's `src/main` contains another service's schema-qualified name (regex `\b(catalog|checkout|inventory|analytics)\.[a-z_]+\b`, excluding its own schema and Java package names);
   - (c) `{DS}/service-contracts/src/main` imports nothing from `java.sql`, `javax.sql`, `org.springframework.jdbc` or `org.springframework.stereotype.Repository`;
   - (d) `{DS}/api-gateway/pom.xml` declares no `jdbc`, `flyway`, `mysql` or `kafka` artifact;
   - (e) `{GW}` contains only `GatewayApplication.java`, `UpstreamProxy.java`, `CheckoutRouteHandler.java` and `ReadModelRouteHandler.java`, plus classes whose names end in `Validation` or `Config`.
   Delete `{IT}/boundaries/NoDirectDomainCallsTest.java` and `{IT}/boundaries/GatewayIsolationTest.java` (R15).
-- [ ] T084 [P] [US3] Rewrite `{IT}/deployment/IndependentStartupTest.java` (quickstart V1, US3-1, US3-3):
+- [X] T084 [P] [US3] Rewrite `{IT}/deployment/IndependentStartupTest.java` (quickstart V1, US3-1, US3-3):
   1. Stop all application containers. For each service X, start only `X-db` and `X`, then assert `/actuator/health/readiness` is `UP`. For Checkout, the health details report `inventory: DOWN` and `catalogProjection: EMPTY` (and `kafka: DOWN` once US4 lands). Then stop X.
   2. Start everything, record each container's `State.StartedAt` (`docker inspect`), and run `docker compose up -d --build --no-deps inventory`. Assert that no other container's `StartedAt` changed, and that a scan and complete through the gateway still succeed.
-- [ ] T085 [P] [US3] Create `{IT}/boundaries/GatewayUnavailableTest.java` (quickstart V3, A6). Stop `checkout` and assert that `POST /transactions` returns `503` with body `error == "SERVICE_UNAVAILABLE"` and only the fields `error` and `message`. Stop `catalog` and assert `GET /items` returns `503`. Restart both and wait for readiness.
-- [ ] T086 [P] [US3] Create the provider contract tests (R16):
+- [X] T085 [P] [US3] Create `{IT}/boundaries/GatewayUnavailableTest.java` (quickstart V3, A6). Stop `checkout` and assert that `POST /transactions` returns `503` with body `error == "SERVICE_UNAVAILABLE"` and only the fields `error` and `message`. Stop `catalog` and assert `GET /items` returns `503`. Restart both and wait for readiness.
+- [X] T086 [P] [US3] Create the provider contract tests (R16):
   - `{CAT_TEST}/internal/CatalogInternalContractTest.java` (`@WebMvcTest` with a mocked `CatalogRepository`): each internal endpoint's JSON deserializes into the `service-contracts` record, and every field named in `{SC_FIX}/catalog-*.json` and `product-*.json` is present.
   - `{INV_TEST}/reservation/ReservationContractTest.java`: the same check against `reservation-v1.json` and the 409 `InternalErrorV1` shape.
   Add `service-contracts` with `<classifier>tests</classifier>` or copy the fixtures through `maven-resources-plugin`, so provider tests can read `{SC_FIX}`.
-- [ ] T087 [P] [US3] Create the consumer contract tests: `{CHK_TEST}/catalog/CatalogClientContractTest.java` and `{CHK_TEST}/inventory/InventoryClientContractTest.java`. Each serves the fixture JSON, with an extra unknown field added, from a local `HttpServer`, and asserts that the client parses it. It also asserts that a refused connection maps to `Unavailable` or `InventoryUnavailableException`, never `NotFound` (FR-029).
+- [X] T087 [P] [US3] Create the consumer contract tests: `{CHK_TEST}/catalog/CatalogClientContractTest.java` and `{CHK_TEST}/inventory/InventoryClientContractTest.java`. Each serves the fixture JSON, with an extra unknown field added, from a local `HttpServer`, and asserts that the client parses it. It also asserts that a refused connection maps to `Unavailable` or `InventoryUnavailableException`, never `NotFound` (FR-029).
 
 ### Implementation for User Story 3
 
-- [ ] T088 [US3] Create `{CHK}/health/InventoryHealthIndicator.java` and `{CHK}/health/CatalogProjectionHealthIndicator.java`:
+- [X] T088 [US3] Create `{CHK}/health/InventoryHealthIndicator.java` and `{CHK}/health/CatalogProjectionHealthIndicator.java`:
   - `InventoryHealthIndicator` calls `GET {INVENTORY_URL}/actuator/health/readiness` with a 300 ms timeout and reports `UP` or `DOWN`.
   - `CatalogProjectionHealthIndicator` always reports status `UP`, with details `state=CURRENT|STALE|EMPTY`, `catalogVersion` and `lastVerifiedAt`, so a stale projection never fails readiness.
   - Register both under the names `inventory` and `catalogProjection`, outside the `readiness` group, which stays `readinessState,db`.
-- [ ] T089 [US3] Verify that `{DEP}/docker-compose.yml` gives every application `depends_on` only on its own database and the gateway none. Run `{DEP}/scripts/reset.sh`, then T082–T085, and fix any coupling found, such as a startup call to another service that blocks readiness.
+- [X] T089 [US3] Verify that `{DEP}/docker-compose.yml` gives every application `depends_on` only on its own database and the gateway none. Run `{DEP}/scripts/reset.sh`, then T082–T085, and fix any coupling found, such as a startup call to another service that blocks readiness.
 
 **Checkpoint**: Gates 1 and 2 pass. Each service deploys alone, and every cross-store access
 attempt is denied.
