@@ -1,0 +1,23 @@
+# Fault-injection override (quickstart V7, research R18). Never used for measured runs.
+#   docker compose -f docker-compose.yml -f docker-compose.faults.yml --env-file services.env up -d
+#
+# - Toxiproxy sits between Checkout and Inventory (proxy "inventory", API on 127.0.0.1:8474) so tests
+#   can add latency or cut connections on that hop only.
+# - Checkout runs with the fault-injection profile, which exposes
+#   POST/DELETE /internal/v1/ops/faults/{point} to halt the JVM or lose an Inventory response at a
+#   named saga step.
+# - CHECKOUT_RECOVERY_CANCEL_AFTER can be shortened for the cancel-versus-commit race test.
+services:
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.9.0
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    ports: ["127.0.0.1:8474:8474"]
+    volumes: ["./toxiproxy:/config:ro"]
+
+  checkout:
+    environment:
+      INVENTORY_URL: http://toxiproxy:18083
+      SPRING_PROFILES_ACTIVE: fault-injection
+      CHECKOUT_RECOVERY_CANCEL_AFTER: ${CHECKOUT_RECOVERY_CANCEL_AFTER:-30s}
+    depends_on:
+      toxiproxy: { condition: service_started }

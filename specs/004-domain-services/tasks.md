@@ -453,68 +453,68 @@ passing within 60 s of dependencies becoming healthy (SC-004).
 
 ### Tests for User Story 2 ⚠️ (write first and confirm they fail)
 
-- [ ] T063 [P] [US2] Create `{INV_TEST}/reservation/ReservationCancelIT.java` (Testcontainers MySQL). Cover:
+- [X] T063 [P] [US2] Create `{INV_TEST}/reservation/ReservationCancelIT.java` (Testcontainers MySQL). Cover:
   - cancel on `RESERVED` → `RELEASED`, with `reserved_stock` restored and `physical_stock` unchanged;
   - cancel on an unknown id → `CANCELLED` tombstone, after which a reserve with the same id returns `CANCELLED` and reserves 0;
   - cancel on `COMMITTED` → `409 RESERVATION_COMMITTED` with the resource;
   - a repeat cancel is idempotent;
   - commit and cancel raced from two threads on one `RESERVED` id produce exactly one winner, and the loser gets its 409.
-- [ ] T064 [P] [US2] Create `{CHK_TEST}/recovery/RecoveryWorkerTest.java`, a unit test with a fake clock, a fake `InventoryClient` and a fake repository. Cover:
+- [X] T064 [P] [US2] Create `{CHK_TEST}/recovery/RecoveryWorkerTest.java`, a unit test with a fake clock, a fake `InventoryClient` and a fake repository. Cover:
   - an eligible attempt is leased once, and a second worker skips it while `lease_until > now`;
   - backoff follows `250 ms × 2ⁿ`, capped at 5 s;
   - a `RESERVING` attempt older than `cancel-after` (30 s) after a failure → `CANCELLING`;
   - a `COMMITTING` attempt is never moved to `CANCELLING`, whatever its age (forward-only);
   - `needs_attention` is set after 20 consecutive failures while retrying continues;
   - `409 RESERVATION_COMMITTED` received in `CANCELLING` sets `needs_attention` and stops.
-- [ ] T065 [P] [US2] Create `{IT}/completion/BusyScanTest.java` (quickstart V5 step 6, US2-4, SC-001):
+- [X] T065 [P] [US2] Create `{IT}/completion/BusyScanTest.java` (quickstart V5 step 6, US2-4, SC-001):
   1. Pause Inventory with `Stack.pause("inventory")`.
   2. Start a completion on a background thread.
   3. While it is unresolved, scan the same transaction. Expect `409 TRANSACTION_BUSY` in under 1 s, the basket line count unchanged, and the Checkout outbox or event count unchanged (`accepted_scan_events` before US4, `outboxTotal` after).
   4. Unpause Inventory, then assert the attempt resolves and `Reconciliation.assertPass()`.
-- [ ] T066 [P] [US2] Create `{IT}/completion/InterruptionRecoveryTest.java` (quickstart V7 a–d). For each point `AFTER_FREEZE`, `AFTER_RESERVE_RESPONSE`, `AFTER_PREPARE` and `AFTER_COMMIT_RESPONSE`:
+- [X] T066 [P] [US2] Create `{IT}/completion/InterruptionRecoveryTest.java` (quickstart V7 a–d). For each point `AFTER_FREEZE`, `AFTER_RESERVE_RESPONSE`, `AFTER_PREPARE` and `AFTER_COMMIT_RESPONSE`:
   1. Arm `Faults.haltAt(point)`, then call complete. The JVM halts.
   2. Restart Checkout with `Stack.start("checkout")` and `awaitReady`.
   3. Within 60 s, assert there is one attempt id for the transaction and either one receipt with stock decremented once, or (a and b only) a `CANCELLED` attempt with reserved stock returned to 0.
   4. Assert `Reconciliation.assertPass()`.
-- [ ] T067 [P] [US2] Create `{IT}/completion/LostResponseTest.java` (quickstart V7 e):
-  1. Add a Toxiproxy `limit_data` downstream toxic on the inventory proxy only for the commit call. Using `Faults`, arm it after the reserve has passed.
+- [X] T067 [P] [US2] Create `{IT}/completion/LostResponseTest.java` (quickstart V7 e):
+  1. Arm `Faults.loseResponseAt("AFTER_COMMIT_RESPONSE")`: Inventory commits, but Checkout discards the response as if it were lost, until disarmed. (Implemented this way because a Toxiproxy toxic applies to the whole connection, not to the commit call alone.)
   2. Complete. Expect `503 SERVICE_UNAVAILABLE` within 5 s plus 1 s tolerance.
   3. Remove the toxic. Recovery finalizes exactly once: one receipt row and one `SALE` movement per SKU.
   4. Call complete again. Expect `409 TRANSACTION_NOT_OPEN`, or a receipt for only the remaining units.
   5. Assert `Reconciliation.assertPass()`.
-- [ ] T068 [P] [US2] Create `{IT}/completion/InventoryOutageTest.java` (quickstart V7 f, US2-6):
+- [X] T068 [P] [US2] Create `{IT}/completion/InventoryOutageTest.java` (quickstart V7 f, US2-6):
   1. Run `Stack.stop("inventory")` for 45 s while 10 transactions complete. Each request must return `503 SERVICE_UNAVAILABLE` within 6 s.
   2. `GET http://127.0.0.1:8082/internal/v1/ops/completion-attempts` lists the unresolved attempts.
   3. Start Inventory again. Within 60 s there is no unresolved attempt and no `RESERVED` reservation.
   4. Assert `Reconciliation.assertPass()`.
-- [ ] T069 [P] [US2] Create `{IT}/completion/DuplicateCompletionJoinTest.java` (quickstart V7 g, A5). Add 500 ms latency to the inventory proxy, then fire 5 concurrent completes for one transaction. Expect exactly one `completion_attempts` row for the transaction (through the ops list `state=all`), and all 5 callers receive the same status and the same receipt body.
-- [ ] T070 [P] [US2] Create `{IT}/completion/CancelCommitRaceTest.java` (quickstart V7 h). Run Checkout with `CHECKOUT_RECOVERY_CANCEL_AFTER=1s` (faults override), and add a Toxiproxy latency of 1,200 ms on the commit path. Over 20 iterations, each attempt ends either `FINALIZED` with a `COMMITTED` reservation, or `CANCELLED` with a `RELEASED` or `CANCELLED` reservation, never mixed (FR-017). Assert `Reconciliation.assertPass()`.
+- [X] T069 [P] [US2] Create `{IT}/completion/DuplicateCompletionJoinTest.java` (quickstart V7 g, A5). Add 500 ms latency to the inventory proxy, then fire 5 concurrent completes for one transaction. Expect exactly one `completion_attempts` row for the transaction (through the ops list `state=all`), and all 5 callers receive the same status and the same receipt body.
+- [X] T070 [P] [US2] Create `{IT}/completion/CancelCommitRaceTest.java` (quickstart V7 h). Run Checkout with `CHECKOUT_RECOVERY_CANCEL_AFTER=1s` (faults override), and add a Toxiproxy latency of 1,200 ms on the commit path. Over 20 iterations, each attempt ends either `FINALIZED` with a `COMMITTED` reservation, or `CANCELLED` with a `RELEASED` or `CANCELLED` reservation, never mixed (FR-017). Assert `Reconciliation.assertPass()`.
 
 ### Implementation for User Story 2
 
-- [ ] T071 [US2] Add `cancel(attemptId)` to `{INV}/reservation/ReservationService.java` and `POST /internal/v1/reservations/{attemptId}/cancel` to `{INV}/reservation/ReservationController.java`, exactly per the cancel table in `inventory-internal-api.md`:
+- [X] T071 [US2] Add `cancel(attemptId)` to `{INV}/reservation/ReservationService.java` and `POST /internal/v1/reservations/{attemptId}/cancel` to `{INV}/reservation/ReservationController.java`, exactly per the cancel table in `inventory-internal-api.md`:
   - `RESERVED` → `RELEASED`, with `reserved_stock −= reserved` and physical stock unchanged;
   - `RELEASED`/`CANCELLED` → `200`, same state;
   - `COMMITTED` → `409 RESERVATION_COMMITTED` with the resource;
   - not found → insert a `CANCELLED` tombstone with no lines and return `200`.
   It locks in the same order as commit, so commit and cancel are mutually exclusive.
-- [ ] T072 [US2] Create `{CHK}/completion/CompletionProperties.java` (`@ConfigurationProperties("checkout.completion")`, `requestDeadline` default `5s`) and `{CHK}/recovery/RecoveryProperties.java` (`@ConfigurationProperties("checkout.recovery")`):
+- [X] T072 [US2] Create `{CHK}/completion/CompletionProperties.java` (`@ConfigurationProperties("checkout.completion")`, `requestDeadline` default `5s`) and `{CHK}/recovery/RecoveryProperties.java` (`@ConfigurationProperties("checkout.recovery")`):
   - `scanInterval` 1s, `cancelAfter` 30s, `attentionAfter` 20, `leaseDuration` 10s;
   - `backoffBase` 250ms, `backoffCap` 5s;
   - `inRequestRetries` 3, with backoffs 100/200/400 ms.
   Bind them in `{DS}/checkout-service/src/main/resources/application.yml` with environment overrides such as `CHECKOUT_RECOVERY_CANCEL_AFTER`. Every value is recorded by `capture-observations.sh`.
-- [ ] T073 [US2] Add deadline and retry handling to `{CHK}/completion/AttemptDriver.java`:
+- [X] T073 [US2] Add deadline and retry handling to `{CHK}/completion/AttemptDriver.java`:
   - **Deadline**: `drive(attemptId, deadline)` stops at the deadline. On `InventoryUnavailableException`, retry the **same** command with the **same** `attemptId` up to `inRequestRetries` times, sleeping 100/200/400 ms, never past the deadline.
   - **On exhaustion or deadline**: in a local transaction, `recordStepFailure(attemptId, error, now + backoff)` and release the lease. The caller then returns `503 SERVICE_UNAVAILABLE`, does not cancel the attempt, and does not restore stock (FR-016).
   - **Leases**: before driving, `CompletionAttemptRepository.acquireLease(attemptId, owner, leaseDuration)` runs a conditional `UPDATE … WHERE attempt_id=? AND (lease_until IS NULL OR lease_until < now OR lease_owner = ?)`. If the lease is not acquired, the request polls the attempt state every 50 ms until it is terminal or the deadline passes.
   - **On progress**: reset `step_failures` to 0.
-- [ ] T074 [US2] Implement precedence rule 3 (join, A5) in `{CHK}/completion/CompletionService.java`, replacing the T055 placeholder. When the freeze transaction sees a non-null `active_attempt_id`, commit without writes and call `AttemptDriver.drive(activeAttemptId, deadline)` for the same attempt. Return its outcome: `FINALIZED` → that attempt's receipt from `ReceiptAssembler`, `REJECTED` → `409 INSUFFICIENT_STOCK`, and `CANCELLED` or deadline → `503`. Increment `checkout.completion.outcome{result=joined}`.
-- [ ] T075 [US2] Add the `CANCELLING` step to `{CHK}/completion/AttemptDriver.java`:
+- [X] T074 [US2] Implement precedence rule 3 (join, A5) in `{CHK}/completion/CompletionService.java`, replacing the T055 placeholder. When the freeze transaction sees a non-null `active_attempt_id`, commit without writes and call `AttemptDriver.drive(activeAttemptId, deadline)` for the same attempt. Return its outcome: `FINALIZED` → that attempt's receipt from `ReceiptAssembler`, `REJECTED` → `409 INSUFFICIENT_STOCK`, and `CANCELLED` or deadline → `503`. Increment `checkout.completion.outcome{result=joined}`.
+- [X] T075 [US2] Add the `CANCELLING` step to `{CHK}/completion/AttemptDriver.java`:
   - Call `inventory.cancel`.
   - On `RELEASED` or `CANCELLED`, in a local transaction, transition `CANCELLING→CANCELLED` and `clearActiveAttempt`. The basket stays unchanged and the transaction stays `OPEN`.
   - On `409 RESERVATION_COMMITTED`, set `needs_attention` and `last_error = "cancel observed COMMITTED"`, and stop. This is impossible by design (data-model table).
   - On an unknown outcome, record the failure and back off.
-- [ ] T076 [US2] Create `{CHK}/recovery/RecoveryWorker.java`:
+- [X] T076 [US2] Create `{CHK}/recovery/RecoveryWorker.java`:
   - **Schedule**: `@Scheduled(fixedDelayString="${checkout.recovery.scan-interval:1s}")` with lease owner id `<hostname>-<uuid>`.
   - **Selection**: up to 50 attempts `WHERE state IN ('RESERVING','COMMITTING','CANCELLING') AND next_retry_at <= now AND (lease_until IS NULL OR lease_until < now) ORDER BY next_retry_at`.
   - **For each attempt**:
@@ -525,22 +525,22 @@ passing within 60 s of dependencies becoming healthy (SC-004).
     - release the lease.
   - **Metrics**: `checkout.recovery.steps{step,result}`, plus the gauge `checkout.completion.attempts{state}`, refreshed every scan.
   - The worker never holds a transaction while calling Inventory.
-- [ ] T077 [US2] Extend `{CHK}/ops/OperationsController.java` per `checkout-operations-api.md`:
+- [X] T077 [US2] Extend `{CHK}/ops/OperationsController.java` per `checkout-operations-api.md`:
   - `GET /internal/v1/ops/completion-attempts?state=unresolved|needsAttention|all&limit=`, with default `unresolved` and limit 100, maximum 1000 (otherwise `400 INVALID_LIMIT`), returning attempts with their lines;
   - `GET /internal/v1/ops/completion-attempts/{attemptId}`, returning `200` or `404 ATTEMPT_NOT_FOUND`;
   - `POST /internal/v1/ops/completion-attempts/{attemptId}/retry`, which sets `next_retry_at = now` and `needs_attention = FALSE` and returns `202`, or `409 ATTEMPT_TERMINAL` for terminal states.
-- [ ] T078 [P] [US2] Create `{CHK}/fault/FaultInjector.java`:
+- [X] T078 [P] [US2] Create `{CHK}/fault/FaultInjector.java`:
   - An interface with `checkpoint(FaultPoint point)` and enum `FaultPoint { AFTER_FREEZE, AFTER_RESERVE_RESPONSE, AFTER_PREPARE, AFTER_COMMIT_RESPONSE }`.
   - `NoopFaultInjector` (`@Profile("!fault-injection")`).
   - `HaltingFaultInjector` (`@Profile("fault-injection")`). It holds an in-memory armed point that is cleared on restart, so a restarted process does not halt again, and it calls `Runtime.getRuntime().halt(137)` when the armed point is reached.
   - `{CHK}/fault/FaultController.java` (`@Profile("fault-injection")`) with `POST /internal/v1/ops/faults/{point}` to arm a point and `DELETE` to disarm it.
   - Create `{IT}/support/Faults.java`, which calls that endpoint and wraps the Toxiproxy API through `eu.rekawek.toxiproxy:toxiproxy-java` (as pulled by Testcontainers toxiproxy) at `127.0.0.1:8474`.
-- [ ] T079 [US2] Call `faultInjector.checkpoint(...)` in `{CHK}/completion/CompletionService.java` right after the freeze commit (`AFTER_FREEZE`), and in `{CHK}/completion/AttemptDriver.java` after the reserve response arrives and before prepare (`AFTER_RESERVE_RESPONSE`), after the prepare commit (`AFTER_PREPARE`), and after the commit response arrives and before finalize (`AFTER_COMMIT_RESPONSE`).
-- [ ] T080 [P] [US2] Create `{DEP}/docker-compose.faults.yml`, an override file that implements the quickstart's `faults` profile:
+- [X] T079 [US2] Call `faultInjector.checkpoint(...)` in `{CHK}/completion/CompletionService.java` right after the freeze commit (`AFTER_FREEZE`), and in `{CHK}/completion/AttemptDriver.java` after the reserve response arrives and before prepare (`AFTER_RESERVE_RESPONSE`), after the prepare commit (`AFTER_PREPARE`), and after the commit response arrives and before finalize (`AFTER_COMMIT_RESPONSE`).
+- [X] T080 [P] [US2] Create `{DEP}/docker-compose.faults.yml`, an override file that implements the quickstart's `faults` profile:
   - It adds a `toxiproxy` service (`ghcr.io/shopify/toxiproxy:2.9.0`, API on `127.0.0.1:8474`) with the proxy `inventory`, listening on `0.0.0.0:18083` with upstream `inventory:8083`. The proxy is created by a startup command or `{DEP}/toxiproxy/config.json`.
   - It sets `checkout`'s `INVENTORY_URL=http://toxiproxy:18083`, `SPRING_PROFILES_ACTIVE=fault-injection`, and a pass-through `CHECKOUT_RECOVERY_CANCEL_AFTER: ${CHECKOUT_RECOVERY_CANCEL_AFTER:-30s}`.
   - Make `Stack` (T040) include this override when the system property `-Dstack.faults=true` is set.
-- [ ] T081 [US2] Add graceful shutdown to Checkout. Create `{CHK}/recovery/RecoveryLifecycle.java`, a `SmartLifecycle` that stops `RecoveryWorker` from picking new attempts on shutdown, waits up to 15 s for in-flight steps (each step ends in a durable state), and then releases this owner's leases with `UPDATE completion_attempts SET lease_until = NULL WHERE lease_owner = ?`.
+- [X] T081 [US2] Add graceful shutdown to Checkout. Create `{CHK}/recovery/RecoveryLifecycle.java`, a `SmartLifecycle` that stops `RecoveryWorker` from picking new attempts on shutdown, waits up to 15 s for in-flight steps (each step ends in a durable state), and then releases this owner's leases with `UPDATE completion_attempts SET lease_until = NULL WHERE lease_owner = ?`.
 
 **Checkpoint**: Completion is crash-safe and timeout-safe. T063–T070 pass, and no unexplained
 attempt or reservation remains within 60 s of recovery.

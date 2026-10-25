@@ -72,7 +72,18 @@ public final class Stack {
   public static int dbPort(String service) { return DB_PORTS.get(service); }
 
   /** Runs {@code docker compose <args>} against the stack and returns its stdout; fails on a non-zero exit. */
-  public static String compose(String... args) {
+  public static String compose(String... args) { return composeWithEnv(Map.of(), args); }
+
+  /**
+   * Recreates one service so it picks up {@code env} (compose interpolation, e.g.
+   * CHECKOUT_RECOVERY_CANCEL_AFTER), then waits for its readiness.
+   */
+  public static void recreate(String service, Map<String, String> env) {
+    composeWithEnv(env, "up", "-d", "--no-deps", "--force-recreate", service);
+    awaitReady(service, Duration.ofSeconds(120));
+  }
+
+  private static String composeWithEnv(Map<String, String> env, String... args) {
     List<String> command = new ArrayList<>(List.of("docker", "compose",
         "-f", DEPLOYMENT.resolve("docker-compose.yml").toString(),
         "--env-file", DEPLOYMENT.resolve("services.env").toString()));
@@ -81,7 +92,9 @@ public final class Stack {
     }
     command.addAll(List.of(args));
     try {
-      Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+      ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      builder.environment().putAll(env);
+      Process process = builder.start();
       String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
       if (process.waitFor() != 0) fail("docker compose " + String.join(" ", args) + " failed:\n" + output);
       return output;
@@ -91,6 +104,22 @@ public final class Stack {
       Thread.currentThread().interrupt();
       throw new IllegalStateException(e);
     }
+  }
+
+  /** Waits until a crashed or halted service's container has actually exited, so a following start takes effect. */
+  public static void awaitExited(String service, Duration timeout) {
+    Instant deadline = Instant.now().plus(timeout);
+    while (Instant.now().isBefore(deadline)) {
+      String state = compose("ps", "-a", "--format", "{{.State}}", service).strip();
+      if (state.equals("exited") || state.equals("dead")) return;
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException(e);
+      }
+    }
+    fail(service + " did not exit within " + timeout);
   }
 
   public static void stop(String service) { compose("stop", service); }

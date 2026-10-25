@@ -5,6 +5,7 @@ import edu.northeastern.cs6510.contracts.catalog.v1.ProductPageV1;
 import edu.northeastern.cs6510.contracts.catalog.v1.ProductV1;
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.concurrent.CancellationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -37,7 +38,7 @@ public class CatalogClient {
   public CatalogVersionV1 version() {
     try {
       return snapshot.get().uri("/internal/v1/catalog-version").retrieve().body(CatalogVersionV1.class);
-    } catch (RestClientException e) {
+    } catch (RestClientException | CancellationException e) {
       throw new CatalogUnavailableException(e);
     }
   }
@@ -51,7 +52,7 @@ public class CatalogClient {
             return b.build();
           })
           .retrieve().body(ProductPageV1.class);
-    } catch (RestClientException e) {
+    } catch (RestClientException | CancellationException e) {
       throw new CatalogUnavailableException(e);
     }
   }
@@ -62,8 +63,9 @@ public class CatalogClient {
       return product == null ? new Unavailable("empty response") : new Found(product);
     } catch (HttpClientErrorException.NotFound e) {
       return new NotFound();
-    } catch (RestClientException e) {
-      return new Unavailable(e.getMessage());
+    } catch (RestClientException | CancellationException e) {
+      // A read timeout surfaces as a cancelled request future from Spring's JDK request factory.
+      return new Unavailable(String.valueOf(e.getMessage()));
     }
   }
 

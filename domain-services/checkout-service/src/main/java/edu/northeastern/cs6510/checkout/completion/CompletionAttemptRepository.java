@@ -18,8 +18,13 @@ public interface CompletionAttemptRepository {
   /** Current basket lines of a transaction, read under the caller's transaction lock. */
   List<AttemptLine> basketLines(String transactionId);
 
-  /** Inserts a RESERVING attempt with its snapshot lines and marks it active on the transaction. */
-  void insertAttemptWithLines(String attemptId, String transactionId, List<AttemptLine> lines, Instant now);
+  /**
+   * Inserts a RESERVING attempt with its snapshot lines, already leased to {@code leaseOwner}, and
+   * marks it active on the transaction. Creating the attempt leased means recovery cannot pick it
+   * up before the request that created it starts driving it.
+   */
+  void insertAttemptWithLines(String attemptId, String transactionId, List<AttemptLine> lines, Instant now,
+                              String leaseOwner, Instant leaseUntil);
 
   Optional<CompletionAttempt> find(String attemptId);
 
@@ -41,10 +46,37 @@ public interface CompletionAttemptRepository {
    */
   boolean finalizeAttempt(CompletionAttempt attempt, Instant now);
 
+  /** Counts one more consecutive failed step and schedules the next recovery try. */
   void recordStepFailure(String attemptId, String error, Instant nextRetryAt, Instant now);
 
+  /** Flags the attempt for operators; recovery keeps retrying it. */
   void markNeedsAttention(String attemptId, String error, Instant now);
+
+  /** Flags an impossible state for operators and stops automatic retries until an operator retry. */
+  void parkForOperator(String attemptId, String error, Instant now);
+
+  /** Takes the single-driver lease if it is free, expired, or already this owner's. */
+  boolean acquireLease(String attemptId, String owner, Instant leaseUntil, Instant now);
+
+  void releaseLease(String attemptId, String owner);
+
+  /** Releases every lease held by an owner (graceful shutdown). */
+  void releaseLeasesOwnedBy(String owner);
+
+  /** Unresolved attempts due for a retry whose lease is free or expired, oldest due first. */
+  List<String> findDueForRecovery(Instant now, int limit);
+
+  /** Attempt count per state, for metrics. */
+  Map<AttemptState, Long> countByState();
+
+  /** Operator view: unresolved, needs-attention or all attempts, newest first. */
+  List<CompletionAttempt> list(OperatorFilter filter, int limit);
+
+  /** Makes a non-terminal attempt due now and clears its attention flag; false when the attempt is terminal or unknown. */
+  boolean requestRetry(String attemptId, Instant now);
 
   /** The public status and active attempt of a transaction, as read under a row lock. */
   record TransactionLock(String status, String activeAttemptId) { }
+
+  enum OperatorFilter { UNRESOLVED, NEEDS_ATTENTION, ALL }
 }

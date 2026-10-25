@@ -7,6 +7,7 @@ import edu.northeastern.cs6510.contracts.inventory.v1.ReserveRequestV1;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.concurrent.CancellationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -72,6 +73,9 @@ public class HttpInventoryClient implements InventoryClient {
       });
     } catch (RestClientException e) {
       throw new InventoryUnavailableException("inventory " + command + ": " + e.getMessage(), e);
+    } catch (CancellationException timedOut) {
+      // Spring's JDK request factory enforces the read timeout by cancelling the request future.
+      throw new InventoryUnavailableException("inventory " + command + ": read timed out", timedOut);
     } catch (InventoryUnavailableException | IllegalStateException e) {
       throw e;
     } catch (RuntimeException e) {

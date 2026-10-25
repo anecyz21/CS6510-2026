@@ -3,7 +3,9 @@ package edu.northeastern.cs6510.checkout.completion;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class JdbcCompletionAttemptRepository implements CompletionAttemptRepository {
   private static final int MAX_ERROR_LENGTH = 512;
+  private static final Duration PARKED_FOR = Duration.ofDays(365);
   private final JdbcTemplate db;
 
   public JdbcCompletionAttemptRepository(JdbcTemplate db) { this.db = db; }
@@ -31,10 +34,12 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
   }
 
   @Override
-  public void insertAttemptWithLines(String attemptId, String transactionId, List<AttemptLine> lines, Instant now) {
+  public void insertAttemptWithLines(String attemptId, String transactionId, List<AttemptLine> lines, Instant now,
+                                     String leaseOwner, Instant leaseUntil) {
     Timestamp at = Timestamp.from(now);
-    db.update("INSERT INTO completion_attempts (attempt_id, transaction_id, state, created_at, updated_at, next_retry_at) VALUES (?, ?, 'RESERVING', ?, ?, ?)",
-        attemptId, transactionId, at, at, at);
+    db.update("INSERT INTO completion_attempts (attempt_id, transaction_id, state, created_at, updated_at, next_retry_at, lease_owner, lease_until) "
+            + "VALUES (?, ?, 'RESERVING', ?, ?, ?, ?, ?)",
+        attemptId, transactionId, at, at, at, leaseOwner, Timestamp.from(leaseUntil));
     db.batchUpdate("INSERT INTO completion_attempt_lines (attempt_id, sku, requested_quantity, unit_price_cents, name) VALUES (?, ?, ?, ?, ?)",
         lines, lines.size(), (ps, line) -> {
           ps.setString(1, attemptId);
@@ -122,6 +127,63 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
   public void markNeedsAttention(String attemptId, String error, Instant now) {
     db.update("UPDATE completion_attempts SET needs_attention = TRUE, last_error = ?, updated_at = ? WHERE attempt_id = ?",
         truncate(error), Timestamp.from(now), attemptId);
+  }
+
+  @Override
+  public void parkForOperator(String attemptId, String error, Instant now) {
+    // TIMESTAMP ends in 2038, so "parked" is a year out rather than "forever"; an operator retry makes it due again.
+    db.update("UPDATE completion_attempts SET needs_attention = TRUE, last_error = ?, next_retry_at = ?, updated_at = ? WHERE attempt_id = ?",
+        truncate(error), Timestamp.from(now.plus(PARKED_FOR)), Timestamp.from(now), attemptId);
+  }
+
+  @Override
+  public boolean acquireLease(String attemptId, String owner, Instant leaseUntil, Instant now) {
+    return db.update("UPDATE completion_attempts SET lease_owner = ?, lease_until = ? "
+            + "WHERE attempt_id = ? AND (lease_until IS NULL OR lease_until < ? OR lease_owner = ?)",
+        owner, Timestamp.from(leaseUntil), attemptId, Timestamp.from(now), owner) == 1;
+  }
+
+  @Override
+  public void releaseLease(String attemptId, String owner) {
+    db.update("UPDATE completion_attempts SET lease_owner = NULL, lease_until = NULL WHERE attempt_id = ? AND lease_owner = ?", attemptId, owner);
+  }
+
+  @Override
+  public void releaseLeasesOwnedBy(String owner) {
+    db.update("UPDATE completion_attempts SET lease_owner = NULL, lease_until = NULL WHERE lease_owner = ?", owner);
+  }
+
+  @Override
+  public List<String> findDueForRecovery(Instant now, int limit) {
+    Timestamp at = Timestamp.from(now);
+    return db.queryForList("SELECT attempt_id FROM completion_attempts WHERE state IN ('RESERVING', 'COMMITTING', 'CANCELLING') "
+        + "AND next_retry_at <= ? AND (lease_until IS NULL OR lease_until < ?) ORDER BY next_retry_at LIMIT ?", String.class, at, at, limit);
+  }
+
+  @Override
+  public Map<AttemptState, Long> countByState() {
+    Map<AttemptState, Long> counts = new EnumMap<>(AttemptState.class);
+    for (AttemptState s : AttemptState.values()) counts.put(s, 0L);
+    db.query("SELECT state, COUNT(*) FROM completion_attempts GROUP BY state",
+        rs -> { counts.put(AttemptState.valueOf(rs.getString(1)), rs.getLong(2)); });
+    return counts;
+  }
+
+  @Override
+  public List<CompletionAttempt> list(OperatorFilter filter, int limit) {
+    String where = switch (filter) {
+      case UNRESOLVED -> "WHERE state IN ('RESERVING', 'COMMITTING', 'CANCELLING')";
+      case NEEDS_ATTENTION -> "WHERE needs_attention = TRUE";
+      case ALL -> "";
+    };
+    List<String> ids = db.queryForList("SELECT attempt_id FROM completion_attempts " + where + " ORDER BY created_at DESC LIMIT ?", String.class, limit);
+    return ids.stream().map(id -> find(id).orElseThrow()).toList();
+  }
+
+  @Override
+  public boolean requestRetry(String attemptId, Instant now) {
+    return db.update("UPDATE completion_attempts SET next_retry_at = ?, needs_attention = FALSE, updated_at = ? "
+        + "WHERE attempt_id = ? AND state IN ('RESERVING', 'COMMITTING', 'CANCELLING')", Timestamp.from(now), Timestamp.from(now), attemptId) == 1;
   }
 
   private static CompletionAttempt attempt(ResultSet rs, List<AttemptLine> lines) throws SQLException {

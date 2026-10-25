@@ -11,6 +11,11 @@ spring:
     hikari: { maximum-pool-size: "${DB_POOL_SIZE:10}" }
   flyway: { enabled: true }
   lifecycle: { timeout-per-shutdown-phase: 20s }
+  # The catalog projection poll and the recovery worker must not wait on each other.
+  task:
+    scheduling:
+      pool:
+        size: 2
 management:
   endpoint:
     health:
@@ -34,4 +39,14 @@ inventory:
 checkout:
   completion:
     # Public completion returns 503 SERVICE_UNAVAILABLE once this passes without a confirmed outcome (A4).
-    request-deadline: 5s
+    request-deadline: "${CHECKOUT_COMPLETION_REQUEST_DEADLINE:5s}"
+  # Recovery and retry budgets (research R9); environment overrides exist for fault tests.
+  recovery:
+    scan-interval: "${CHECKOUT_RECOVERY_SCAN_INTERVAL:1s}"
+    cancel-after: "${CHECKOUT_RECOVERY_CANCEL_AFTER:30s}"
+    attention-after: "${CHECKOUT_RECOVERY_ATTENTION_AFTER:20}"
+    lease-duration: "${CHECKOUT_RECOVERY_LEASE_DURATION:10s}"
+    backoff-base: 250ms
+    backoff-cap: 5s
+    in-request-retries: 3
+    in-request-backoff: 100ms,200ms,400ms

@@ -30,6 +30,10 @@ public class ReservationController {
   @PostMapping("/{attemptId}/commit")
   public ReservationV1 commit(@PathVariable String attemptId) { return reservations.commit(attemptId); }
 
+  /** Releases an uncommitted reservation; an unknown id becomes a CANCELLED tombstone. 409 if already committed. */
+  @PostMapping("/{attemptId}/cancel")
+  public ReservationV1 cancel(@PathVariable String attemptId) { return reservations.cancel(attemptId); }
+
   @GetMapping("/{attemptId}")
   public ReservationV1 get(@PathVariable String attemptId) { return reservations.get(attemptId); }
 }

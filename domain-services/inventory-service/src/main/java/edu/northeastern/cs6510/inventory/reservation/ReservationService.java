@@ -122,6 +122,45 @@ public class ReservationService {
     return repository.find(attemptId).orElseThrow();
   }
 
+  /**
+   * Releases an uncommitted reservation. An unknown id gets a CANCELLED tombstone, so a reserve
+   * that arrives later for the same id reserves nothing. Locks like commit (reservation row first,
+   * then positions in SKU order), so commit and cancel of one id are mutually exclusive.
+   */
+  public ReservationV1 cancel(String attemptId) {
+    return withLockRetries("cancel", () -> transactions.execute(status -> cancelOnce(attemptId)));
+  }
+
+  private ReservationV1 cancelOnce(String attemptId) {
+    Instant now = clock.instant();
+    // The tombstone does not know its transaction: cancel carries no body.
+    if (repository.insertReservation(attemptId, "", ReservationStateV1.CANCELLED, now)) {
+      repository.updateState(attemptId, ReservationStateV1.CANCELLED, now);
+      return repository.find(attemptId).orElseThrow();
+    }
+    ReservationStateV1 state = repository.lockReservation(attemptId).orElseThrow();
+    ReservationV1 reservation = repository.find(attemptId).orElseThrow();
+    switch (state) {
+      case RELEASED:
+      case CANCELLED:
+        return reservation;   // idempotent repeat
+      case COMMITTED:
+        throw conflict("RESERVATION_COMMITTED", "Reservation " + attemptId + " is committed; finalize it instead of compensating.", reservation);
+      case RESERVED:
+      default:
+        break;
+    }
+    List<ReservationLineV1> held = reservation.lines().stream().filter(l -> l.reservedQuantity() > 0).toList();
+    repository.lockPositions(held.stream().map(ReservationLineV1::sku).toList());
+    for (ReservationLineV1 line : held) {
+      if (!repository.releaseLine(line.sku(), line.reservedQuantity())) {
+        throw new IllegalStateException("reserved stock for " + line.sku() + " is lower than reservation " + attemptId);
+      }
+    }
+    repository.updateState(attemptId, ReservationStateV1.RELEASED, now);
+    return repository.find(attemptId).orElseThrow();
+  }
+
   public ReservationV1 get(String attemptId) {
     return repository.find(attemptId).orElseThrow(() -> notFound(attemptId));
   }
