@@ -312,7 +312,7 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
 
 ### Tests for User Story 1 ⚠️ (write first and confirm they fail)
 
-- [ ] T041 [P] [US1] Create `{INV_TEST}/reservation/ReservationServiceIT.java`, using a Testcontainers `MySQLContainer("mysql:8.4")` with Flyway applying `{INV_DB}`. Cover:
+- [X] T041 [P] [US1] Create `{INV_TEST}/reservation/ReservationServiceIT.java`, using a Testcontainers `MySQLContainer("mysql:8.4")` with Flyway applying `{INV_DB}`. Cover:
   - **reserve** grants `min(quantity, physical − reserved)` per SKU, and a SKU without a position reserves 0;
   - Σ reserved = 0 → state `RELEASED`, nothing held;
   - a repeat with the same id returns the stored resource with `200`, with no second effect;
@@ -321,21 +321,21 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
   - a repeat commit has no effect;
   - committing a `RELEASED` reservation → `409 RESERVATION_NOT_COMMITTABLE`;
   - **concurrency**: 50 threads reserve against a SKU with `physical_stock = 1`. Exactly one grant of 1, and `0 ≤ reserved_stock ≤ physical_stock` throughout.
-- [ ] T042 [P] [US1] Create `{CHK_TEST}/completion/AttemptDriverTest.java`, a unit test with a fake `InventoryClient` and an H2-free in-memory fake of `CompletionAttemptRepository`. Cover:
+- [X] T042 [P] [US1] Create `{CHK_TEST}/completion/AttemptDriverTest.java`, a unit test with a fake `InventoryClient` and an H2-free in-memory fake of `CompletionAttemptRepository`. Cover:
   - full reserve → `COMMITTING` → `FINALIZED`;
   - partial reserve stores `reserved_quantity` per line;
   - all-zero reserve → `REJECTED`, with `active_attempt_id` cleared;
   - reserve returning a `CANCELLED` tombstone → `CANCELLED`;
   - a lost conditional-update race (0 rows updated) re-reads the attempt instead of failing;
   - no `InventoryClient` call happens inside a repository transaction callback (assert with a flag set by the fake repository).
-- [ ] T043 [P] [US1] Create `{IT}/completion/PartialFulfillmentTest.java` implementing quickstart V5 steps 1–5:
+- [X] T043 [P] [US1] Create `{IT}/completion/PartialFulfillmentTest.java` implementing quickstart V5 steps 1–5:
   1. Set `SKU-000001`=2 and `SKU-000002`=1, plus a zero-stock SKU (`SKU-000003`=0). Scan A×3, B×1 and the zero-stock SKU once. Expect `200` each time, and Inventory physical and reserved stock unchanged (US1-1).
   2. Complete. Expect `200` with A×2 and B×1, `itemCount=3` and total `2·pA+pB` in exact cents. `GET` shows `OPEN` with the remaining units (US1-3).
   3. Complete again. Expect `409 INSUFFICIENT_STOCK`, with the basket, stock and receipt count unchanged (US1-6).
   4. Restock A+1 and the zero-stock SKU+1, then complete. Expect the same `transactionId` and `startedAt`, a new `completedAt`, only the newly purchased units, and status `COMPLETED` (US1-4).
   5. Complete again. Expect `409 TRANSACTION_NOT_OPEN`.
   Finish with `Reconciliation.assertPass()`.
-- [ ] T044 [P] [US1] Create `{IT}/completion/CompletionPreconditionTest.java` (US1-7). Cover:
+- [X] T044 [P] [US1] Create `{IT}/completion/CompletionPreconditionTest.java` (US1-7). Cover:
   - complete on an unknown id → `404 TRANSACTION_NOT_FOUND`;
   - complete on an open transaction with an empty basket → `409 EMPTY_BASKET`;
   - complete on a completed transaction → `409 TRANSACTION_NOT_OPEN`;
@@ -343,14 +343,14 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
   - scan `SKU-999999` on an open transaction while the projection is `CURRENT` → `404 SKU_NOT_FOUND`;
   - scan on a completed transaction → `409 TRANSACTION_NOT_OPEN`.
   Assert every body has exactly the fields `error` and `message`.
-- [ ] T045 [P] [US1] Create `{IT}/completion/ConcurrentLastUnitTest.java` (quickstart V6):
+- [X] T045 [P] [US1] Create `{IT}/completion/ConcurrentLastUnitTest.java` (quickstart V6):
   - (a) 50 transactions on distinct stations each scan `SKU-000010` (stock 1) and `SKU-000011` (stock 1000), then complete simultaneously through an `ExecutorService`. Expect exactly one receipt containing `SKU-000010`, and the other 49 receipts each to contain `SKU-000011` with their transactions still `OPEN` holding `SKU-000010`.
   - (b) 200 parallel completions against random stocks from 0 to 3.
   End each case with `Reconciliation.assertPass()`. Delete the obsolete `{IT}/checkout/CheckoutInventoryInvariantTest.java`.
 
 ### Implementation for User Story 1
 
-- [ ] T046 [P] [US1] Create `{INV_DB}/V6__reservations.sql`:
+- [X] T046 [P] [US1] Create `{INV_DB}/V6__reservations.sql`:
   - `reservations`: `attempt_id VARCHAR(64) PRIMARY KEY`, `transaction_id VARCHAR(64) NOT NULL`, `state VARCHAR(16) NOT NULL CHECK (state IN ('RESERVED','COMMITTED','RELEASED','CANCELLED'))`, `created_at TIMESTAMP(6) NOT NULL`, `resolved_at TIMESTAMP(6) NULL`.
   - `reservation_lines`: `attempt_id VARCHAR(64) NOT NULL`, `sku VARCHAR(64) NOT NULL`, `requested_quantity INT NOT NULL`, `reserved_quantity INT NOT NULL`, `PRIMARY KEY (attempt_id, sku)`, `CHECK (requested_quantity >= 1)`, `CHECK (reserved_quantity >= 0 AND reserved_quantity <= requested_quantity)` (data model: "0 ≤ reserved ≤ requested").
   - `inventory_movements`:
@@ -358,7 +358,7 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
     - rename `stock_after` to `physical_after`;
     - add `CHECK (movement_type <> 'SALE' OR attempt_id IS NOT NULL)` (data model: "Every committed decrement references a durable attempt");
     - add `UNIQUE KEY uq_sale_attempt_sku (attempt_id, sku)`. NULL attempt ids on `PROVISION` rows do not collide.
-- [ ] T047 [P] [US1] Create `{CHK_DB}/V5__completion_attempts.sql`:
+- [X] T047 [P] [US1] Create `{CHK_DB}/V5__completion_attempts.sql`:
   - **`checkout_transactions`**: add `active_attempt_id VARCHAR(64) NULL` and `version BIGINT NOT NULL DEFAULT 0`.
   - **`completion_attempts`**:
     - Columns: `attempt_id VARCHAR(64) PRIMARY KEY`, `transaction_id VARCHAR(64) NOT NULL` (indexed), `state VARCHAR(16) NOT NULL CHECK (state IN ('RESERVING','COMMITTING','CANCELLING','FINALIZED','REJECTED','CANCELLED'))`, `created_at` and `updated_at TIMESTAMP(6) NOT NULL`, `finalized_at TIMESTAMP(6) NULL`, `step_failures INT NOT NULL DEFAULT 0`, `next_retry_at TIMESTAMP(6) NOT NULL`, `lease_owner VARCHAR(64) NULL`, `lease_until TIMESTAMP(6) NULL`, `needs_attention BOOLEAN NOT NULL DEFAULT FALSE` and `last_error VARCHAR(512) NULL`.
@@ -370,7 +370,7 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
   - **Receipts**: `DROP TABLE receipt_lines; DROP TABLE receipts;` (development data is not migrated, R13). Then recreate:
     - `receipts`: `attempt_id VARCHAR(64) PRIMARY KEY`, `transaction_id VARCHAR(64) NOT NULL` (indexed) and `completed_at TIMESTAMP(6) NOT NULL`;
     - `receipt_lines`: `attempt_id`, `sku`, `quantity INT NOT NULL CHECK (quantity > 0)`, `unit_price_cents BIGINT NOT NULL CHECK (unit_price_cents >= 0)` and `name VARCHAR(255) NOT NULL`, with primary key `(attempt_id, sku)`.
-- [ ] T048 [US1] Create `{INV}/reservation/ReservationRepository.java`:
+- [X] T048 [US1] Create `{INV}/reservation/ReservationRepository.java`:
   - `lockReservation(attemptId)`: `SELECT … FOR UPDATE`;
   - `insertReservation`;
   - `lockPositions(skus)`: `SELECT sku, physical_stock, reserved_stock FROM inventory_positions WHERE sku IN (…) ORDER BY sku FOR UPDATE`;
@@ -380,7 +380,7 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
   - `insertSaleMovement(attemptId, sku, -qty, physicalAfter)`;
   - `updateState(attemptId, state, resolvedAt)`;
   - `find(attemptId)` returning `ReservationV1`.
-- [ ] T049 [US1] Create `{INV}/reservation/ReservationService.java` with `reserve(attemptId, ReserveRequestV1)`, `commit(attemptId)` and `get(attemptId)`:
+- [X] T049 [US1] Create `{INV}/reservation/ReservationService.java` with `reserve(attemptId, ReserveRequestV1)`, `commit(attemptId)` and `get(attemptId)`:
   - Each runs in **one** local transaction: lock or insert the reservation row first, then the positions in ascending SKU order (R11).
   - **reserve**:
     - Validate 1–1,000 distinct SKUs, each with `quantity ≥ 1`; otherwise `400 INVALID_RESERVATION_REQUEST`.
@@ -388,27 +388,27 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
     - If the id exists, return it unchanged (`200`), or `409 RESERVATION_MISMATCH` when the lines differ.
   - **commit**: implement exactly the table in `specs/004-domain-services/contracts/inventory-internal-api.md`.
   - Retry `CannotAcquireLockException` and `DeadlockLoserDataAccessException` up to 3 times, incrementing `inventory.db.retries{operation}`. After that, return `503 SERVICE_UNAVAILABLE`.
-- [ ] T050 [US1] Create `{INV}/reservation/ReservationController.java` with `PUT /internal/v1/reservations/{attemptId}` (`201` when created, `200` when it existed), `POST /internal/v1/reservations/{attemptId}/commit` and `GET /internal/v1/reservations/{attemptId}`. 404 returns `RESERVATION_NOT_FOUND`, and the 409 bodies are `InternalErrorV1` including the resource. Add a `service-contracts` dependency to `{DS}/inventory-service/pom.xml`.
-- [ ] T051 [P] [US1] Create `{INV}/ops/InventoryOpsController.java` with `GET /internal/v1/ops/reconciliation-export`, which is read-only. It returns `positions` (an array of `{sku, initialStock, physicalStock, reservedStock}`), `openReservations` (the count in `RESERVED`), `committedAttemptIds`, and `saleQuantityBySku` (Σ |SALE `quantity_delta`| per SKU, an additive field).
-- [ ] T052 [P] [US1] Create `{CHK}/inventory/InventoryClient.java`:
+- [X] T050 [US1] Create `{INV}/reservation/ReservationController.java` with `PUT /internal/v1/reservations/{attemptId}` (`201` when created, `200` when it existed), `POST /internal/v1/reservations/{attemptId}/commit` and `GET /internal/v1/reservations/{attemptId}`. 404 returns `RESERVATION_NOT_FOUND`, and the 409 bodies are `InternalErrorV1` including the resource. Add a `service-contracts` dependency to `{DS}/inventory-service/pom.xml`.
+- [X] T051 [P] [US1] Create `{INV}/ops/InventoryOpsController.java` with `GET /internal/v1/ops/reconciliation-export`, which is read-only. It returns `positions` (an array of `{sku, initialStock, physicalStock, reservedStock}`), `openReservations` (the count in `RESERVED`), `committedAttemptIds`, and `saleQuantityBySku` (Σ |SALE `quantity_delta`| per SKU, an additive field).
+- [X] T052 [P] [US1] Create `{CHK}/inventory/InventoryClient.java`:
   - It uses `RestClient` over a JDK `HttpClient` with a 300 ms connect and 1,500 ms read timeout. The base URL comes from `INVENTORY_URL`.
   - Methods: `reserve(attemptId, ReserveRequestV1)`, `commit(attemptId)`, `cancel(attemptId)` and `get(attemptId)`. They return a `ReservationV1`, or a typed `Conflict(code, ReservationV1)` for 409s.
   - Transport errors, timeouts and `5xx` throw `InventoryUnavailableException` (an unknown outcome). The client never retries; retries belong to the driver (T073).
-- [ ] T053 [P] [US1] Create `{CHK}/completion/UuidV7.java`, a static `String next()` generating RFC 9562 UUIDv7 values (48-bit Unix milliseconds, version 7, variant 10, random bits from `SecureRandom`). Add `{CHK_TEST}/completion/UuidV7Test.java`, which checks the version and variant bits and monotonic time ordering across milliseconds.
-- [ ] T054 [US1] Create `{CHK}/completion/AttemptState.java` (enum `RESERVING`, `COMMITTING`, `CANCELLING`, `FINALIZED`, `REJECTED`, `CANCELLED` with `isTerminal()`), `{CHK}/completion/CompletionAttempt.java`, `{CHK}/completion/AttemptLine.java` (records) and `{CHK}/completion/CompletionAttemptRepository.java`. The repository provides:
+- [X] T053 [P] [US1] Create `{CHK}/completion/UuidV7.java`, a static `String next()` generating RFC 9562 UUIDv7 values (48-bit Unix milliseconds, version 7, variant 10, random bits from `SecureRandom`). Add `{CHK_TEST}/completion/UuidV7Test.java`, which checks the version and variant bits and monotonic time ordering across milliseconds.
+- [X] T054 [US1] Create `{CHK}/completion/AttemptState.java` (enum `RESERVING`, `COMMITTING`, `CANCELLING`, `FINALIZED`, `REJECTED`, `CANCELLED` with `isTerminal()`), `{CHK}/completion/CompletionAttempt.java`, `{CHK}/completion/AttemptLine.java` (records) and `{CHK}/completion/CompletionAttemptRepository.java`. The repository provides:
   - `insertAttemptWithLines`, `find(attemptId)` (attempt plus lines) and `findActiveForTransaction`;
   - conditional transitions `transition(attemptId, from, to)`: `UPDATE completion_attempts SET state=?, updated_at=? WHERE attempt_id=? AND state=?`, returning a boolean;
   - `storeReserved(attemptId, Map<sku,qty>)`;
   - `recordStepFailure(attemptId, error, nextRetryAt)`, which truncates `last_error` to 512 characters;
   - `clearActiveAttempt(transactionId, attemptId)`: `… SET active_attempt_id = NULL, version = version + 1 WHERE transaction_id=? AND active_attempt_id=?`.
-- [ ] T055 [US1] Create `{CHK}/completion/CompletionService.java`. `complete(transactionId)` runs the freeze as one local transaction:
+- [X] T055 [US1] Create `{CHK}/completion/CompletionService.java`. `complete(transactionId)` runs the freeze as one local transaction:
   1. `SELECT status, active_attempt_id FROM checkout_transactions WHERE transaction_id=? FOR UPDATE`.
   2. Apply precedence 1–2 (`TRANSACTION_NOT_FOUND`, `TRANSACTION_NOT_OPEN`). Precedence 3 (active attempt) throws `serviceUnavailable("completion")` until T074 adds the join.
   3. Precedence 4: no basket lines → `EMPTY_BASKET`.
   4. Insert the attempt (`UuidV7.next()`, state `RESERVING`, `next_retry_at = now`), copy every basket line into `completion_attempt_lines` (immutable snapshot: `requested_quantity`, `unit_price_cents`, `name`), and set `active_attempt_id` and `version = version + 1`.
   After the commit, call `AttemptDriver.drive(attemptId, deadline)` and map its terminal outcome: `FINALIZED` → receipt, `REJECTED` → `insufficientStock`, `CANCELLED` → `serviceUnavailable`.
-- [ ] T056 [US1] Modify `{CHK}/scan/ScanService.java` to read `SELECT status, active_attempt_id … FOR SHARE`. A non-null `active_attempt_id` throws `ApiException.transactionBusy(id)` immediately, before any basket write and before any event or outbox insert (FR-011, R10). Precedence: `NOT_FOUND`, then `NOT_OPEN`, then `BUSY`, then SKU outcomes. Keep the precedence for the unknown-SKU path from T036 consistent by also checking `active_attempt_id` in its non-locking pre-read.
-- [ ] T057 [US1] Create `{CHK}/completion/AttemptDriver.java`. It drives one attempt step by step until it reaches a terminal state or the deadline, re-reading the attempt before every step, and every local write is its own `TransactionTemplate.execute`:
+- [X] T056 [US1] Modify `{CHK}/scan/ScanService.java` to read `SELECT status, active_attempt_id … FOR SHARE`. A non-null `active_attempt_id` throws `ApiException.transactionBusy(id)` immediately, before any basket write and before any event or outbox insert (FR-011, R10). Precedence: `NOT_FOUND`, then `NOT_OPEN`, then `BUSY`, then SKU outcomes. Keep the precedence for the unknown-SKU path from T036 consistent by also checking `active_attempt_id` in its non-locking pre-read.
+- [X] T057 [US1] Create `{CHK}/completion/AttemptDriver.java`. It drives one attempt step by step until it reaches a terminal state or the deadline, re-reading the attempt before every step, and every local write is its own `TransactionTemplate.execute`:
   - **RESERVING**:
     - Call `inventory.reserve(attemptId, lines)`.
     - On `RESERVED`, validate that the returned SKUs equal the attempt lines and that `0 ≤ reserved ≤ requested`. Then, in a local transaction, `storeReserved` and transition `RESERVING→COMMITTING` (the durable receipt intent).
@@ -417,7 +417,7 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
   - **COMMITTING**: call `inventory.commit` and require `COMMITTED`, then finalize (T058).
   - If any validation fails, set `needs_attention = TRUE` and `last_error`, and stop.
   - When a conditional transition returns false, re-read and continue from the observed state.
-- [ ] T058 [US1] Implement `finalize(attemptId)` in `{CHK}/completion/AttemptDriver.java`. It runs as one local transaction:
+- [X] T058 [US1] Implement `finalize(attemptId)` in `{CHK}/completion/AttemptDriver.java`. It runs as one local transaction:
   1. Transition `COMMITTING→FINALIZED` with `finalized_at = now` (if this returns false, re-read).
   2. Insert `receipts(attempt_id, transaction_id, completed_at = finalized_at)`.
   3. Insert a `receipt_lines` row for each line with `reserved_quantity > 0` (`quantity = reserved_quantity`, plus the captured `unit_price_cents` and `name`).
@@ -425,10 +425,10 @@ available, and never oversells under concurrency (FR-007, FR-008, FR-011–FR-01
   5. If no basket lines remain, `UPDATE checkout_transactions SET status='COMPLETED', completed_at=?`.
   6. `clearActiveAttempt`.
   Then create `{CHK}/completion/ReceiptAssembler.java`. It builds the public `Receipt` exactly per the OpenAPI `Receipt` schema from the `receipts` and `receipt_lines` rows of **this attempt only**, plus the transaction's `transactionId`, `stationId` and `startedAt`. `itemCount` is Σ quantity and `totalAmount` is Σ quantity × cents / 100, both exact (FR-014).
-- [ ] T059 [US1] Wire `POST /transactions/{id}/complete` in `{CHK}/api/CheckoutController.java` to `CompletionService`, replacing the T037 placeholder. Delete the leftover completion and receipt code from `{CHK}/CheckoutService.java` and `{CHK}/CheckoutRepository.java`. Add the counter `checkout.completion.outcome{result=receipt|insufficient|unavailable}`.
-- [ ] T060 [US1] Create `{CHK}/ops/OperationsController.java` with `GET /internal/v1/ops/reconciliation-export`, which is read-only. It returns `unresolvedAttempts` (the count in `RESERVING`, `COMMITTING` or `CANCELLING`), `activeAttemptFlags` (the count of non-null `active_attempt_id`), `receiptQuantityBySku` (Σ `receipt_lines.quantity` per SKU) and `finalizedAttemptIds`, per `specs/004-domain-services/contracts/checkout-operations-api.md`. `outboxPending` and `outboxTotal` are added in T106.
-- [ ] T061 [P] [US1] Create `{DEP}/provisioning/restock-sku.sql`, parameterized with `SET @sku = 'SKU-…'; SET @qty = N;`. In one transaction it runs `UPDATE inventory_positions SET initial_stock = initial_stock + @qty, physical_stock = physical_stock + @qty WHERE sku = @sku` and inserts a `PROVISION` movement with a NULL attempt. Create `{IT}/support/InventoryProvisioning.java` with `setStock(sku, n)`, which adjusts both columns by the delta and writes a `PROVISION` movement, and `addStock(sku, n)`, which runs the same statements through the inventory owner's JDBC credentials.
-- [ ] T062 [US1] Create `{DEP}/scripts/reconcile.sh`, using bash with `curl` and `jq`:
+- [X] T059 [US1] Wire `POST /transactions/{id}/complete` in `{CHK}/api/CheckoutController.java` to `CompletionService`, replacing the T037 placeholder. Delete the leftover completion and receipt code from `{CHK}/CheckoutService.java` and `{CHK}/CheckoutRepository.java`. Add the counter `checkout.completion.outcome{result=receipt|insufficient|unavailable}`.
+- [X] T060 [US1] Create `{CHK}/ops/OperationsController.java` with `GET /internal/v1/ops/reconciliation-export`, which is read-only. It returns `unresolvedAttempts` (the count in `RESERVING`, `COMMITTING` or `CANCELLING`), `activeAttemptFlags` (the count of non-null `active_attempt_id`), `receiptQuantityBySku` (Σ `receipt_lines.quantity` per SKU) and `finalizedAttemptIds`, per `specs/004-domain-services/contracts/checkout-operations-api.md`. `outboxPending` and `outboxTotal` are added in T106.
+- [X] T061 [P] [US1] Create `{DEP}/provisioning/restock-sku.sql`, parameterized with `SET @sku = 'SKU-…'; SET @qty = N;`. In one transaction it runs `UPDATE inventory_positions SET initial_stock = initial_stock + @qty, physical_stock = physical_stock + @qty WHERE sku = @sku` and inserts a `PROVISION` movement with a NULL attempt. Create `{IT}/support/InventoryProvisioning.java` with `setStock(sku, n)`, which adjusts both columns by the delta and writes a `PROVISION` movement, and `addStock(sku, n)`, which runs the same statements through the inventory owner's JDBC credentials.
+- [X] T062 [US1] Create `{DEP}/scripts/reconcile.sh`, using bash with `curl` and `jq`:
   - Options: `--wait-settled SECONDS`, which polls until `unresolvedAttempts == 0` and `openReservations == 0` or the timeout expires, and `--out FILE`.
   - Read the two exports from `127.0.0.1:8082` and `127.0.0.1:8083`, never a database.
   - Evaluate checks R-1…R-5 from `specs/004-domain-services/data-model.md#settled-state-reconciliation-fr-019-sc-005`. R-4 is `initialStock − physicalStock == receiptQuantityBySku[sku]` for every SKU. R-5 is set equality of `committedAttemptIds` and `finalizedAttemptIds`, plus `saleQuantityBySku == receiptQuantityBySku`.

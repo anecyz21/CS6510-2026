@@ -29,3 +29,9 @@ catalog:
   projection:
     poll-interval: 15s
     max-staleness: 60s
+inventory:
+  url: "${INVENTORY_URL:http://localhost:8083}"
+checkout:
+  completion:
+    # Public completion returns 503 SERVICE_UNAVAILABLE once this passes without a confirmed outcome (A4).
+    request-deadline: 5s

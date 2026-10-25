@@ -406,7 +406,7 @@ All values are configuration properties with these defaults, recorded in every m
   - Toxiproxy (`ghcr.io/shopify/toxiproxy:2.9.0`) between Checkout and Inventory simulates lost
     responses (`limit_data` downstream after the request reaches Inventory) and timeouts.
   - `docker compose stop/kill/pause` simulates Inventory, Kafka and Analytics outages.
-  - Integration tests use Testcontainers 1.20.4 (MySQL, Kafka and Toxiproxy modules).
+  - Integration tests use Testcontainers 1.21.4 (MySQL, Kafka and Toxiproxy modules); 1.20.x cannot talk to Docker Engine 29.
 - **Rationale**: Exercises each completion boundary deterministically without production code
   paths that depend on test flags beyond the inert profile.
 

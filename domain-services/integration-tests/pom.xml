@@ -3,6 +3,10 @@
   <parent><groupId>edu.northeastern.cs6510</groupId><artifactId>domain-services</artifactId><version>1.0.0-SNAPSHOT</version></parent>
   <artifactId>integration-tests</artifactId>
   <description>System tests against the running Compose stack, plus static boundary checks.</description>
+  <properties>
+    <!-- Tests tagged "system" need the running stack; run them with -Psystem-tests. -->
+    <excluded.test.groups>system</excluded.test.groups>
+  </properties>
   <dependencies>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
     <dependency><groupId>com.mysql</groupId><artifactId>mysql-connector-j</artifactId><scope>test</scope></dependency>
@@ -14,4 +18,19 @@
     <dependency><groupId>org.testcontainers</groupId><artifactId>kafka</artifactId><scope>test</scope></dependency>
     <dependency><groupId>org.testcontainers</groupId><artifactId>toxiproxy</artifactId><scope>test</scope></dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration><excludedGroups>${excluded.test.groups}</excludedGroups></configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <profiles>
+    <profile>
+      <id>system-tests</id>
+      <properties><excluded.test.groups>none</excluded.test.groups></properties>
+    </profile>
+  </profiles>
 </project>

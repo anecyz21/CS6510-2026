@@ -47,7 +47,7 @@ Decisions and rejected alternatives are in [research.md](research.md).
 
 **Testing**:
 - JUnit 5 and Spring Boot Test for unit and slice tests.
-- Testcontainers 1.20.4 (MySQL, Kafka, Toxiproxy) for service integration tests.
+- Testcontainers 1.21.4 (MySQL, Kafka, Toxiproxy) for service integration tests. Raised from 1.20.4 during US1 because Docker Engine 29 rejects the older Docker API version that 1.20.x requests.
 - Docker Compose system tests for the end-to-end, outage and boundary scenarios.
 - Contract-fixture tests for internal APIs and events.
 - The unchanged load client for normal and stress runs.

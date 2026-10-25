@@ -60,10 +60,14 @@ public class ScanService {
   }
 
   private ScanResult scanOnce(String transactionId, String sku, ProductLookup.Accept product) {
-    String status = db.query("SELECT status FROM checkout_transactions WHERE transaction_id = ? FOR SHARE",
-        rs -> rs.next() ? rs.getString(1) : null, transactionId);
-    if (status == null) throw ApiException.transactionNotFound(transactionId);
-    if (!"OPEN".equals(status)) throw ApiException.transactionNotOpen(transactionId);
+    // FOR SHARE serializes with the completion freeze (FOR UPDATE): a scan either commits before
+    // the freeze and is in the snapshot, or sees the busy flag (research R10).
+    String[] locked = db.query("SELECT status, active_attempt_id FROM checkout_transactions WHERE transaction_id = ? FOR SHARE",
+        rs -> rs.next() ? new String[] {rs.getString(1), rs.getString(2)} : null, transactionId);
+    if (locked == null) throw ApiException.transactionNotFound(transactionId);
+    if (!"OPEN".equals(locked[0])) throw ApiException.transactionNotOpen(transactionId);
+    // Rejected immediately: not queued, no basket change, no accepted-scan record (FR-011).
+    if (locked[1] != null) throw ApiException.transactionBusy(transactionId);
     // The price and name are captured at the first scan of a SKU and never re-priced.
     db.update("INSERT INTO basket_lines (transaction_id, sku, quantity, unit_price_cents, name) VALUES (?, ?, 1, ?, ?) "
         + "ON DUPLICATE KEY UPDATE quantity = quantity + 1", transactionId, sku, product.priceCents(), product.name());

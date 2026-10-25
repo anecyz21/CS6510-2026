@@ -2,6 +2,7 @@ package edu.northeastern.cs6510.checkout.api;
 
 import edu.northeastern.cs6510.checkout.CheckoutRepository;
 import edu.northeastern.cs6510.checkout.CheckoutService;
+import edu.northeastern.cs6510.checkout.completion.CompletionService;
 import edu.northeastern.cs6510.checkout.scan.ScanService;
 import java.math.BigDecimal;
 import java.util.Map;
@@ -14,17 +15,16 @@ import org.springframework.web.bind.annotation.*;
 public class CheckoutController {
   private final CheckoutService service;
   private final ScanService scans;
-  public CheckoutController(CheckoutService service, ScanService scans) { this.service = service; this.scans = scans; }
+  private final CompletionService completions;
+  public CheckoutController(CheckoutService service, ScanService scans, CompletionService completions) { this.service = service; this.scans = scans; this.completions = completions; }
   @PostMapping @ResponseStatus(HttpStatus.CREATED) public Map<String,Object> start(@RequestBody(required = false) Map<String,String> body) { return transaction(service.start(body == null ? null : body.get("stationId"))); }
   @GetMapping("/{id}") public Map<String,Object> get(@PathVariable String id) { return transaction(service.get(id)); }
   @PostMapping("/{id}/items") public Map<String,Object> scan(@PathVariable String id, @RequestBody(required = false) Map<String,String> body) {
     ScanService.ScanResult result=scans.scan(id, body == null ? null : body.get("sku"));
     return Map.of("transactionId",result.transactionId(),"sku",result.sku(),"name",result.name(),"unitPrice",money(result.unitPriceCents()),"itemCount",result.itemCount(),"runningTotal",money(result.runningTotalCents()));
   }
-  @PostMapping("/{id}/complete") @ResponseStatus(HttpStatus.OK) public Map<String,Object> complete(@PathVariable String id) {
-    service.complete(id);
-    throw new IllegalStateException("unreachable: completion is unavailable until the saga lands");
-  }
+  /** A 200 receipt covers only this call's purchases; unavailable units stay in the open basket (A1). */
+  @PostMapping("/{id}/complete") @ResponseStatus(HttpStatus.OK) public Map<String,Object> complete(@PathVariable String id) { return completions.complete(id); }
   private Map<String,Object> transaction(CheckoutRepository.Transaction t) { CheckoutRepository.Totals totals=service.basketTotals(t.transactionId()); return Map.of("transactionId",t.transactionId(),"stationId",t.stationId(),"status",t.status(),"itemCount",totals.itemCount(),"runningTotal",money(totals.cents()),"startedAt",t.startedAt().toString()); }
   private static BigDecimal money(long cents) { return BigDecimal.valueOf(cents, 2); }
 }
