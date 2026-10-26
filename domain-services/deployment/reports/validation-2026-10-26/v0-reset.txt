@@ -1,0 +1,283 @@
+# V0 reset to empty stores and readiness
+# command: /d/cs6510new/CS6510-2026/domain-services/deployment/scripts/reset.sh
+# started: 2026-10-26T02:12:55Z
+
+ Container deployment-inventory-1  Stopping
+ Container deployment-analytics-1  Stopping
+ Container deployment-checkout-1  Stopping
+ Container deployment-catalog-1  Stopping
+ Container deployment-kafka-1  Stopping
+ Container deployment-gateway-1  Stopping
+ Container deployment-catalog-1  Stopped
+ Container deployment-catalog-1  Removing
+ Container deployment-catalog-1  Removed
+ Container deployment-catalog-db-1  Stopping
+ Container deployment-inventory-1  Stopped
+ Container deployment-inventory-1  Removing
+ Container deployment-inventory-1  Removed
+ Container deployment-inventory-db-1  Stopping
+ Container deployment-gateway-1  Stopped
+ Container deployment-gateway-1  Removing
+ Container deployment-gateway-1  Removed
+ Container deployment-analytics-1  Stopped
+ Container deployment-analytics-1  Removing
+ Container deployment-analytics-1  Removed
+ Container deployment-analytics-db-1  Stopping
+ Container deployment-checkout-1  Stopped
+ Container deployment-checkout-1  Removing
+ Container deployment-checkout-1  Removed
+ Container deployment-checkout-db-1  Stopping
+ Container deployment-kafka-1  Stopped
+ Container deployment-kafka-1  Removing
+ Container deployment-kafka-1  Removed
+ Container deployment-catalog-db-1  Stopped
+ Container deployment-catalog-db-1  Removing
+ Container deployment-catalog-db-1  Removed
+ Container deployment-inventory-db-1  Stopped
+ Container deployment-inventory-db-1  Removing
+ Container deployment-inventory-db-1  Removed
+ Container deployment-analytics-db-1  Stopped
+ Container deployment-analytics-db-1  Removing
+ Container deployment-analytics-db-1  Removed
+ Container deployment-checkout-db-1  Stopped
+ Container deployment-checkout-db-1  Removing
+ Container deployment-checkout-db-1  Removed
+ Volume deployment_catalog-data  Removing
+ Volume deployment_inventory-data  Removing
+ Volume deployment_checkout-data  Removing
+ Volume deployment_analytics-data  Removing
+ Network deployment_default  Removing
+ Volume deployment_checkout-data  Removed
+ Volume deployment_kafka-data  Removing
+ Volume deployment_inventory-data  Removed
+ Volume deployment_catalog-data  Removed
+ Volume deployment_kafka-data  Removed
+ Volume deployment_analytics-data  Removed
+ Network deployment_default  Removed
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.59kB 0.0s done
+#1 DONE 0.0s
+
+#2 [gateway internal] load build definition from Dockerfile
+#2 transferring dockerfile: 130B done
+#2 DONE 0.0s
+
+#3 [analytics internal] load build definition from Dockerfile
+#3 transferring dockerfile: 130B done
+#3 DONE 0.0s
+
+#4 [catalog internal] load build definition from Dockerfile
+#4 transferring dockerfile: 130B done
+#4 DONE 0.0s
+
+#5 [inventory internal] load build definition from Dockerfile
+#5 transferring dockerfile: 130B done
+#5 DONE 0.0s
+
+#6 [checkout internal] load build definition from Dockerfile
+#6 transferring dockerfile: 130B done
+#6 DONE 0.0s
+
+#7 [checkout internal] load metadata for docker.io/library/eclipse-temurin:21-jre
+#7 DONE 0.5s
+
+#8 [checkout internal] load .dockerignore
+#8 transferring context: 2B done
+#8 DONE 0.0s
+
+#9 [inventory internal] load .dockerignore
+#9 transferring context: 2B done
+#9 DONE 0.0s
+
+#10 [analytics internal] load .dockerignore
+#10 transferring context: 2B done
+#10 DONE 0.0s
+
+#11 [catalog internal] load .dockerignore
+#11 transferring context: 2B done
+#11 DONE 0.0s
+
+#12 [gateway internal] load .dockerignore
+#12 transferring context: 2B done
+#12 DONE 0.0s
+
+#13 [inventory 1/2] FROM docker.io/library/eclipse-temurin:21-jre@sha256:227118764cccd3c3294617061aaa93a08309c63a395eefa83e6b35032992ea99
+#13 resolve docker.io/library/eclipse-temurin:21-jre@sha256:227118764cccd3c3294617061aaa93a08309c63a395eefa83e6b35032992ea99 0.0s done
+#13 DONE 0.0s
+
+#14 [checkout internal] load build context
+#14 transferring context: 92B done
+#14 DONE 0.0s
+
+#15 [inventory internal] load build context
+#15 transferring context: 93B done
+#15 DONE 0.0s
+
+#16 [analytics internal] load build context
+#16 transferring context: 93B done
+#16 DONE 0.0s
+
+#17 [catalog internal] load build context
+#17 transferring context: 91B done
+#17 DONE 0.0s
+
+#18 [gateway internal] load build context
+#18 transferring context: 87B done
+#18 DONE 0.0s
+
+#19 [checkout 2/2] COPY target/*.jar /app.jar
+#19 CACHED
+
+#20 [analytics 2/2] COPY target/*.jar /app.jar
+#20 CACHED
+
+#21 [inventory 2/2] COPY target/*.jar /app.jar
+#21 CACHED
+
+#22 [catalog 2/2] COPY target/*.jar /app.jar
+#22 CACHED
+
+#23 [gateway 2/2] COPY target/*.jar /app.jar
+#23 CACHED
+
+#24 [checkout] exporting to image
+#24 exporting layers done
+#24 exporting manifest sha256:b4712fa1ec0c025493da6f0801740cb450c5411265408396e484665d739d21bd done
+#24 exporting config sha256:cf5ed258924ae065b47a8d876cd7907f67f278e5c69af07296958f2cc2fc66c2 done
+#24 exporting attestation manifest sha256:824be8017de6d3cf131732f87461157f754e27f343bd53d2aa7875dbb26a2fb4 0.0s done
+#24 exporting manifest list sha256:52ae92490220f740b1bbf39e9483af8abd9f43829726a785e21adf012ab50bb5
+#24 exporting manifest list sha256:52ae92490220f740b1bbf39e9483af8abd9f43829726a785e21adf012ab50bb5 0.0s done
+#24 naming to docker.io/library/deployment-checkout:latest done
+#24 unpacking to docker.io/library/deployment-checkout:latest done
+#24 DONE 0.1s
+
+#25 [analytics] exporting to image
+#25 exporting layers done
+#25 exporting manifest sha256:7c4f5314c5d42379afd5857039be9acffca448c53ba01663b652f46d5531ca2c done
+#25 exporting config sha256:23f0cff156bea078f3e7350889f52e6f17c62c673c384e67ad195ad9118ea3c3 done
+#25 exporting attestation manifest sha256:b38ef05484ae1ce263f2c7152d8a51ec772e96aa15726cee1834b7c6733728c9 0.0s done
+#25 exporting manifest list sha256:4a190f5c0c700d20ff97b2f489c86c4d3cf85c7bcff0d90c359ccb23a5a84b2c 0.0s done
+#25 naming to docker.io/library/deployment-analytics:latest done
+#25 unpacking to docker.io/library/deployment-analytics:latest done
+#25 DONE 0.1s
+
+#26 [catalog] exporting to image
+#26 exporting layers done
+#26 exporting manifest sha256:f5c53413bb22c57e641e38d9210c0ac616b3930afc68e82d8a49e69efef193f4 done
+#26 exporting config sha256:4f00855c57cf45f9f6a7747ee0be5a8782120f68b662667ea73cfeff3bb232f5 done
+#26 exporting attestation manifest sha256:1d74b71dfcdc15de749b71e766812b9870c1ffe6c25b3c8b8af8947549c297e8 0.0s done
+#26 exporting manifest list sha256:0a9609b0915782a789bdf786bce0eed2b1c6b11ee68226f40f4e7793662afc00 0.0s done
+#26 naming to docker.io/library/deployment-catalog:latest done
+#26 unpacking to docker.io/library/deployment-catalog:latest done
+#26 DONE 0.1s
+
+#27 [gateway] exporting to image
+#27 exporting layers done
+#27 exporting manifest sha256:1f03d82092dc9925ced8c2bb4be5920e06475f387c239000319179e9c32741e4 done
+#27 exporting config sha256:d772aeec0d67daaed8f0daf2a5529f2146341722be3ff481d733e94cd95abe88 done
+#27 exporting attestation manifest sha256:9d8f5a65707c911480b9640c6df0e3660f67021cd8e6e513477340f81703e0cd 0.0s done
+#27 exporting manifest list sha256:2e0e9d86d89bc67a2c1949fb0dc12204466481dd6420b2dc00cae39de23cad49 0.0s done
+#27 naming to docker.io/library/deployment-gateway:latest done
+#27 unpacking to docker.io/library/deployment-gateway:latest done
+#27 DONE 0.1s
+
+#28 [inventory] exporting to image
+#28 exporting layers done
+#28 exporting manifest sha256:0647df9ec04eb248954f5818013a6574293171ab355ea7e03be760b60e566488 done
+#28 exporting config sha256:64c8c03555861f004313807b20ee12c571ccf89efbd08867c1fad8ab816805cb done
+#28 exporting attestation manifest sha256:74b6fbd3d374c87b04b634461b0de97e2f764514163c8679dd8043363318f6de 0.0s done
+#28 exporting manifest list sha256:e0dd2456ba60bd92e9ef45d7bda0e5f5946bec5717e1f651787008a81486c55f 0.0s done
+#28 naming to docker.io/library/deployment-inventory:latest done
+#28 unpacking to docker.io/library/deployment-inventory:latest done
+#28 DONE 0.1s
+
+#29 [checkout] resolving provenance for metadata file
+#29 DONE 0.1s
+
+#30 [analytics] resolving provenance for metadata file
+#30 DONE 0.1s
+
+#31 [gateway] resolving provenance for metadata file
+#31 DONE 0.0s
+
+#32 [inventory] resolving provenance for metadata file
+#32 DONE 0.0s
+
+#33 [catalog] resolving provenance for metadata file
+#33 DONE 0.0s
+ deployment-checkout  Built
+ deployment-gateway  Built
+ deployment-analytics  Built
+ deployment-catalog  Built
+ deployment-inventory  Built
+ Network deployment_default  Creating
+ Network deployment_default  Created
+ Volume deployment_checkout-data  Creating
+ Volume deployment_checkout-data  Created
+ Volume deployment_catalog-data  Creating
+ Volume deployment_catalog-data  Created
+ Volume deployment_analytics-data  Creating
+ Volume deployment_analytics-data  Created
+ Volume deployment_inventory-data  Creating
+ Volume deployment_inventory-data  Created
+ Volume deployment_kafka-data  Creating
+ Volume deployment_kafka-data  Created
+ Container deployment-gateway-1  Creating
+ Container deployment-checkout-db-1  Creating
+ Container deployment-inventory-db-1  Creating
+ Container deployment-analytics-db-1  Creating
+ Container deployment-catalog-db-1  Creating
+ Container deployment-kafka-1  Creating
+ Container deployment-gateway-1  Created
+ Container deployment-inventory-db-1  Created
+ Container deployment-inventory-1  Creating
+ Container deployment-checkout-db-1  Created
+ Container deployment-checkout-1  Creating
+ Container deployment-analytics-db-1  Created
+ Container deployment-analytics-1  Creating
+ Container deployment-catalog-db-1  Created
+ Container deployment-catalog-1  Creating
+ Container deployment-kafka-1  Created
+ Container deployment-checkout-1  Created
+ Container deployment-inventory-1  Created
+ Container deployment-catalog-1  Created
+ Container deployment-analytics-1  Created
+ Container deployment-inventory-db-1  Starting
+ Container deployment-analytics-db-1  Starting
+ Container deployment-gateway-1  Starting
+ Container deployment-kafka-1  Starting
+ Container deployment-catalog-db-1  Starting
+ Container deployment-checkout-db-1  Starting
+ Container deployment-checkout-db-1  Started
+ Container deployment-checkout-db-1  Waiting
+ Container deployment-analytics-db-1  Started
+ Container deployment-analytics-db-1  Waiting
+ Container deployment-catalog-db-1  Started
+ Container deployment-catalog-db-1  Waiting
+ Container deployment-gateway-1  Started
+ Container deployment-kafka-1  Started
+ Container deployment-inventory-db-1  Started
+ Container deployment-inventory-db-1  Waiting
+ Container deployment-checkout-db-1  Healthy
+ Container deployment-checkout-1  Starting
+ Container deployment-analytics-db-1  Healthy
+ Container deployment-analytics-1  Starting
+ Container deployment-catalog-db-1  Healthy
+ Container deployment-catalog-1  Starting
+ Container deployment-inventory-db-1  Healthy
+ Container deployment-inventory-1  Starting
+ Container deployment-checkout-1  Started
+ Container deployment-analytics-1  Started
+ Container deployment-catalog-1  Started
+ Container deployment-inventory-1  Started
+catalog-db     ready
+checkout-db    ready
+inventory-db   ready
+analytics-db   ready
+kafka          ready
+catalog        ready
+checkout       ready
+inventory      ready
+analytics      ready
+gateway        ready
+all services ready

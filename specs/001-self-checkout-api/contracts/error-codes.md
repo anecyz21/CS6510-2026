@@ -2,7 +2,7 @@
 
 > **Superseded by
 > [`specs/004-domain-services/contracts/public-api-amendment.md`](../../004-domain-services/contracts/public-api-amendment.md)**
-> (OpenAPI `1.2.0`). This catalog records feature 001 as it was designed. The current error
+> (OpenAPI `1.2.1`). This catalog records feature 001 as it was designed. The current error
 > catalog, including `TRANSACTION_BUSY` and `SERVICE_UNAVAILABLE`, and the current
 > `INSUFFICIENT_STOCK` semantics are in that document.
 

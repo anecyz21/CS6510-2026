@@ -33,4 +33,4 @@ The stress run's start/complete mean/p95/p99 latencies were 110.94/266.96/385.12
 
 Checkout retries MySQL deadlock victims up to eight times with capped exponential backoff. This addresses transient contention without treating a failed write as accepted. A previous four-attempt policy produced two scan errors during a normal-run startup burst; the recorded final runs have no errors.
 
-After the stress run, `integration-tests/scripts/reconcile-inventory.sql` returned no rows: all inventory remains non-negative and, for every SKU, initial stock minus available stock equals completed receipt-line quantity.
+After the stress run, `integration-tests/scripts/reconcile-inventory.sql` (kept at tag `baseline/service-based-v1`; removed from the redesign) returned no rows: all inventory remains non-negative and, for every SKU, initial stock minus available stock equals completed receipt-line quantity.

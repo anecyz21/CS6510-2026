@@ -23,9 +23,13 @@ their code. Each scenario names the requirement, success criterion or quality ga
 
 ## V0: Prerequisites and reset
 
-- JDK 21, Maven 3.9+, and Docker with Compose v2. Bash is required for scripts; Git Bash works on
-  Windows.
-- Ports free: 8080 (gateway); 3311–3314 (databases, operator access); 9092 (Kafka, host access).
+- JDK 21, Maven 3.9+, Docker with Compose v2, and `jq` (used by `reconcile.sh` and
+  `compare-reports.sh`). Bash is required for scripts; Git Bash works on Windows.
+- Ports free: 8080 (gateway); 8081–8084 (service operator ports); 3311–3314 (databases, operator
+  access); 9092 (Kafka, host access).
+- The service ports `127.0.0.1:8081–8084` and the database ports are bound to the loopback
+  interface and are for operators and tests only (actuator, `/internal/v1/ops/**`). Clients use
+  only the gateway on 8080, which never routes `/internal/**`.
 - Copy `domain-services/deployment/services.env.example` to `services.env` and fill in owner
   passwords. `services.env` is gitignored and never committed.
 
@@ -91,7 +95,7 @@ mvn -f domain-services/pom.xml -pl integration-tests -Dtest='FullGatewayContract
 
 **Expected**:
 - **All seven operations**: responses validate against the amended
-  `spec/self-checkout-openapi.yaml` (v1.2.0), and each error code in the
+  `spec/self-checkout-openapi.yaml` (v1.2.1), and each error code in the
   [error catalog](contracts/public-api-amendment.md#error-catalog-after-amendment) is produced by
   its trigger.
 - **Names**: low-stock and popular-items `name` values equal catalog names, not SKUs.
@@ -130,8 +134,16 @@ Automated: `completion/PartialFulfillmentTest`, `completion/BusyScanTest`.
 
 ## V7: Interruption, lost response and outage recovery (US2, SC-004)
 
-Run with the `fault-injection` profile on Checkout and the Compose `faults` profile (Toxiproxy
-between Checkout and Inventory).
+Run with the fault-injection override file `docker-compose.faults.yml`, which adds Toxiproxy
+between Checkout and Inventory and starts Checkout with its `fault-injection` Spring profile:
+
+```bash
+docker compose -f domain-services/deployment/docker-compose.yml -f domain-services/deployment/docker-compose.faults.yml --env-file domain-services/deployment/services.env up -d
+```
+
+```bash
+mvn -f domain-services/pom.xml -pl integration-tests -am -Psystem-tests test -Dstack.faults=true
+```
 
 | Case | Injection | Expected after the dependency or process is healthy again (≤ 60 s) |
 |---|---|---|
@@ -183,32 +195,41 @@ equal to ingested count. The output is saved beside the run's report.
 
 ## V10: Baseline and redesign performance (US5, Gate 4)
 
-**Baseline (before any redesign code)**:
+`domain-services/deployment/scripts/run-measurement.sh` runs the whole procedure for one
+topology and profile. For each run it:
+1. resets every volume and rebuilds;
+2. waits for readiness and applies the stock seed with the inventory owner's credentials;
+3. performs one start, scan and complete smoke check;
+4. warms up for 30 s (report discarded);
+5. runs the unchanged load client (`--stations=10 --duration=60` for `normal`,
+   `--stations=200 --duration=180` for `stress`) while `capture-observations.sh` samples;
+6. reconciles.
 
-1. Check out tag `baseline/service-based-v1` in a separate worktree. This is the current code
-   plus the instrumentation-only commit.
-2. Start the old Compose topology and apply `provisioning/measured-stock-baseline.sql`.
-3. Warm up for 30 s.
-4. Run three normal and three stress runs, resetting before each:
+It writes `report-<ts>.json`, `observations-<ts>.json`, `reconciliation-<ts>.txt` and
+`client-<ts>.log`.
+
+**Baseline (before any redesign code)**: check out tag `baseline/service-based-v1` (the current
+code plus the instrumentation-only commit) in a separate worktree, then run three normal and three
+stress runs. The baseline reconciliation is its own SQL check, run by the script.
 
 ```bash
-load-client/run.sh --stations=10 --duration=60 --reportDir=domain-services/deployment/reports/baseline
+git worktree add ../cs6510-baseline baseline/service-based-v1
 ```
 
 ```bash
-load-client/run.sh --stations=200 --duration=180 --reportDir=domain-services/deployment/reports/baseline
+domain-services/deployment/scripts/run-measurement.sh --topology baseline --compose-file ../cs6510-baseline/domain-services/deployment/docker-compose.yml --stock-sql domain-services/deployment/provisioning/measured-stock-baseline.sql --profile normal --runs 3 --report-dir domain-services/deployment/reports/baseline
 ```
 
-5. During each run, capture observations:
+Repeat with `--profile stress`.
+
+**Redesign**: the same script on the redesigned topology with `provisioning/measured-stock.sql`
+and V9 (`reconcile.sh --wait-settled 60`) after each run:
 
 ```bash
-domain-services/deployment/scripts/capture-observations.sh --out domain-services/deployment/reports/baseline
+domain-services/deployment/scripts/run-measurement.sh --topology redesign --compose-file domain-services/deployment/docker-compose.yml --env-file domain-services/deployment/services.env --stock-sql domain-services/deployment/provisioning/measured-stock.sql --profile normal --runs 3 --report-dir domain-services/deployment/reports/redesign
 ```
 
-6. Run the baseline's reconciliation SQL after each run.
-
-**Redesign**: the same procedure on the redesigned topology with
-`provisioning/measured-stock.sql`, with reports in `reports/redesign/` and V9 after each run.
+Repeat with `--profile stress`.
 
 **Comparison**: `domain-services/deployment/scripts/compare-reports.sh` writes `reports/COMPARISON.md`.
 

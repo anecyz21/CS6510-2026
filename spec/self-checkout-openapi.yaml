@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Self-Checkout System API
-  version: "1.2.0"
+  version: "1.2.1"
   description: |
     Shared API contract for the semester-long self-checkout project.
 
@@ -140,6 +140,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ScanResult"
+        "400":
+          description: Invalid request (`MISSING_SKU`, `sku` missing or blank)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
         "404":
           description: Transaction or SKU not found
           content:
@@ -320,6 +326,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PopularItemsResponse"
+        "400":
+          description: Invalid request (`INVALID_LIMIT`, `limit` below 1 or not an integer)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
         "503":
           description: >
             The service owning this operation, or data it requires, is

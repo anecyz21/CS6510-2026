@@ -764,12 +764,12 @@ failures included.
 **Purpose**: Public contract conformance across all seven operations, the documentation entry
 point, cleanup and full validation.
 
-- [ ] T121 [P] Rewrite `{IT}/contract/FullGatewayContractTest.java` (quickstart V4, gate 3, SC-001):
+- [X] T121 [P] Rewrite `{IT}/contract/FullGatewayContractTest.java` (quickstart V4, gate 3, SC-001):
   - Validate every response of the seven operations against `spec/self-checkout-openapi.yaml` v1.2.0, using `com.atlassian.oai:swagger-request-validator-core` (add the latest release on Maven Central to the integration-tests pom).
   - Trigger each error code in the error catalog of `public-api-amendment.md` and assert its status. The 503 cases come from stopped services.
   - Assert `Transaction.status` values are only `OPEN`, `COMPLETED` or `CANCELLED`.
   - Assert low-stock and popular-items `name` values equal the catalog names.
-- [ ] T122 [P] Rewrite `{DEP}/ARCHITECTURE.md` for the private-store design:
+- [X] T122 [P] Rewrite `{DEP}/ARCHITECTURE.md` for the private-store design:
   - deployables and ports;
   - an ownership and permission table (instance, database, account, and the absence of cross grants);
   - internal contracts, linking to `specs/004-domain-services/contracts/`;
@@ -778,19 +778,20 @@ point, cleanup and full validation.
   - the Analytics `ingest → window → rank-and-publish` order;
   - the catalog projection policy.
   Add the superseded note pointing to `public-api-amendment.md` (R19).
-- [ ] T123 Rewrite `{DEP}/README.md` as the single documentation entry point (FR-033, SC-011). Within its first screen, it links to: deployments and ports; the ownership and permission table in `ARCHITECTURE.md`; the internal contracts; the saga and recovery rules; the analytics flow; `reports/baseline/`, `reports/redesign/` and `reports/COMPARISON.md`; reconciliation outputs and `scripts/reconcile.sh`; and the quickstart. It states the prerequisites (JDK 21, Maven 3.9, Docker Compose v2, bash, `jq`). Link it from the root `README.md`.
-- [ ] T124 [P] Update `specs/004-domain-services/quickstart.md` to match the implementation:
+- [X] T123 Rewrite `{DEP}/README.md` as the single documentation entry point (FR-033, SC-011). Within its first screen, it links to: deployments and ports; the ownership and permission table in `ARCHITECTURE.md`; the internal contracts; the saga and recovery rules; the analytics flow; `reports/baseline/`, `reports/redesign/` and `reports/COMPARISON.md`; reconciliation outputs and `scripts/reconcile.sh`; and the quickstart. It states the prerequisites (JDK 21, Maven 3.9, Docker Compose v2, bash, `jq`). Link it from the root `README.md`.
+- [X] T124 [P] Update `specs/004-domain-services/quickstart.md` to match the implementation:
   - the `faults` profile is the override file `docker-compose.faults.yml`;
   - `jq` is a V0 prerequisite;
   - ops ports `127.0.0.1:8081–8084` are operator-only;
   - `run-measurement.sh` is used for V10.
   Change no expected outcomes.
-- [ ] T125 [P] Remove obsolete artifacts:
+- [X] T125 [P] Remove obsolete artifacts:
   - delete `{DS}/integration-tests/scripts/reconcile-inventory.sql`, whose baseline copy remains at tag `baseline/service-based-v1`, along with its references;
   - delete `{CHK}/CheckoutService.java` and `{CHK}/CheckoutRepository.java` if nothing references them any more;
   - delete any unused imports or classes in `{INV}/InventoryApplication.java` and `{ANA}/AnalyticsApplication.java`.
   Confirm that `mvn -q -f domain-services/pom.xml -DskipTests package` succeeds.
-- [ ] T126 Run the full quickstart validation V0–V11 from a `reset.sh` state, including `mvn -f domain-services/pom.xml verify` with the stack running and with `-Dstack.faults=true` for the V7 tests. Save each scenario's output under `{DEP}/reports/validation-<UTC date>/`, and link the folder from `{DEP}/README.md`. Any failure is recorded and fixed, never omitted.
+- [X] T126 Run the full quickstart validation V0–V11 from a `reset.sh` state, including `mvn -f domain-services/pom.xml verify` with the stack running and with `-Dstack.faults=true` for the V7 tests. Save each scenario's output under `{DEP}/reports/validation-<UTC date>/`, and link the folder from `{DEP}/README.md`. Any failure is recorded and fixed, never omitted.
+  - *Status 2026-10-26*: done; see `{DEP}/reports/validation-2026-10-26/`. The run found that the OpenAPI document had no `400` for scan (`MISSING_SKU`) or popular items (`INVALID_LIMIT`). The user approved amendment A7 (OpenAPI `1.2.1`) to document both, and the contract test then passed.
 - [ ] T127 (Optional; requires the user's explicit approval before editing) Propose the PATCH clarification of constitution principle IV in `.specify/memory/constitution.md`: "identify unavailable quantities through the retained basket". Bump the version to 3.0.1 and update the amendment date, per plan Complexity Tracking. Skip this task if it is not approved.
 
 ---

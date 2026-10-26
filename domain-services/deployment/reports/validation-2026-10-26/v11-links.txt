@@ -1,0 +1,42 @@
+# V11 every relative link in the entry-point docs resolves
+# command: bash -c 
+  status=0
+  for doc in "$1/README.md" "$1/ARCHITECTURE.md"; do
+    dir=$(dirname "$doc")
+    for link in $(grep -oE "\]\([^)#]+" "$doc" | sed "s/^](//" | grep -vE "^(https?:|mailto:)"); do
+      if [ -e "$dir/$link" ]; then echo "ok      $(basename "$doc") -> $link"; else echo "MISSING $(basename "$doc") -> $link"; status=1; fi
+    done
+  done
+  exit $status _ /d/cs6510new/CS6510-2026/domain-services/deployment
+# started: 2026-10-26T02:28:31Z
+
+ok      README.md -> ../../specs/004-domain-services/spec.md
+ok      README.md -> ARCHITECTURE.md
+ok      README.md -> docker-compose.yml
+ok      README.md -> ARCHITECTURE.md
+ok      README.md -> ../../specs/004-domain-services/contracts/README.md
+ok      README.md -> ARCHITECTURE.md
+ok      README.md -> ../../specs/004-domain-services/data-model.md
+ok      README.md -> ARCHITECTURE.md
+ok      README.md -> ARCHITECTURE.md
+ok      README.md -> reports/baseline/OBSERVATIONS.md
+ok      README.md -> reports/redesign/
+ok      README.md -> reports/COMPARISON.md
+ok      README.md -> reports/redesign/exploratory/inventory-locking/NOTES.md
+ok      README.md -> scripts/reconcile.sh
+ok      README.md -> reports/validation-2026-10-26/README.md
+ok      README.md -> ../../specs/004-domain-services/quickstart.md
+ok      README.md -> services.env.example
+ok      README.md -> reports/README.md
+ok      README.md -> reports/COMPARISON.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/contracts/public-api-amendment.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/research.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/data-model.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/contracts/README.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/contracts/catalog-internal-api.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/contracts/inventory-internal-api.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/contracts/checkout-operations-api.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/contracts/accepted-scan-event.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/contracts/public-api-amendment.md
+ok      ARCHITECTURE.md -> ../../specs/004-domain-services/data-model.md
+ok      ARCHITECTURE.md -> reports/redesign/exploratory/inventory-locking/NOTES.md

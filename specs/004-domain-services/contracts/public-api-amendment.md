@@ -1,7 +1,7 @@
 # Public API Amendment: Partial Completion, Busy Scans and Dependency Outcomes
 
 **Source of truth**: [`spec/self-checkout-openapi.yaml`](../../../spec/self-checkout-openapi.yaml)
-(currently `info.version: "1.0.0"`) | **Target version**: `1.2.0` |
+(was `info.version: "1.0.0"`) | **Target version**: `1.2.0` (A1–A6); `1.2.1` after A7 |
 **Authority**: spec Clarifications 2026-10-23, FR-006, FR-013–FR-016, FR-034
 
 This document lists every change to the canonical public contract that this feature requires. Per
@@ -10,8 +10,8 @@ implementation code changes**. None of them adds a path, schema, field, required
 lifecycle status. Every error uses the existing `ApiError {error, message}` body. The load client
 and mock server are not modified.
 
-Status legend: **Approved** = authorized by the spec's clarifications (A1–A5) or by the user's
-explicit planning decision of 2026-10-24 (A6).
+Status legend: **Approved** = authorized by the spec's clarifications (A1–A5), by the user's
+explicit planning decision of 2026-10-24 (A6), or by the user's decision of 2026-10-26 (A7).
 
 ## Amendments
 
@@ -95,6 +95,20 @@ Add a `503` response (schema `ApiError`, `error: SERVICE_UNAVAILABLE`) to all se
 The user approved A6 during planning on 2026-10-24, which satisfies FR-034's requirement to
 document this outcome before implementation. It replaces today's undocumented `500` for these
 cases. A `503` never accompanies a business effect, and the client may retry.
+
+### A7: Document the existing `400` responses on scan and popular items (Approved 2026-10-26)
+
+A documentation-only PATCH (`info.version` `1.2.0` → `1.2.1`). It adds a `400` response
+(schema `ApiError`) to two operations whose `400` codes were already in the error catalog below
+and already returned by the services, but were missing from the YAML:
+
+| Operation | `400` description | Code | Source |
+|---|---|---|---|
+| `POST /transactions/{transactionId}/items` | Invalid request (`MISSING_SKU`, `sku` missing or blank) | `MISSING_SKU` | `ScanItemRequest` already requires `sku`. The gateway has rejected a missing `sku` since the service-based design |
+| `GET /analytics/popular-items` | Invalid request (`INVALID_LIMIT`, `limit` below 1 or not an integer) | `INVALID_LIMIT` | Feature 001 `error-codes.md` (FR-027); restored by task T111 |
+
+No path, parameter, schema, field or behavior changes. The gap was found by the full contract
+test (task T121, `reports/validation-2026-10-26/`).
 
 ## Error catalog (after amendment)
 

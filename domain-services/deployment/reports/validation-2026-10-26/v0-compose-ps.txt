@@ -1,0 +1,15 @@
+# V0 Compose topology (services and health)
+# command: compose ps
+# started: 2026-10-26T02:13:17Z
+
+NAME                        IMAGE                  COMMAND                   SERVICE        CREATED          STATUS                            PORTS
+deployment-analytics-1      deployment-analytics   "java -jar /app.jar"      analytics      17 seconds ago   Up 6 seconds (healthy)            127.0.0.1:8084->8084/tcp
+deployment-analytics-db-1   mysql:8.4              "docker-entrypoint.s…"   analytics-db   18 seconds ago   Up 17 seconds (healthy)           127.0.0.1:3314->3306/tcp
+deployment-catalog-1        deployment-catalog     "java -jar /app.jar"      catalog        17 seconds ago   Up 6 seconds (healthy)            127.0.0.1:8081->8081/tcp
+deployment-catalog-db-1     mysql:8.4              "docker-entrypoint.s…"   catalog-db     18 seconds ago   Up 17 seconds (healthy)           127.0.0.1:3311->3306/tcp
+deployment-checkout-1       deployment-checkout    "java -jar /app.jar"      checkout       17 seconds ago   Up 6 seconds (health: starting)   127.0.0.1:8082->8082/tcp
+deployment-checkout-db-1    mysql:8.4              "docker-entrypoint.s…"   checkout-db    18 seconds ago   Up 17 seconds (healthy)           127.0.0.1:3312->3306/tcp
+deployment-gateway-1        deployment-gateway     "java -jar /app.jar"      gateway        18 seconds ago   Up 17 seconds (healthy)           0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+deployment-inventory-1      deployment-inventory   "java -jar /app.jar"      inventory      17 seconds ago   Up 6 seconds (healthy)            127.0.0.1:8083->8083/tcp
+deployment-inventory-db-1   mysql:8.4              "docker-entrypoint.s…"   inventory-db   18 seconds ago   Up 17 seconds (healthy)           127.0.0.1:3313->3306/tcp
+deployment-kafka-1          apache/kafka:3.8.1     "/__cacert_entrypoin…"   kafka          18 seconds ago   Up 17 seconds (healthy)           127.0.0.1:9092->9092/tcp

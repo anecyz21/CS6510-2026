@@ -1,0 +1,27 @@
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.212 s -- in edu.northeastern.cs6510.contracts.FixtureCompatibilityTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 91.76 s -- in edu.northeastern.cs6510.analytics.AnalyticsInterruptionTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 101.1 s -- in edu.northeastern.cs6510.analytics.KnownSequenceRankingTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 89.57 s -- in edu.northeastern.cs6510.analytics.OutageRecoveryTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 48.97 s -- in edu.northeastern.cs6510.analytics.PopularItemsViewTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.177 s -- in edu.northeastern.cs6510.analytics.ReplayDuplicateTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 19.44 s -- in edu.northeastern.cs6510.boundaries.GatewayUnavailableTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in edu.northeastern.cs6510.boundaries.ModuleBoundaryTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.396 s -- in edu.northeastern.cs6510.boundaries.PrivateStoreAccessTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.379 s -- in edu.northeastern.cs6510.completion.BusyScanTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.266 s -- in edu.northeastern.cs6510.completion.CompletionPreconditionTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 39.51 s -- in edu.northeastern.cs6510.completion.ConcurrentLastUnitTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 50.99 s -- in edu.northeastern.cs6510.completion.InventoryOutageTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.241 s -- in edu.northeastern.cs6510.completion.PartialFulfillmentTest
+[ERROR] Tests run: 5, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 69.43 s <<< FAILURE! -- in edu.northeastern.cs6510.contract.FullGatewayContractTest
+[ERROR] edu.northeastern.cs6510.contract.FullGatewayContractTest.everyOperationAnswers503WhenItsOwnerIsDown -- Time elapsed: 64.13 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: the basket survives the outage ==> expected: <200> but was: <409>
+[ERROR] edu.northeastern.cs6510.contract.FullGatewayContractTest.badRequestsOnScanAndPopularItemsAreDocumented -- Time elapsed: 0.053 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+POST /transactions/37696a17-b75b-4e6e-9aa4-bf1b1b5c0584/items -> 400 does not conform: Response status 400 not defined for path '/transactions/{transactionId}/items'.
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 72.57 s -- in edu.northeastern.cs6510.deployment.IndependentStartupTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.29 s -- in edu.northeastern.cs6510.inventory.LowStockViewTest
+[ERROR]   FullGatewayContractTest.badRequestsOnScanAndPopularItemsAreDocumented:139->post:230->send:250 POST /transactions/37696a17-b75b-4e6e-9aa4-bf1b1b5c0584/items -> 400 does not conform: Response status 400 not defined for path '/transactions/{transactionId}/items'.
+[ERROR] Tests run: 32, Failures: 2, Errors: 0, Skipped: 0
+[INFO] integration-tests .................................. FAILURE [10:30 min]
+[INFO] BUILD FAILURE

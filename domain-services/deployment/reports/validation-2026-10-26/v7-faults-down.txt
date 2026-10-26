@@ -1,0 +1,29 @@
+# V7 restore the plain topology
+# command: compose up -d --remove-orphans
+# started: 2026-10-26T02:28:23Z
+
+ Container deployment-toxiproxy-1  Stopping
+ Container deployment-toxiproxy-1  Stopped
+ Container deployment-toxiproxy-1  Removing
+ Container deployment-toxiproxy-1  Removed
+ Container deployment-gateway-1  Running
+ Container deployment-inventory-db-1  Running
+ Container deployment-checkout-db-1  Running
+ Container deployment-catalog-db-1  Running
+ Container deployment-kafka-1  Running
+ Container deployment-checkout-1  Recreate
+ Container deployment-inventory-1  Running
+ Container deployment-analytics-db-1  Running
+ Container deployment-catalog-1  Running
+ Container deployment-analytics-1  Running
+ Container deployment-checkout-1  Recreated
+ Container deployment-checkout-db-1  Waiting
+ Container deployment-catalog-db-1  Waiting
+ Container deployment-inventory-db-1  Waiting
+ Container deployment-analytics-db-1  Waiting
+ Container deployment-analytics-db-1  Healthy
+ Container deployment-checkout-db-1  Healthy
+ Container deployment-checkout-1  Starting
+ Container deployment-catalog-db-1  Healthy
+ Container deployment-inventory-db-1  Healthy
+ Container deployment-checkout-1  Started

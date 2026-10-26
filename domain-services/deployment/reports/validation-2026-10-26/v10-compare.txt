@@ -1,0 +1,5 @@
+# V10 regenerate COMPARISON.md from the committed runs
+# command: /d/cs6510new/CS6510-2026/domain-services/deployment/scripts/compare-reports.sh
+# started: 2026-10-26T02:28:29Z
+
+wrote /d/cs6510new/CS6510-2026/domain-services/deployment/scripts/../reports/COMPARISON.md

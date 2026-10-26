@@ -1,0 +1,13 @@
+V0 reset to empty stores and readiness                     PASS  exit 0  (v0-reset.txt, 02:12:55)
+V0 Compose topology (services and health)                  PASS  exit 0  (v0-compose-ps.txt, 02:13:17)
+V1-V2 module, contract and Testcontainers tests (mvn verify) PASS  exit 0  (v1-mvn-verify.txt, 02:13:17)
+V1-V9 system tests on the plain stack (all but V7 faults)  FAIL  exit 1  (v1-v9-system-tests.txt, 02:14:55)
+V7 start the fault-injection override                      PASS  exit 0  (v7-faults-up.txt, 02:25:28)
+V7 readiness with faults override                          PASS  exit 0  (v7-readiness.txt, 02:25:30)
+V7 interruption, lost response and race tests (-Dstack.faults=true) PASS  exit 0  (v7-fault-tests.txt, 02:25:34)
+V7 restore the plain topology                              PASS  exit 0  (v7-faults-down.txt, 02:28:23)
+V7 readiness after restore                                 PASS  exit 0  (v7-restore-readiness.txt, 02:28:25)
+V9 settled reconciliation R-1..R-6                         PASS  exit 0  (v9-reconciliation.txt, 02:28:29)
+V10 regenerate COMPARISON.md from the committed runs       PASS  exit 0  (v10-compare.txt, 02:28:29)
+V11 every relative link in the entry-point docs resolves   PASS  exit 0  (v11-links.txt, 02:28:30)
+validation finished 2026-10-26T02:28:31Z; outputs in /d/cs6510new/CS6510-2026/domain-services/deployment/reports/validation-2026-10-26

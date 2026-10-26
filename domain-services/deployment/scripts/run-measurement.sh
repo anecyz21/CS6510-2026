@@ -101,10 +101,11 @@ smoke_check() { # one start -> scan -> complete through the gateway; aborts on a
 
 reconcile() { # file
   if [ "$topology" = baseline ]; then
+    # The baseline check lives in the baseline tree (tag baseline/service-based-v1); the redesign uses reconcile.sh.
     local rows
     rows=$(compose exec -T mysql mysql -uroot -proot -N -B < "$tree/domain-services/integration-tests/scripts/reconcile-inventory.sql" 2>/dev/null | tr -d '\r')
     {
-      echo "baseline reconciliation: domain-services/integration-tests/scripts/reconcile-inventory.sql (root, shared instance)"
+      echo "baseline reconciliation: domain-services/integration-tests/scripts/reconcile-inventory.sql at tag baseline/service-based-v1 (root, shared instance)"
       echo "rule: available_stock >= 0 and initial_stock - available_stock = completed receipt-line quantity, per SKU"
       if [ -z "$rows" ]; then echo "violating SKUs: none"; echo "RECONCILIATION PASS"
       else echo "violating SKUs (sku, initial, available, completed):"; echo "$rows"; echo "RECONCILIATION FAIL"; fi

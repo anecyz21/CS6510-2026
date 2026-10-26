@@ -1,0 +1,12 @@
+# V9 settled reconciliation R-1..R-6
+# command: /d/cs6510new/CS6510-2026/domain-services/deployment/scripts/reconcile.sh --wait-settled 120
+# started: 2026-10-26T02:28:29Z
+
+reconciliation at 2026-10-26T02:28:29Z (exports: http://127.0.0.1:8082/internal/v1/ops/reconciliation-export, http://127.0.0.1:8083/internal/v1/ops/reconciliation-export, http://127.0.0.1:8084/internal/v1/ops/ingest-status)
+R-1 physical >= reserved >= 0 PASS  violations=0
+R-2 no RESERVED reservation PASS  openReservations=0
+R-3 no unresolved attempt or freeze flag PASS  unresolvedAttempts=0 activeAttemptFlags=0
+R-4 initial - physical = receipt quantity PASS  skus=2000 violations=0 pendingSaleLines=0
+R-5 committed reservations = finalized attempts PASS  committed=104 finalized=104 skuMismatches=0
+R-6 accepted scans = ingested scans PASS  outboxTotal=4560 ingestedCount=4560 outboxPending=0 consumerLag=0
+RECONCILIATION PASS

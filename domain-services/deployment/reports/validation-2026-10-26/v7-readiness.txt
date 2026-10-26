@@ -1,0 +1,15 @@
+# V7 readiness with faults override
+# command: /d/cs6510new/CS6510-2026/domain-services/deployment/scripts/check-readiness.sh
+# started: 2026-10-26T02:25:30Z
+
+catalog-db     ready
+checkout-db    ready
+inventory-db   ready
+analytics-db   ready
+kafka          ready
+catalog        ready
+checkout       ready
+inventory      ready
+analytics      ready
+gateway        ready
+all services ready

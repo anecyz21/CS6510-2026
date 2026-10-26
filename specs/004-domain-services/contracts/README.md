@@ -2,7 +2,7 @@
 
 | Contract | Kind | Provider → Consumer(s) | Version |
 |---|---|---|---|
-| [public-api-amendment.md](public-api-amendment.md) | Public HTTP (OpenAPI amendment A1–A6 + error catalog) | Gateway → load client and users | OpenAPI `1.2.0` |
+| [public-api-amendment.md](public-api-amendment.md) | Public HTTP (OpenAPI amendments A1–A7 + error catalog) | Gateway → load client and users | OpenAPI `1.2.1` (A1–A6 in `1.2.0`, A7 in `1.2.1`) |
 | [catalog-internal-api.md](catalog-internal-api.md) | Internal HTTP | Catalog → Checkout, Inventory, Analytics | `/internal/v1` |
 | [inventory-internal-api.md](inventory-internal-api.md) | Internal HTTP (reservation commands) | Inventory → Checkout | `/internal/v1` |
 | [checkout-operations-api.md](checkout-operations-api.md) | Internal HTTP (operator, reconciliation) | Checkout/Inventory/Analytics → operators, tests | `/internal/v1/ops` |

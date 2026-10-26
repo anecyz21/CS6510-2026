@@ -25,6 +25,10 @@ self-checkout-project/
 └── domain-services/                  ← services, deployment assets, and service tests
 ```
 
+The domain-services implementation (private stores, completion saga, Kafka analytics) starts at
+[`domain-services/deployment/README.md`](domain-services/deployment/README.md), which links its
+architecture, contracts, reports and validation evidence.
+
 ## The API contract (`spec/self-checkout-openapi.yaml`)
 
 This is what every weekly implementation must satisfy, regardless of its

@@ -1,0 +1,2846 @@
+# V1-V2 module, contract and Testcontainers tests (mvn verify)
+# command: mvn -f /d/cs6510new/CS6510-2026/domain-services/pom.xml verify
+# started: 2026-10-26T02:13:17Z
+
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] domain-services                                                    [pom]
+[INFO] service-contracts                                                  [jar]
+[INFO] catalog-service                                                    [jar]
+[INFO] checkout-service                                                   [jar]
+[INFO] inventory-service                                                  [jar]
+[INFO] analytics-service                                                  [jar]
+[INFO] api-gateway                                                        [jar]
+[INFO] integration-tests                                                  [jar]
+[INFO] 
+[INFO] --------------< edu.northeastern.cs6510:domain-services >---------------
+[INFO] Building domain-services 1.0.0-SNAPSHOT                            [1/8]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] -------------< edu.northeastern.cs6510:service-contracts >--------------
+[INFO] Building service-contracts 1.0.0-SNAPSHOT                          [2/8]
+[INFO]   from service-contracts\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ service-contracts ---
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\service-contracts\src\main\resources
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\service-contracts\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ service-contracts ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ service-contracts ---
+[INFO] Copying 6 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ service-contracts ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ service-contracts ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running edu.northeastern.cs6510.contracts.FixtureCompatibilityTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.221 s -- in edu.northeastern.cs6510.contracts.FixtureCompatibilityTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ service-contracts ---
+[INFO] 
+[INFO] --- jar:3.4.2:test-jar (default) @ service-contracts ---
+[INFO] 
+[INFO] --------------< edu.northeastern.cs6510:catalog-service >---------------
+[INFO] Building catalog-service 1.0.0-SNAPSHOT                            [3/8]
+[INFO]   from catalog-service\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ catalog-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ catalog-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ catalog-service ---
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\catalog-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ catalog-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ catalog-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running edu.northeastern.cs6510.catalog.internal.CatalogInternalContractTest
+19:13:21.170 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [edu.northeastern.cs6510.catalog.internal.CatalogInternalContractTest]: CatalogInternalContractTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+19:13:21.272 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration edu.northeastern.cs6510.catalog.CatalogApplication for test class edu.northeastern.cs6510.catalog.internal.CatalogInternalContractTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.3)
+
+2026-10-25T19:13:21.557-07:00  INFO 26632 --- [catalog-service] [           main] e.n.c.c.i.CatalogInternalContractTest    : Starting CatalogInternalContractTest using Java 21.0.6 with PID 26632 (started by ychen21 in D:\cs6510new\CS6510-2026\domain-services\catalog-service)
+2026-10-25T19:13:21.558-07:00  INFO 26632 --- [catalog-service] [           main] e.n.c.c.i.CatalogInternalContractTest    : No active profile set, falling back to 1 default profile: "default"
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\ychen21\.m2\repository\net\bytebuddy\byte-buddy-agent\1.15.11\byte-buddy-agent-1.15.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-10-25T19:13:22.982-07:00  INFO 26632 --- [catalog-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-25T19:13:22.982-07:00  INFO 26632 --- [catalog-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-25T19:13:22.985-07:00  INFO 26632 --- [catalog-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+2026-10-25T19:13:23.026-07:00  INFO 26632 --- [catalog-service] [           main] e.n.c.c.i.CatalogInternalContractTest    : Started CatalogInternalContractTest in 1.691 seconds (process running for 2.29)
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.425 s -- in edu.northeastern.cs6510.catalog.internal.CatalogInternalContractTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ catalog-service ---
+[INFO] 
+[INFO] --- spring-boot:3.4.3:repackage (repackage) @ catalog-service ---
+[INFO] Replacing main artifact D:\cs6510new\CS6510-2026\domain-services\catalog-service\target\catalog-service-1.0.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\cs6510new\CS6510-2026\domain-services\catalog-service\target\catalog-service-1.0.0-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --------------< edu.northeastern.cs6510:checkout-service >--------------
+[INFO] Building checkout-service 1.0.0-SNAPSHOT                           [4/8]
+[INFO]   from checkout-service\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ checkout-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 6 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ checkout-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ checkout-service ---
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\checkout-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ checkout-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ checkout-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running edu.northeastern.cs6510.checkout.catalog.CatalogClientContractTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.469 s -- in edu.northeastern.cs6510.checkout.catalog.CatalogClientContractTest
+[INFO] Running edu.northeastern.cs6510.checkout.completion.AttemptDriverTest
+19:13:24.703 [main] ERROR edu.northeastern.cs6510.checkout.completion.AttemptDriver -- completion attempt a-1 needs attention: reservation lines do not match the attempt snapshot
+19:13:24.707 [main] ERROR edu.northeastern.cs6510.checkout.completion.AttemptDriver -- completion attempt a-1 needs attention: cancel observed COMMITTED
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.022 s -- in edu.northeastern.cs6510.checkout.completion.AttemptDriverTest
+[INFO] Running edu.northeastern.cs6510.checkout.completion.UuidV7Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in edu.northeastern.cs6510.checkout.completion.UuidV7Test
+[INFO] Running edu.northeastern.cs6510.checkout.inventory.HttpInventoryClientTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.025 s -- in edu.northeastern.cs6510.checkout.inventory.HttpInventoryClientTest
+[INFO] Running edu.northeastern.cs6510.checkout.inventory.InventoryClientContractTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.030 s -- in edu.northeastern.cs6510.checkout.inventory.InventoryClientContractTest
+[INFO] Running edu.northeastern.cs6510.checkout.outbox.AcceptedScanSerializationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in edu.northeastern.cs6510.checkout.outbox.AcceptedScanSerializationTest
+[INFO] Running edu.northeastern.cs6510.checkout.recovery.RecoveryWorkerTest
+19:13:27.798 [main] ERROR edu.northeastern.cs6510.checkout.completion.AttemptDriver -- completion attempt a-1 needs attention: cancel observed COMMITTED
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.020 s -- in edu.northeastern.cs6510.checkout.recovery.RecoveryWorkerTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 31, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ checkout-service ---
+[INFO] 
+[INFO] --- spring-boot:3.4.3:repackage (repackage) @ checkout-service ---
+[INFO] Replacing main artifact D:\cs6510new\CS6510-2026\domain-services\checkout-service\target\checkout-service-1.0.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\cs6510new\CS6510-2026\domain-services\checkout-service\target\checkout-service-1.0.0-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --- failsafe:3.5.2:integration-test (default) @ checkout-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+19:13:28.853 [main] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 1.21.4
+19:13:28.975 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Loaded org.testcontainers.dockerclient.NpipeSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+19:13:29.104 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with local Npipe socket (npipe:////./pipe/docker_engine)
+19:13:29.106 [main] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is localhost
+19:13:29.117 [main] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
+  Server Version: 29.1.3
+  API Version: 1.52
+  Operating System: Docker Desktop (containerized)
+  Total Memory: 15862 MB
+  Labels: 
+    com.docker.desktop.address=npipe://\\.\pipe\docker_cli
+19:13:29.123 [main] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
+19:13:29.125 [main] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+19:13:29.239 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Creating container for image: testcontainers/ryuk:0.12.0
+19:13:29.290 [main] INFO org.testcontainers.utility.RegistryAuthLocator -- Credential helper/store (docker-credential-desktop) does not have credentials for https://index.docker.io/v1/
+19:13:29.390 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 is starting: 331f6aaa0b0e7fa619b101680ee1786f11769afc5ed1436824c6c84d104cd613
+19:13:29.583 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 started in PT0.3438739S
+19:13:29.586 [main] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+19:13:29.587 [main] INFO org.testcontainers.DockerClientFactory -- Checking the system...
+19:13:29.588 [main] INFO org.testcontainers.DockerClientFactory -- ?? Docker server version should be at least 1.6.0
+[INFO] Running edu.northeastern.cs6510.checkout.outbox.OutboxRelayIT
+19:13:29.597 [main] INFO tc.apache/kafka:3.8.1 -- Creating container for image: apache/kafka:3.8.1
+19:13:29.643 [main] INFO tc.apache/kafka:3.8.1 -- Container apache/kafka:3.8.1 is starting: ee38f1e6e3b6d54481af1d24b4bb9a2f2c20872118933105e0e2e438f401f8ba
+19:13:31.396 [main] INFO tc.apache/kafka:3.8.1 -- Container apache/kafka:3.8.1 started in PT1.7992829S
+19:13:31.397 [main] INFO tc.mysql:8.4 -- Creating container for image: mysql:8.4
+19:13:31.462 [main] INFO tc.mysql:8.4 -- Container mysql:8.4 is starting: bac47252a9ffbb70119c3c041d82db8822e1029b5dd19b6b3e4b8aedc49d0283
+19:13:31.600 [main] INFO tc.mysql:8.4 -- Waiting for database connection to become available at jdbc:mysql://localhost:56789/checkout using query 'SELECT 1'
+19:13:38.825 [main] INFO tc.mysql:8.4 -- Container mysql:8.4 started in PT7.4273509S
+19:13:38.825 [main] INFO tc.mysql:8.4 -- Container is started (JDBC URL: jdbc:mysql://localhost:56789/checkout)
+19:13:39.109 [main] INFO org.flywaydb.core.FlywayExecutor -- Database: jdbc:mysql://localhost:56789/checkout (MySQL 8.4)
+19:13:39.361 [main] WARN org.flywaydb.core.internal.database.base.Database -- Flyway upgrade recommended: MySQL 8.4 is newer than this version of Flyway and support has not been tested. The latest supported version of MySQL is 8.1.
+19:13:39.381 [main] INFO org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory -- Schema history table `checkout`.`flyway_schema_history` does not exist yet
+19:13:39.385 [main] INFO org.flywaydb.core.internal.command.DbValidate -- Successfully validated 6 migrations (execution time 00:00.016s)
+19:13:39.401 [main] INFO org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory -- Creating Schema History table `checkout`.`flyway_schema_history` ...
+19:13:39.446 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Current version of schema `checkout`: << Empty Schema >>
+19:13:39.457 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `checkout` to version "1 - checkout"
+19:13:39.537 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `checkout` to version "2 - outbox view"
+19:13:39.557 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `checkout` to version "3 - receipts"
+19:13:39.596 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `checkout` to version "4 - private store and projection"
+19:13:39.655 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `checkout` to version "5 - completion attempts"
+19:13:39.764 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `checkout` to version "6 - accepted scan outbox"
+19:13:39.806 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Successfully applied 6 migrations to schema `checkout`, now at version v6 (execution time 00:00.260s)
+19:13:40.015 [main] INFO org.apache.kafka.clients.admin.AdminClientConfig -- AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:56784]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 5000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 3000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+19:13:40.090 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:40.090 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:40.090 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980820089
+19:13:40.319 [kafka-admin-client-thread | adminclient-1] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.admin.client for adminclient-1 unregistered
+19:13:40.323 [kafka-admin-client-thread | adminclient-1] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:40.323 [kafka-admin-client-thread | adminclient-1] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:40.323 [kafka-admin-client-thread | adminclient-1] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:40.405 [main] INFO org.apache.kafka.clients.admin.AdminClientConfig -- AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [127.0.0.1:1]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 5000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 3000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+19:13:40.407 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:40.407 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:40.407 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980820407
+19:13:40.409 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:40.409 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:40.517 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:40.518 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:40.734 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:40.734 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:40.953 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:40.953 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:41.385 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:41.385 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:42.358 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:42.358 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:43.221 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:43.222 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:43.422 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.admin.internals.AdminMetadataManager -- [AdminClient clientId=adminclient-2] Metadata update failed
+org.apache.kafka.common.errors.TimeoutException: Timed out waiting for a node assignment. Call: fetchMetadata
+19:13:44.289 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:44.289 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:45.361 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Node -1 disconnected.
+19:13:45.361 [kafka-admin-client-thread | adminclient-2] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-2] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:45.422 [main] ERROR org.springframework.kafka.core.KafkaAdmin -- Could not configure topics
+org.springframework.kafka.KafkaException: Timed out waiting to get existing topics
+	at org.springframework.kafka.core.KafkaAdmin.lambda$checkPartitions$13(KafkaAdmin.java:571)
+	at java.base/java.util.HashMap.forEach(HashMap.java:1429)
+	at java.base/java.util.Collections$UnmodifiableMap.forEach(Collections.java:1707)
+	at org.springframework.kafka.core.KafkaAdmin.checkPartitions(KafkaAdmin.java:550)
+	at org.springframework.kafka.core.KafkaAdmin.addOrModifyTopicsIfNeeded(KafkaAdmin.java:443)
+	at org.springframework.kafka.core.KafkaAdmin.initialize(KafkaAdmin.java:276)
+	at org.springframework.kafka.core.KafkaAdmin.afterSingletonsInstantiated(KafkaAdmin.java:245)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1083)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:987)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:627)
+	at edu.northeastern.cs6510.checkout.outbox.OutboxRelayIT.kafkaContext(OutboxRelayIT.java:152)
+	at edu.northeastern.cs6510.checkout.outbox.OutboxRelayIT.withKafkaDownRowsStayPendingAndScansKeepCommitting(OutboxRelayIT.java:87)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:767)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$8(TestMethodTestDescriptor.java:217)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:213)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:138)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:68)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+Caused by: java.util.concurrent.TimeoutException: null
+	at java.base/java.util.concurrent.CompletableFuture.timedGet(CompletableFuture.java:1960)
+	at java.base/java.util.concurrent.CompletableFuture.get(CompletableFuture.java:2095)
+	at org.apache.kafka.common.internals.KafkaFutureImpl.get(KafkaFutureImpl.java:180)
+	at org.springframework.kafka.core.KafkaAdmin.lambda$checkPartitions$13(KafkaAdmin.java:553)
+	... 80 common frames omitted
+19:13:45.423 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.admin.client for adminclient-2 unregistered
+19:13:45.423 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.admin.internals.AdminMetadataManager -- [AdminClient clientId=adminclient-2] Metadata update failed
+org.apache.kafka.common.errors.TimeoutException: The AdminClient thread has exited. Call: fetchMetadata
+19:13:45.423 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.clients.admin.KafkaAdminClient -- [AdminClient clientId=adminclient-2] Timed out 1 remaining operation(s) during close.
+19:13:45.423 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:45.423 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:45.423 [kafka-admin-client-thread | adminclient-2] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:45.482 [main] INFO org.apache.kafka.clients.admin.AdminClientConfig -- AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [127.0.0.1:1]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 5000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 3000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+19:13:45.483 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:45.483 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:45.483 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980825483
+19:13:45.484 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Node -1 disconnected.
+19:13:45.484 [kafka-admin-client-thread | adminclient-3] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:45.590 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Node -1 disconnected.
+19:13:45.590 [kafka-admin-client-thread | adminclient-3] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:45.803 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Node -1 disconnected.
+19:13:45.803 [kafka-admin-client-thread | adminclient-3] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:46.019 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Node -1 disconnected.
+19:13:46.019 [kafka-admin-client-thread | adminclient-3] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:46.553 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Node -1 disconnected.
+19:13:46.553 [kafka-admin-client-thread | adminclient-3] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:47.413 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Node -1 disconnected.
+19:13:47.413 [kafka-admin-client-thread | adminclient-3] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:48.484 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.admin.internals.AdminMetadataManager -- [AdminClient clientId=adminclient-3] Metadata update failed
+org.apache.kafka.common.errors.TimeoutException: Timed out waiting for a node assignment. Call: fetchMetadata
+19:13:48.485 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Node -1 disconnected.
+19:13:48.485 [kafka-admin-client-thread | adminclient-3] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:49.565 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Node -1 disconnected.
+19:13:49.565 [kafka-admin-client-thread | adminclient-3] WARN org.apache.kafka.clients.NetworkClient -- [AdminClient clientId=adminclient-3] Connection to node -1 (/127.0.0.1:1) could not be established. Node may not be available.
+19:13:50.493 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.admin.client for adminclient-3 unregistered
+19:13:50.493 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.admin.internals.AdminMetadataManager -- [AdminClient clientId=adminclient-3] Metadata update failed
+org.apache.kafka.common.errors.TimeoutException: The AdminClient thread has exited. Call: fetchMetadata
+19:13:50.493 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.clients.admin.KafkaAdminClient -- [AdminClient clientId=adminclient-3] Timed out 1 remaining operation(s) during close.
+19:13:50.494 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:50.494 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:50.494 [kafka-admin-client-thread | adminclient-3] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:50.606 [main] INFO org.apache.kafka.clients.admin.AdminClientConfig -- AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:56784]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 5000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 3000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+19:13:50.607 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:50.607 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:50.607 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980830607
+19:13:50.620 [kafka-admin-client-thread | adminclient-4] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.admin.client for adminclient-4 unregistered
+19:13:50.620 [kafka-admin-client-thread | adminclient-4] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:50.620 [kafka-admin-client-thread | adminclient-4] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:50.621 [kafka-admin-client-thread | adminclient-4] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:50.685 [main] INFO org.apache.kafka.clients.producer.ProducerConfig -- ProducerConfig values: 
+	acks = -1
+	auto.include.jmx.reporter = true
+	batch.size = 16384
+	bootstrap.servers = [localhost:56784]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-1
+	compression.gzip.level = -1
+	compression.lz4.level = 9
+	compression.type = none
+	compression.zstd.level = 3
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 10000
+	enable.idempotence = true
+	enable.metrics.push = true
+	interceptor.classes = []
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 0
+	max.block.ms = 2000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.adaptive.partitioning.enable = true
+	partitioner.availability.timeout.ms = 0
+	partitioner.class = null
+	partitioner.ignore.keys = false
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 5000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.kafka.common.serialization.StringSerializer
+
+19:13:50.700 [main] INFO org.apache.kafka.common.telemetry.internals.KafkaMetricsCollector -- initializing Kafka metrics collector
+19:13:50.705 [main] INFO org.apache.kafka.clients.producer.KafkaProducer -- [Producer clientId=producer-1] Instantiated an idempotent producer.
+19:13:50.716 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:50.716 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:50.716 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980830716
+19:13:50.726 [kafka-producer-network-thread | producer-1] INFO org.apache.kafka.clients.Metadata -- [Producer clientId=producer-1] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+19:13:50.837 [kafka-producer-network-thread | producer-1] INFO org.apache.kafka.clients.producer.internals.TransactionManager -- [Producer clientId=producer-1] ProducerId set to 0 with epoch 0
+19:13:51.020 [main] INFO edu.northeastern.cs6510.checkout.outbox.OutboxRelay -- outbox relay holds checkout.scan-relay
+19:13:51.122 [main] INFO edu.northeastern.cs6510.checkout.outbox.OutboxRelay -- outbox relay holds checkout.scan-relay
+19:13:51.232 [main] INFO org.apache.kafka.clients.admin.AdminClientConfig -- AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:56784]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 5000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 3000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+19:13:51.235 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:51.235 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:51.235 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980831235
+19:13:51.246 [kafka-admin-client-thread | adminclient-5] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.admin.client for adminclient-5 unregistered
+19:13:51.248 [kafka-admin-client-thread | adminclient-5] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:51.248 [kafka-admin-client-thread | adminclient-5] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:51.248 [kafka-admin-client-thread | adminclient-5] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:51.465 [main] INFO org.apache.kafka.clients.consumer.ConsumerConfig -- ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.include.jmx.reporter = true
+	auto.offset.reset = latest
+	bootstrap.servers = [localhost:56784]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-null-1
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = false
+	enable.metrics.push = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = null
+	group.instance.id = null
+	group.protocol = classic
+	group.remote.assignor = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 45000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+
+19:13:51.467 [main] INFO org.apache.kafka.common.telemetry.internals.KafkaMetricsCollector -- initializing Kafka metrics collector
+19:13:51.480 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:51.481 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:51.481 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980831480
+19:13:51.481 [main] INFO org.apache.kafka.clients.consumer.internals.LegacyKafkaConsumer -- [Consumer clientId=consumer-null-1, groupId=null] Assigned to partition(s): checkout.accepted-scans.v1-0
+19:13:51.482 [main] INFO org.apache.kafka.clients.consumer.internals.SubscriptionState -- [Consumer clientId=consumer-null-1, groupId=null] Seeking to earliest offset of partition checkout.accepted-scans.v1-0
+19:13:51.488 [main] INFO org.apache.kafka.clients.Metadata -- [Consumer clientId=consumer-null-1, groupId=null] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+19:13:51.498 [main] INFO org.apache.kafka.clients.consumer.internals.SubscriptionState -- [Consumer clientId=consumer-null-1, groupId=null] Resetting offset for partition checkout.accepted-scans.v1-0 to position FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[localhost:56784 (id: 1 rack: null)], epoch=0}}.
+19:13:52.021 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:52.021 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:52.021 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+19:13:52.021 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:52.023 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.consumer for consumer-null-1 unregistered
+19:13:52.238 [main] INFO org.apache.kafka.clients.admin.AdminClientConfig -- AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:56784]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 5000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 3000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+19:13:52.240 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:52.240 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:52.240 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980832240
+19:13:52.253 [kafka-admin-client-thread | adminclient-6] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.admin.client for adminclient-6 unregistered
+19:13:52.253 [kafka-admin-client-thread | adminclient-6] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:52.253 [kafka-admin-client-thread | adminclient-6] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:52.253 [kafka-admin-client-thread | adminclient-6] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:52.455 [main] INFO org.apache.kafka.clients.consumer.ConsumerConfig -- ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.include.jmx.reporter = true
+	auto.offset.reset = latest
+	bootstrap.servers = [localhost:56784]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-null-2
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = false
+	enable.metrics.push = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = null
+	group.instance.id = null
+	group.protocol = classic
+	group.remote.assignor = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 45000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+
+19:13:52.455 [main] INFO org.apache.kafka.common.telemetry.internals.KafkaMetricsCollector -- initializing Kafka metrics collector
+19:13:52.457 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:52.457 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:52.457 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980832457
+19:13:52.457 [main] INFO org.apache.kafka.clients.consumer.internals.LegacyKafkaConsumer -- [Consumer clientId=consumer-null-2, groupId=null] Assigned to partition(s): checkout.accepted-scans.v1-0
+19:13:52.457 [main] INFO org.apache.kafka.clients.consumer.internals.SubscriptionState -- [Consumer clientId=consumer-null-2, groupId=null] Seeking to earliest offset of partition checkout.accepted-scans.v1-0
+19:13:52.461 [main] INFO org.apache.kafka.clients.Metadata -- [Consumer clientId=consumer-null-2, groupId=null] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+19:13:52.465 [main] INFO org.apache.kafka.clients.consumer.internals.SubscriptionState -- [Consumer clientId=consumer-null-2, groupId=null] Resetting offset for partition checkout.accepted-scans.v1-0 to position FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[localhost:56784 (id: 1 rack: null)], epoch=0}}.
+19:13:52.969 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:52.969 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:52.969 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+19:13:52.969 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:52.970 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.consumer for consumer-null-2 unregistered
+19:13:53.130 [main] INFO org.apache.kafka.clients.admin.AdminClientConfig -- AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:56784]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 5000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 3000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+19:13:53.131 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:53.131 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:53.131 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980833131
+19:13:53.139 [kafka-admin-client-thread | adminclient-7] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.admin.client for adminclient-7 unregistered
+19:13:53.140 [kafka-admin-client-thread | adminclient-7] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:53.140 [kafka-admin-client-thread | adminclient-7] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:53.140 [kafka-admin-client-thread | adminclient-7] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:53.244 [main] INFO org.apache.kafka.clients.consumer.ConsumerConfig -- ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.include.jmx.reporter = true
+	auto.offset.reset = latest
+	bootstrap.servers = [localhost:56784]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-null-3
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = false
+	enable.metrics.push = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = null
+	group.instance.id = null
+	group.protocol = classic
+	group.remote.assignor = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 45000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+
+19:13:53.245 [main] INFO org.apache.kafka.common.telemetry.internals.KafkaMetricsCollector -- initializing Kafka metrics collector
+19:13:53.246 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:53.246 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:53.246 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980833246
+19:13:53.246 [main] INFO org.apache.kafka.clients.consumer.internals.LegacyKafkaConsumer -- [Consumer clientId=consumer-null-3, groupId=null] Assigned to partition(s): checkout.accepted-scans.v1-0
+19:13:53.246 [main] INFO org.apache.kafka.clients.consumer.internals.SubscriptionState -- [Consumer clientId=consumer-null-3, groupId=null] Seeking to earliest offset of partition checkout.accepted-scans.v1-0
+19:13:53.251 [main] INFO org.apache.kafka.clients.Metadata -- [Consumer clientId=consumer-null-3, groupId=null] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+19:13:53.256 [main] INFO org.apache.kafka.clients.consumer.internals.SubscriptionState -- [Consumer clientId=consumer-null-3, groupId=null] Resetting offset for partition checkout.accepted-scans.v1-0 to position FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[localhost:56784 (id: 1 rack: null)], epoch=0}}.
+19:13:53.761 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:53.761 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:53.761 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+19:13:53.761 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:53.763 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.consumer for consumer-null-3 unregistered
+19:13:53.872 [main] INFO org.apache.kafka.clients.consumer.ConsumerConfig -- ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.include.jmx.reporter = true
+	auto.offset.reset = latest
+	bootstrap.servers = [localhost:56784]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-null-4
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = false
+	enable.metrics.push = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = null
+	group.instance.id = null
+	group.protocol = classic
+	group.remote.assignor = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 45000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+
+19:13:53.872 [main] INFO org.apache.kafka.common.telemetry.internals.KafkaMetricsCollector -- initializing Kafka metrics collector
+19:13:53.880 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka version: 3.8.1
+19:13:53.880 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka commitId: 70d6ff42debf7e17
+19:13:53.880 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- Kafka startTimeMs: 1792980833879
+19:13:53.880 [main] INFO org.apache.kafka.clients.consumer.internals.LegacyKafkaConsumer -- [Consumer clientId=consumer-null-4, groupId=null] Assigned to partition(s): checkout.accepted-scans.v1-0
+19:13:53.880 [main] INFO org.apache.kafka.clients.consumer.internals.SubscriptionState -- [Consumer clientId=consumer-null-4, groupId=null] Seeking to earliest offset of partition checkout.accepted-scans.v1-0
+19:13:53.884 [main] INFO org.apache.kafka.clients.Metadata -- [Consumer clientId=consumer-null-4, groupId=null] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+19:13:53.888 [main] INFO org.apache.kafka.clients.consumer.internals.SubscriptionState -- [Consumer clientId=consumer-null-4, groupId=null] Resetting offset for partition checkout.accepted-scans.v1-0 to position FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[localhost:56784 (id: 1 rack: null)], epoch=0}}.
+19:13:54.393 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:54.393 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:54.393 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+19:13:54.393 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:54.395 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.consumer for consumer-null-4 unregistered
+19:13:54.397 [main] INFO org.apache.kafka.clients.producer.KafkaProducer -- [Producer clientId=producer-1] Closing the Kafka producer with timeoutMillis = 30000 ms.
+19:13:54.398 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics scheduler closed
+19:13:54.398 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.metrics.JmxReporter
+19:13:54.398 [main] INFO org.apache.kafka.common.metrics.Metrics -- Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+19:13:54.398 [main] INFO org.apache.kafka.common.metrics.Metrics -- Metrics reporters closed
+19:13:54.399 [main] INFO org.apache.kafka.common.utils.AppInfoParser -- App info kafka.producer for producer-1 unregistered
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.45 s -- in edu.northeastern.cs6510.checkout.outbox.OutboxRelayIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- failsafe:3.5.2:verify (default) @ checkout-service ---
+[INFO] 
+[INFO] -------------< edu.northeastern.cs6510:inventory-service >--------------
+[INFO] Building inventory-service 1.0.0-SNAPSHOT                          [5/8]
+[INFO]   from inventory-service\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ inventory-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 8 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ inventory-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ inventory-service ---
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\inventory-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ inventory-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ inventory-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running edu.northeastern.cs6510.inventory.reservation.ReservationContractTest
+19:13:56.151 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [edu.northeastern.cs6510.inventory.reservation.ReservationContractTest]: ReservationContractTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+19:13:56.241 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration edu.northeastern.cs6510.inventory.InventoryApplication for test class edu.northeastern.cs6510.inventory.reservation.ReservationContractTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.3)
+
+2026-10-25T19:13:56.518-07:00  INFO 20416 --- [inventory-service] [           main] e.n.c.i.r.ReservationContractTest        : Starting ReservationContractTest using Java 21.0.6 with PID 20416 (started by ychen21 in D:\cs6510new\CS6510-2026\domain-services\inventory-service)
+2026-10-25T19:13:56.520-07:00  INFO 20416 --- [inventory-service] [           main] e.n.c.i.r.ReservationContractTest        : No active profile set, falling back to 1 default profile: "default"
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (C:\Users\ychen21\.m2\repository\net\bytebuddy\byte-buddy-agent\1.15.11\byte-buddy-agent-1.15.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+2026-10-25T19:13:58.050-07:00  INFO 20416 --- [inventory-service] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-25T19:13:58.050-07:00  INFO 20416 --- [inventory-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-25T19:13:58.052-07:00  INFO 20416 --- [inventory-service] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-10-25T19:13:58.087-07:00  INFO 20416 --- [inventory-service] [           main] e.n.c.i.r.ReservationContractTest        : Started ReservationContractTest in 1.801 seconds (process running for 2.361)
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.423 s -- in edu.northeastern.cs6510.inventory.reservation.ReservationContractTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ inventory-service ---
+[INFO] 
+[INFO] --- spring-boot:3.4.3:repackage (repackage) @ inventory-service ---
+[INFO] Replacing main artifact D:\cs6510new\CS6510-2026\domain-services\inventory-service\target\inventory-service-1.0.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\cs6510new\CS6510-2026\domain-services\inventory-service\target\inventory-service-1.0.0-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --- failsafe:3.5.2:integration-test (default) @ inventory-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+19:13:59.014 [main] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 1.21.4
+19:13:59.141 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Loaded org.testcontainers.dockerclient.NpipeSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+19:13:59.272 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with local Npipe socket (npipe:////./pipe/docker_engine)
+19:13:59.273 [main] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is localhost
+19:13:59.284 [main] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
+  Server Version: 29.1.3
+  API Version: 1.52
+  Operating System: Docker Desktop (containerized)
+  Total Memory: 15862 MB
+  Labels: 
+    com.docker.desktop.address=npipe://\\.\pipe\docker_cli
+19:13:59.290 [main] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
+19:13:59.291 [main] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+19:13:59.403 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Creating container for image: testcontainers/ryuk:0.12.0
+19:13:59.452 [main] INFO org.testcontainers.utility.RegistryAuthLocator -- Credential helper/store (docker-credential-desktop) does not have credentials for https://index.docker.io/v1/
+19:13:59.547 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 is starting: da966b79fee17584338873f2725e3f5586d359f6d4958ef53a44d08a588088a0
+19:13:59.780 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 started in PT0.3769278S
+19:13:59.784 [main] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+19:13:59.784 [main] INFO org.testcontainers.DockerClientFactory -- Checking the system...
+19:13:59.784 [main] INFO org.testcontainers.DockerClientFactory -- ?? Docker server version should be at least 1.6.0
+[INFO] Running edu.northeastern.cs6510.inventory.reservation.ReservationCancelIT
+19:13:59.794 [main] INFO tc.mysql:8.4 -- Creating container for image: mysql:8.4
+19:13:59.862 [main] INFO tc.mysql:8.4 -- Container mysql:8.4 is starting: b022c7269263d22fd27f160ee970d5a9e18775dc7afd7102fd7c8766ef8a1851
+19:14:00.011 [main] INFO tc.mysql:8.4 -- Waiting for database connection to become available at jdbc:mysql://localhost:56941/inventory using query 'SELECT 1'
+19:14:07.278 [main] INFO tc.mysql:8.4 -- Container mysql:8.4 started in PT7.4846491S
+19:14:07.278 [main] INFO tc.mysql:8.4 -- Container is started (JDBC URL: jdbc:mysql://localhost:56941/inventory)
+19:14:07.573 [main] INFO org.flywaydb.core.FlywayExecutor -- Database: jdbc:mysql://localhost:56941/inventory (MySQL 8.4)
+19:14:07.824 [main] WARN org.flywaydb.core.internal.database.base.Database -- Flyway upgrade recommended: MySQL 8.4 is newer than this version of Flyway and support has not been tested. The latest supported version of MySQL is 8.1.
+19:14:07.842 [main] INFO org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory -- Schema history table `inventory`.`flyway_schema_history` does not exist yet
+19:14:07.845 [main] INFO org.flywaydb.core.internal.command.DbValidate -- Successfully validated 8 migrations (execution time 00:00.014s)
+19:14:07.863 [main] INFO org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory -- Creating Schema History table `inventory`.`flyway_schema_history` ...
+19:14:07.916 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Current version of schema `inventory`: << Empty Schema >>
+19:14:07.928 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "1 - inventory"
+19:14:07.982 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "2 - fulfillment procedure"
+19:14:08.005 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "3 - basket fulfillment"
+19:14:08.029 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "4 - seed inventory"
+19:14:08.092 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "5 - private store"
+19:14:08.177 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "6 - reservations"
+19:14:08.270 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "7 - catalog names"
+19:14:08.324 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "8 - sale queue"
+19:14:08.356 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Successfully applied 8 migrations to schema `inventory`, now at version v8 (execution time 00:00.300s)
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 22.90 s -- in edu.northeastern.cs6510.inventory.reservation.ReservationCancelIT
+[INFO] Running edu.northeastern.cs6510.inventory.reservation.ReservationServiceIT
+19:14:22.688 [main] INFO tc.mysql:8.4 -- Creating container for image: mysql:8.4
+19:14:22.755 [main] INFO tc.mysql:8.4 -- Container mysql:8.4 is starting: 7cbf9268ac3c6fc192090c1a33237ffa3fbc23c497ffe9246a66673d4402f127
+19:14:22.894 [main] INFO tc.mysql:8.4 -- Waiting for database connection to become available at jdbc:mysql://localhost:58268/inventory using query 'SELECT 1'
+19:14:30.117 [main] INFO tc.mysql:8.4 -- Container mysql:8.4 started in PT7.4298185S
+19:14:30.117 [main] INFO tc.mysql:8.4 -- Container is started (JDBC URL: jdbc:mysql://localhost:58268/inventory)
+19:14:30.180 [main] INFO org.flywaydb.core.FlywayExecutor -- Database: jdbc:mysql://localhost:58268/inventory (MySQL 8.4)
+19:14:30.185 [main] WARN org.flywaydb.core.internal.database.base.Database -- Flyway upgrade recommended: MySQL 8.4 is newer than this version of Flyway and support has not been tested. The latest supported version of MySQL is 8.1.
+19:14:30.191 [main] INFO org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory -- Schema history table `inventory`.`flyway_schema_history` does not exist yet
+19:14:30.192 [main] INFO org.flywaydb.core.internal.command.DbValidate -- Successfully validated 8 migrations (execution time 00:00.006s)
+19:14:30.205 [main] INFO org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory -- Creating Schema History table `inventory`.`flyway_schema_history` ...
+19:14:30.231 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Current version of schema `inventory`: << Empty Schema >>
+19:14:30.234 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "1 - inventory"
+19:14:30.267 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "2 - fulfillment procedure"
+19:14:30.283 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "3 - basket fulfillment"
+19:14:30.300 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "4 - seed inventory"
+19:14:30.359 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "5 - private store"
+19:14:30.417 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "6 - reservations"
+19:14:30.473 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "7 - catalog names"
+19:14:30.517 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Migrating schema `inventory` to version "8 - sale queue"
+19:14:30.538 [main] INFO org.flywaydb.core.internal.command.DbMigrate -- Successfully applied 8 migrations to schema `inventory`, now at version v8 (execution time 00:00.228s)
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.18 s -- in edu.northeastern.cs6510.inventory.reservation.ReservationServiceIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- failsafe:3.5.2:verify (default) @ inventory-service ---
+[INFO] 
+[INFO] -------------< edu.northeastern.cs6510:analytics-service >--------------
+[INFO] Building analytics-service 1.0.0-SNAPSHOT                          [6/8]
+[INFO]   from analytics-service\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ analytics-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 4 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ analytics-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ analytics-service ---
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\analytics-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ analytics-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ analytics-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running edu.northeastern.cs6510.analytics.ingest.AcceptedScanParsingTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.210 s -- in edu.northeastern.cs6510.analytics.ingest.AcceptedScanParsingTest
+[INFO] Running edu.northeastern.cs6510.analytics.window.WindowFilterTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s -- in edu.northeastern.cs6510.analytics.window.WindowFilterTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ analytics-service ---
+[INFO] 
+[INFO] --- spring-boot:3.4.3:repackage (repackage) @ analytics-service ---
+[INFO] Replacing main artifact D:\cs6510new\CS6510-2026\domain-services\analytics-service\target\analytics-service-1.0.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\cs6510new\CS6510-2026\domain-services\analytics-service\target\analytics-service-1.0.0-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --- failsafe:3.5.2:integration-test (default) @ analytics-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+19:14:35.529 [main] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 1.21.4
+19:14:35.657 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Loaded org.testcontainers.dockerclient.NpipeSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+19:14:35.785 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with local Npipe socket (npipe:////./pipe/docker_engine)
+19:14:35.788 [main] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is localhost
+19:14:35.799 [main] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
+  Server Version: 29.1.3
+  API Version: 1.52
+  Operating System: Docker Desktop (containerized)
+  Total Memory: 15862 MB
+  Labels: 
+    com.docker.desktop.address=npipe://\\.\pipe\docker_cli
+19:14:35.806 [main] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
+19:14:35.807 [main] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+19:14:35.922 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Creating container for image: testcontainers/ryuk:0.12.0
+19:14:35.970 [main] INFO org.testcontainers.utility.RegistryAuthLocator -- Credential helper/store (docker-credential-desktop) does not have credentials for https://index.docker.io/v1/
+19:14:36.052 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 is starting: af5364ab81195cf2247b3d391e661ce3d3789030d3d53ec80413304bdf9ec461
+19:14:36.247 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 started in PT0.3255662S
+19:14:36.251 [main] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+19:14:36.251 [main] INFO org.testcontainers.DockerClientFactory -- Checking the system...
+19:14:36.252 [main] INFO org.testcontainers.DockerClientFactory -- ?? Docker server version should be at least 1.6.0
+[INFO] Running edu.northeastern.cs6510.analytics.ingest.ScanIngestIT
+19:14:36.299 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [edu.northeastern.cs6510.analytics.ingest.ScanIngestIT]: ScanIngestIT does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+19:14:36.362 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration edu.northeastern.cs6510.analytics.AnalyticsApplication for test class edu.northeastern.cs6510.analytics.ingest.ScanIngestIT
+19:14:36.434 [main] INFO tc.apache/kafka:3.8.1 -- Creating container for image: apache/kafka:3.8.1
+19:14:36.488 [main] INFO tc.apache/kafka:3.8.1 -- Container apache/kafka:3.8.1 is starting: e99483aa84f2bc8dfca04d4e6f6978c936b27a5a4829da0fa78d774c0bc9fdc5
+19:14:38.116 [main] INFO tc.apache/kafka:3.8.1 -- Container apache/kafka:3.8.1 started in PT1.6819222S
+19:14:38.118 [main] INFO tc.mysql:8.4 -- Creating container for image: mysql:8.4
+19:14:38.180 [main] INFO tc.mysql:8.4 -- Container mysql:8.4 is starting: 9f1b9d911f78373e46558653915a402d79ab2202d36a87535b72abcccd18b10e
+19:14:38.332 [main] INFO tc.mysql:8.4 -- Waiting for database connection to become available at jdbc:mysql://localhost:58562/analytics using query 'SELECT 1'
+19:14:45.532 [main] INFO tc.mysql:8.4 -- Container mysql:8.4 started in PT7.4138766S
+19:14:45.532 [main] INFO tc.mysql:8.4 -- Container is started (JDBC URL: jdbc:mysql://localhost:58562/analytics)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.3)
+
+2026-10-25T19:14:45.730-07:00  INFO 49476 --- [analytics-service] [           main] e.n.c.analytics.ingest.ScanIngestIT      : Starting ScanIngestIT using Java 21.0.6 with PID 49476 (started by ychen21 in D:\cs6510new\CS6510-2026\domain-services\analytics-service)
+2026-10-25T19:14:45.731-07:00  INFO 49476 --- [analytics-service] [           main] e.n.c.analytics.ingest.ScanIngestIT      : No active profile set, falling back to 1 default profile: "default"
+2026-10-25T19:14:46.644-07:00  INFO 49476 --- [analytics-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-25T19:14:46.786-07:00  INFO 49476 --- [analytics-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@229749f0
+2026-10-25T19:14:46.787-07:00  INFO 49476 --- [analytics-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-25T19:14:46.812-07:00  INFO 49476 --- [analytics-service] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://localhost:58562/analytics (MySQL 8.4)
+2026-10-25T19:14:47.079-07:00  WARN 49476 --- [analytics-service] [           main] o.f.c.internal.database.base.Database    : Flyway upgrade recommended: MySQL 8.4 is newer than this version of Flyway and support has not been tested. The latest supported version of MySQL is 8.1.
+2026-10-25T19:14:47.101-07:00  INFO 49476 --- [analytics-service] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table `analytics`.`flyway_schema_history` does not exist yet
+2026-10-25T19:14:47.105-07:00  INFO 49476 --- [analytics-service] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 4 migrations (execution time 00:00.015s)
+2026-10-25T19:14:47.122-07:00  INFO 49476 --- [analytics-service] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table `analytics`.`flyway_schema_history` ...
+2026-10-25T19:14:47.168-07:00  INFO 49476 --- [analytics-service] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema `analytics`: << Empty Schema >>
+2026-10-25T19:14:47.177-07:00  INFO 49476 --- [analytics-service] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `analytics` to version "1 - analytics"
+2026-10-25T19:14:47.260-07:00  INFO 49476 --- [analytics-service] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `analytics` to version "2 - published view"
+2026-10-25T19:14:47.280-07:00  INFO 49476 --- [analytics-service] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `analytics` to version "3 - private store"
+2026-10-25T19:14:47.301-07:00  INFO 49476 --- [analytics-service] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `analytics` to version "4 - ingest and snapshots"
+2026-10-25T19:14:47.437-07:00  INFO 49476 --- [analytics-service] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 4 migrations to schema `analytics`, now at version v4 (execution time 00:00.194s)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\ychen21\.m2\repository\net\bytebuddy\byte-buddy-agent\1.15.11\byte-buddy-agent-1.15.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-10-25T19:14:48.327-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.admin.AdminClientConfig    : AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:58561]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 60000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+2026-10-25T19:14:48.549-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:48.549-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:48.549-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980888546
+2026-10-25T19:14:48.912-07:00  INFO 49476 --- [analytics-service] [| adminclient-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.admin.client for adminclient-1 unregistered
+2026-10-25T19:14:48.916-07:00  INFO 49476 --- [analytics-service] [| adminclient-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-25T19:14:48.916-07:00  INFO 49476 --- [analytics-service] [| adminclient-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-25T19:14:48.916-07:00  INFO 49476 --- [analytics-service] [| adminclient-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-25T19:14:48.954-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.admin.AdminClientConfig    : AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:58561]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 60000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+2026-10-25T19:14:48.957-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:48.957-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:48.958-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980888957
+2026-10-25T19:14:48.974-07:00  INFO 49476 --- [analytics-service] [| adminclient-2] o.a.kafka.common.utils.AppInfoParser     : App info kafka.admin.client for adminclient-2 unregistered
+2026-10-25T19:14:48.976-07:00  INFO 49476 --- [analytics-service] [| adminclient-2] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-25T19:14:48.976-07:00  INFO 49476 --- [analytics-service] [| adminclient-2] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-25T19:14:48.976-07:00  INFO 49476 --- [analytics-service] [| adminclient-2] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-25T19:14:48.977-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.admin.AdminClientConfig    : AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:58561]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 1000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 1000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+2026-10-25T19:14:48.979-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:48.979-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:48.979-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980888979
+2026-10-25T19:14:49.696-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.admin.AdminClientConfig    : AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:58561]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 60000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+2026-10-25T19:14:49.699-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:49.699-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:49.699-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980889699
+2026-10-25T19:14:49.717-07:00  INFO 49476 --- [analytics-service] [| adminclient-4] o.a.kafka.common.utils.AppInfoParser     : App info kafka.admin.client for adminclient-4 unregistered
+2026-10-25T19:14:49.718-07:00  INFO 49476 --- [analytics-service] [| adminclient-4] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-25T19:14:49.719-07:00  INFO 49476 --- [analytics-service] [| adminclient-4] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-25T19:14:49.719-07:00  INFO 49476 --- [analytics-service] [| adminclient-4] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-25T19:14:49.719-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.admin.AdminClientConfig    : AdminClientConfig values: 
+	auto.include.jmx.reporter = true
+	bootstrap.controllers = []
+	bootstrap.servers = [localhost:58561]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 60000
+	enable.metrics.push = true
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+2026-10-25T19:14:49.721-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:49.721-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:49.721-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980889721
+2026-10-25T19:14:49.731-07:00  INFO 49476 --- [analytics-service] [| adminclient-5] o.a.kafka.common.utils.AppInfoParser     : App info kafka.admin.client for adminclient-5 unregistered
+2026-10-25T19:14:49.732-07:00  INFO 49476 --- [analytics-service] [| adminclient-5] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-25T19:14:49.732-07:00  INFO 49476 --- [analytics-service] [| adminclient-5] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-25T19:14:49.732-07:00  INFO 49476 --- [analytics-service] [| adminclient-5] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-25T19:14:49.846-07:00  INFO 49476 --- [analytics-service] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-10-25T19:14:49.981-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.consumer.ConsumerConfig    : ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.include.jmx.reporter = true
+	auto.offset.reset = earliest
+	bootstrap.servers = [localhost:58561]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-analytics-scan-ingest-1
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = false
+	enable.metrics.push = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = analytics-scan-ingest
+	group.instance.id = null
+	group.protocol = classic
+	group.remote.assignor = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 45000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+
+2026-10-25T19:14:50.012-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2026-10-25T19:14:50.060-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:50.060-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:50.060-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980890060
+2026-10-25T19:14:50.063-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Subscribed to topic(s): checkout.accepted-scans.v1
+2026-10-25T19:14:50.076-07:00  INFO 49476 --- [analytics-service] [           main] e.n.c.analytics.ingest.ScanIngestIT      : Started ScanIngestIT in 4.526 seconds (process running for 14.923)
+2026-10-25T19:14:50.090-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] org.apache.kafka.clients.Metadata        : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+2026-10-25T19:14:50.151-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.ProducerConfig    : ProducerConfig values: 
+	acks = -1
+	auto.include.jmx.reporter = true
+	batch.size = 16384
+	bootstrap.servers = [localhost:58561]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-1
+	compression.gzip.level = -1
+	compression.lz4.level = 9
+	compression.type = none
+	compression.zstd.level = 3
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = true
+	enable.metrics.push = true
+	interceptor.classes = []
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 50
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.adaptive.partitioning.enable = true
+	partitioner.availability.timeout.ms = 0
+	partitioner.class = null
+	partitioner.ignore.keys = false
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.kafka.common.serialization.StringSerializer
+
+2026-10-25T19:14:50.152-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2026-10-25T19:14:50.178-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=producer-1] Instantiated an idempotent producer.
+2026-10-25T19:14:50.203-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Discovered group coordinator localhost:58561 (id: 2147483646 rack: null)
+2026-10-25T19:14:50.206-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:50.206-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:50.206-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980890205
+2026-10-25T19:14:50.207-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] (Re-)joining group
+2026-10-25T19:14:50.214-07:00  INFO 49476 --- [analytics-service] [ad | producer-1] org.apache.kafka.clients.Metadata        : [Producer clientId=producer-1] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+2026-10-25T19:14:50.242-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Request joining group due to: need to re-join with the given member-id: consumer-analytics-scan-ingest-1-c7306ddf-9a57-4df6-9312-511ec10ad969
+2026-10-25T19:14:50.243-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] (Re-)joining group
+2026-10-25T19:14:50.251-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Successfully joined group with generation Generation{generationId=1, memberId='consumer-analytics-scan-ingest-1-c7306ddf-9a57-4df6-9312-511ec10ad969', protocol='range'}
+2026-10-25T19:14:50.269-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Finished assignment for group at generation 1: {consumer-analytics-scan-ingest-1-c7306ddf-9a57-4df6-9312-511ec10ad969=Assignment(partitions=[checkout.accepted-scans.v1-0])}
+2026-10-25T19:14:50.286-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Successfully synced group in generation Generation{generationId=1, memberId='consumer-analytics-scan-ingest-1-c7306ddf-9a57-4df6-9312-511ec10ad969', protocol='range'}
+2026-10-25T19:14:50.287-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Notifying assignor about the new Assignment(partitions=[checkout.accepted-scans.v1-0])
+2026-10-25T19:14:50.289-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Adding newly assigned partitions: checkout.accepted-scans.v1-0
+2026-10-25T19:14:50.299-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Found no committed offset for partition checkout.accepted-scans.v1-0
+2026-10-25T19:14:50.308-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.SubscriptionState    : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Resetting offset for partition checkout.accepted-scans.v1-0 to position FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[localhost:58561 (id: 1 rack: null)], epoch=0}}.
+2026-10-25T19:14:50.309-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : analytics-scan-ingest: partitions assigned: [checkout.accepted-scans.v1-0]
+2026-10-25T19:14:50.322-07:00  INFO 49476 --- [analytics-service] [ad | producer-1] o.a.k.c.p.internals.TransactionManager   : [Producer clientId=producer-1] ProducerId set to 0 with epoch 0
+2026-10-25T19:14:50.362-07:00  INFO 49476 --- [analytics-service] [   scheduling-1] e.n.c.a.c.CatalogNameProjectionLoader    : catalog name projection loaded: version 1, 10 products
+2026-10-25T19:14:50.367-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=producer-1] Closing the Kafka producer with timeoutMillis = 9223372036854775807 ms.
+2026-10-25T19:14:50.370-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-25T19:14:50.370-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-25T19:14:50.370-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-25T19:14:50.370-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-25T19:14:50.371-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for producer-1 unregistered
+2026-10-25T19:14:50.577-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.ProducerConfig    : ProducerConfig values: 
+	acks = -1
+	auto.include.jmx.reporter = true
+	batch.size = 16384
+	bootstrap.servers = [localhost:58561]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-2
+	compression.gzip.level = -1
+	compression.lz4.level = 9
+	compression.type = none
+	compression.zstd.level = 3
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = true
+	enable.metrics.push = true
+	interceptor.classes = []
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 50
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.adaptive.partitioning.enable = true
+	partitioner.availability.timeout.ms = 0
+	partitioner.class = null
+	partitioner.ignore.keys = false
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.kafka.common.serialization.StringSerializer
+
+2026-10-25T19:14:50.578-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2026-10-25T19:14:50.578-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=producer-2] Instantiated an idempotent producer.
+2026-10-25T19:14:50.580-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:50.580-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:50.580-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980890580
+2026-10-25T19:14:50.585-07:00  INFO 49476 --- [analytics-service] [ad | producer-2] org.apache.kafka.clients.Metadata        : [Producer clientId=producer-2] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+2026-10-25T19:14:50.585-07:00  INFO 49476 --- [analytics-service] [ad | producer-2] o.a.k.c.p.internals.TransactionManager   : [Producer clientId=producer-2] ProducerId set to 1 with epoch 0
+2026-10-25T19:14:50.591-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=producer-2] Closing the Kafka producer with timeoutMillis = 9223372036854775807 ms.
+2026-10-25T19:14:50.595-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-25T19:14:50.595-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-25T19:14:50.595-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-25T19:14:50.595-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-25T19:14:50.595-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for producer-2 unregistered
+2026-10-25T19:14:50.657-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.ProducerConfig    : ProducerConfig values: 
+	acks = -1
+	auto.include.jmx.reporter = true
+	batch.size = 16384
+	bootstrap.servers = [localhost:58561]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-3
+	compression.gzip.level = -1
+	compression.lz4.level = 9
+	compression.type = none
+	compression.zstd.level = 3
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = true
+	enable.metrics.push = true
+	interceptor.classes = []
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 50
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.adaptive.partitioning.enable = true
+	partitioner.availability.timeout.ms = 0
+	partitioner.class = null
+	partitioner.ignore.keys = false
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.kafka.common.serialization.StringSerializer
+
+2026-10-25T19:14:50.658-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2026-10-25T19:14:50.658-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=producer-3] Instantiated an idempotent producer.
+2026-10-25T19:14:50.661-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:50.661-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:50.661-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980890661
+2026-10-25T19:14:50.665-07:00  INFO 49476 --- [analytics-service] [ad | producer-3] org.apache.kafka.clients.Metadata        : [Producer clientId=producer-3] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+2026-10-25T19:14:50.665-07:00  INFO 49476 --- [analytics-service] [ad | producer-3] o.a.k.c.p.internals.TransactionManager   : [Producer clientId=producer-3] ProducerId set to 2 with epoch 0
+2026-10-25T19:14:50.671-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=producer-3] Closing the Kafka producer with timeoutMillis = 9223372036854775807 ms.
+2026-10-25T19:14:50.673-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-25T19:14:50.673-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-25T19:14:50.673-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-25T19:14:50.673-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-25T19:14:50.673-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for producer-3 unregistered
+2026-10-25T19:14:50.682-07:00  WARN 49476 --- [analytics-service] [an-ingest-0-C-1] e.n.c.a.ingest.AcceptedScanListener      : rejected 2 accepted-scan records (first at offset 5: unparseable: JsonParseException)
+2026-10-25T19:14:50.896-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.ProducerConfig    : ProducerConfig values: 
+	acks = -1
+	auto.include.jmx.reporter = true
+	batch.size = 16384
+	bootstrap.servers = [localhost:58561]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-4
+	compression.gzip.level = -1
+	compression.lz4.level = 9
+	compression.type = none
+	compression.zstd.level = 3
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = true
+	enable.metrics.push = true
+	interceptor.classes = []
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 50
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metadata.recovery.strategy = none
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.adaptive.partitioning.enable = true
+	partitioner.availability.timeout.ms = 0
+	partitioner.class = null
+	partitioner.ignore.keys = false
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.max.ms = 1000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.connect.timeout.ms = null
+	sasl.login.read.timeout.ms = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.login.retry.backoff.max.ms = 10000
+	sasl.login.retry.backoff.ms = 100
+	sasl.mechanism = GSSAPI
+	sasl.oauthbearer.clock.skew.seconds = 30
+	sasl.oauthbearer.expected.audience = null
+	sasl.oauthbearer.expected.issuer = null
+	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+	sasl.oauthbearer.jwks.endpoint.url = null
+	sasl.oauthbearer.scope.claim.name = scope
+	sasl.oauthbearer.sub.claim.name = sub
+	sasl.oauthbearer.token.endpoint.url = null
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.kafka.common.serialization.StringSerializer
+
+2026-10-25T19:14:50.896-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
+2026-10-25T19:14:50.896-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=producer-4] Instantiated an idempotent producer.
+2026-10-25T19:14:50.898-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
+2026-10-25T19:14:50.899-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
+2026-10-25T19:14:50.899-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1792980890898
+2026-10-25T19:14:50.903-07:00  INFO 49476 --- [analytics-service] [ad | producer-4] org.apache.kafka.clients.Metadata        : [Producer clientId=producer-4] Cluster ID: 4L6g3nShT-eMCtK--X86sw
+2026-10-25T19:14:50.903-07:00  INFO 49476 --- [analytics-service] [ad | producer-4] o.a.k.c.p.internals.TransactionManager   : [Producer clientId=producer-4] ProducerId set to 3 with epoch 0
+2026-10-25T19:14:50.908-07:00  INFO 49476 --- [analytics-service] [           main] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=producer-4] Closing the Kafka producer with timeoutMillis = 9223372036854775807 ms.
+2026-10-25T19:14:50.911-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-25T19:14:50.911-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-25T19:14:50.911-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-25T19:14:50.911-07:00  INFO 49476 --- [analytics-service] [           main] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-25T19:14:50.911-07:00  INFO 49476 --- [analytics-service] [           main] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for producer-4 unregistered
+2026-10-25T19:14:50.924-07:00  WARN 49476 --- [analytics-service] [an-ingest-0-C-1] e.n.c.a.ingest.AcceptedScanListener      : accepted-scan batch of 3 failed and will be redelivered: injected failure after the pipeline ran
+2026-10-25T19:14:51.935-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Seeking to offset 7 for partition checkout.accepted-scans.v1-0
+2026-10-25T19:14:51.935-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : Record in retry and not yet recovered
+2026-10-25T19:14:52.533-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Node 2147483646 disconnected.
+2026-10-25T19:14:52.534-07:00  INFO 49476 --- [analytics-service] [| adminclient-3] org.apache.kafka.clients.NetworkClient   : [AdminClient clientId=adminclient-3] Node 1 disconnected.
+2026-10-25T19:14:52.535-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Group coordinator localhost:58561 (id: 2147483646 rack: null) is unavailable or invalid due to cause: coordinator unavailable. isDisconnected: true. Rediscovery will be attempted.
+2026-10-25T19:14:52.535-07:00  INFO 49476 --- [analytics-service] [| adminclient-3] org.apache.kafka.clients.NetworkClient   : [AdminClient clientId=adminclient-3] Node -1 disconnected.
+2026-10-25T19:14:52.535-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Node 1 disconnected.
+2026-10-25T19:14:52.535-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Cancelled in-flight FETCH request with correlation id 24 due to node 1 being disconnected (elapsed time since creation: 95ms, elapsed time since send: 95ms, throttle time: 0ms, request timeout: 30000ms)
+2026-10-25T19:14:52.535-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Cancelled in-flight METADATA request with correlation id 26 due to node 1 being disconnected (elapsed time since creation: 1ms, elapsed time since send: 1ms, throttle time: 0ms, request timeout: 30000ms)
+2026-10-25T19:14:52.535-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Node -1 disconnected.
+2026-10-25T19:14:52.536-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] o.a.kafka.clients.FetchSessionHandler    : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Error sending fetch request (sessionId=56801448, epoch=7) to node 1:
+
+org.apache.kafka.common.errors.DisconnectException: null
+
+2026-10-25T19:14:52.742-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Node 1 disconnected.
+2026-10-25T19:14:52.742-07:00  INFO 49476 --- [analytics-service] [an-ingest-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-analytics-scan-ingest-1, groupId=analytics-scan-ingest] Cancelled in-flight API_VERSIONS request with correlation id 27 due to node 1 being disconnected (elapsed time since creation: 90ms, elapsed time since send: 90ms, throttle time: 0ms, request timeout: 30000ms)
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 16.51 s -- in edu.northeastern.cs6510.analytics.ingest.ScanIngestIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- failsafe:3.5.2:verify (default) @ analytics-service ---
+[INFO] 
+[INFO] ----------------< edu.northeastern.cs6510:api-gateway >-----------------
+[INFO] Building api-gateway 1.0.0-SNAPSHOT                                [7/8]
+[INFO]   from api-gateway\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ api-gateway ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ api-gateway ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ api-gateway ---
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\api-gateway\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ api-gateway ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ api-gateway ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running edu.northeastern.cs6510.gateway.CheckoutContractTest
+19:14:54.167 [main] INFO org.springframework.mock.web.MockServletContext -- Initializing Spring TestDispatcherServlet ''
+19:14:54.169 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Initializing Servlet ''
+19:14:54.170 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Completed initialization in 1 ms
+19:14:54.177 [main] INFO org.springframework.mock.web.MockServletContext -- Initializing Spring TestDispatcherServlet ''
+19:14:54.177 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Initializing Servlet ''
+19:14:54.177 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Completed initialization in 0 ms
+19:14:54.282 [main] INFO org.springframework.mock.web.MockServletContext -- Initializing Spring TestDispatcherServlet ''
+19:14:54.282 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Initializing Servlet ''
+19:14:54.282 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Completed initialization in 0 ms
+19:14:54.327 [main] INFO org.springframework.mock.web.MockServletContext -- Initializing Spring TestDispatcherServlet ''
+19:14:54.327 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Initializing Servlet ''
+19:14:54.327 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Completed initialization in 0 ms
+19:14:54.339 [main] INFO org.springframework.mock.web.MockServletContext -- Initializing Spring TestDispatcherServlet ''
+19:14:54.339 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Initializing Servlet ''
+19:14:54.339 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Completed initialization in 0 ms
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.603 s -- in edu.northeastern.cs6510.gateway.CheckoutContractTest
+[INFO] Running edu.northeastern.cs6510.gateway.ReadModelContractTest
+19:14:54.358 [main] INFO org.springframework.mock.web.MockServletContext -- Initializing Spring TestDispatcherServlet ''
+19:14:54.358 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Initializing Servlet ''
+19:14:54.358 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Completed initialization in 0 ms
+19:14:54.371 [main] INFO org.springframework.mock.web.MockServletContext -- Initializing Spring TestDispatcherServlet ''
+19:14:54.371 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Initializing Servlet ''
+19:14:54.371 [main] INFO org.springframework.test.web.servlet.TestDispatcherServlet -- Completed initialization in 0 ms
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in edu.northeastern.cs6510.gateway.ReadModelContractTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ api-gateway ---
+[INFO] 
+[INFO] --- spring-boot:3.4.3:repackage (repackage) @ api-gateway ---
+[INFO] Replacing main artifact D:\cs6510new\CS6510-2026\domain-services\api-gateway\target\api-gateway-1.0.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\cs6510new\CS6510-2026\domain-services\api-gateway\target\api-gateway-1.0.0-SNAPSHOT.jar.original
+[INFO] 
+[INFO] -------------< edu.northeastern.cs6510:integration-tests >--------------
+[INFO] Building integration-tests 1.0.0-SNAPSHOT                          [8/8]
+[INFO]   from integration-tests\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ integration-tests ---
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\integration-tests\src\main\resources
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\integration-tests\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ integration-tests ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ integration-tests ---
+[INFO] skip non existing resourceDirectory D:\cs6510new\CS6510-2026\domain-services\integration-tests\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ integration-tests ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ integration-tests ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running edu.northeastern.cs6510.boundaries.ModuleBoundaryTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.062 s -- in edu.northeastern.cs6510.boundaries.ModuleBoundaryTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ integration-tests ---
+[WARNING] JAR will be empty - no content was marked for inclusion!
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for domain-services 1.0.0-SNAPSHOT:
+[INFO] 
+[INFO] domain-services .................................... SUCCESS [  0.003 s]
+[INFO] service-contracts .................................. SUCCESS [  1.294 s]
+[INFO] catalog-service .................................... SUCCESS [  3.284 s]
+[INFO] checkout-service ................................... SUCCESS [ 31.891 s]
+[INFO] inventory-service .................................. SUCCESS [ 38.785 s]
+[INFO] analytics-service .................................. SUCCESS [ 18.952 s]
+[INFO] api-gateway ........................................ SUCCESS [  1.548 s]
+[INFO] integration-tests .................................. SUCCESS [  0.608 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:36 min
+[INFO] Finished at: 2026-10-25T19:14:55-07:00
+[INFO] ------------------------------------------------------------------------
