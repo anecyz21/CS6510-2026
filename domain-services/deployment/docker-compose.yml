@@ -115,6 +115,7 @@ services:
       DB_URL: jdbc:mysql://checkout-db:3306/${CHECKOUT_DB_NAME:-checkout}?rewriteBatchedStatements=true
       DB_USERNAME: ${CHECKOUT_DB_USERNAME:-checkout_service}
       DB_PASSWORD: ${CHECKOUT_DB_PASSWORD}
+      # Chosen in task T118 from baseline and exploratory evidence: reports/redesign/POOL-SIZING.md.
       DB_POOL_SIZE: ${CHECKOUT_DB_POOL_SIZE:-10}
       CATALOG_URL: http://catalog:8081
       INVENTORY_URL: http://inventory:8083
