@@ -19,6 +19,14 @@ One checkout, followed through the code from the gateway to the analytics view
 
 </div>
 
+<!--
+Today I'm walking through the code of the domain-services version of the self-checkout system.
+
+Rather than tell the story of how it was built, I'll follow one checkout. A station starts a transaction, scans items and completes the purchase, and those scans end up in the popular-items ranking. At each step I'll open the class that does the work.
+
+Everything I show is in the domain-services folder on the microservice-new branch.
+-->
+
 ---
 
 # Route of the Tour
@@ -44,7 +52,13 @@ One checkout, followed through the code from the gateway to the analytics view
 </v-clicks>
 
 <!--
-Set expectations: this is a walk through the code, not a history of how it was built.
+This is the route. First, how the repository is laid out and how to run it. Then the shared contracts, which are the only code the services share.
+
+After that we follow a request: the gateway, Catalog, a scan, the completion saga, recovery when something fails, the outbox that feeds Kafka, and analytics. We finish with the tests and the operational evidence.
+
+[click] The public API and the load client are the same ones the monolith and layered versions used. Behavior is comparable, and only the internals change.
+
+[click] Every box maps to a package or a file, so you can follow along in the repository.
 -->
 
 ---
@@ -84,6 +98,16 @@ Services depend on `service-contracts`, never on each other.
 
 </div>
 
+<!--
+domain-services is a Maven multi-module build. The gateway and each of the four services is its own module, and each builds its own jar and Docker image.
+
+service-contracts holds the message types the services exchange. integration-tests runs against the full running stack. deployment holds the Compose files, scripts and reports.
+
+Inside a service, packages are split by concern: api for public controllers, internal and ops for operator endpoints, then scan, completion, recovery, outbox, catalog and health.
+
+The one rule: a service may depend on service-contracts, but never on another service's module. A test enforces it, and I'll show that test near the end.
+-->
+
 ---
 
 # Running the Stack: Topology
@@ -111,7 +135,17 @@ Ten containers from `deployment/docker-compose.yml`. Only port 8080 is public; o
 </div>
 
 <!--
-Plain version: the project is ten pieces that must run together. Compose is the recipe that starts them all with one command.
+This is what Docker Compose starts: ten containers that have to run together.
+
+Checkout stations only ever talk to the gateway, on port 8080. The gateway forwards each request to the service that owns it.
+
+Each service has its own MySQL instance. That makes four databases, and no service has an account on any database but its own.
+
+There are two links between services. Checkout calls Inventory over HTTP to reserve and commit stock. Checkout also publishes every accepted scan to Kafka, and Analytics consumes it.
+
+One link isn't drawn: Checkout, Inventory and Analytics also read Catalog's internal API to keep local copies of the catalog. We'll get to that shortly.
+
+Operator ports and database ports are bound to localhost, so the gateway is the only public surface.
 -->
 
 ---
@@ -158,6 +192,14 @@ checkout-db:
 </div>
 </div>
 
+<!--
+Day to day you need four scripts. start-services builds everything, starts the stack and waits until every service reports ready. reset wipes every volume, which gets you back to empty databases. check-readiness checks each database, Kafka and each service. validate-all runs the full validation.
+
+On the right is one database from the Compose file. Each one has its own database name, user and password, read from services.env. That file is gitignored, and services.env.example is the template. The colon-question-mark syntax makes Compose stop with an error if a password is missing, instead of starting with a blank one.
+
+Tuning, such as pool sizes, timeouts and recovery intervals, lives in each service's application.yml.
+-->
+
 ---
 
 # Shared Contracts: The Message Shapes
@@ -202,7 +244,17 @@ public record AcceptedScanV1(
 </div>
 
 <!--
-Plain version: this module is the rulebook for messages between services.
+The services run as separate processes, so they exchange messages instead of calling each other's methods. These records are the agreed message shapes.
+
+ReserveRequestV1 is the body Checkout sends Inventory to reserve stock. AcceptedScanV1 is the event Checkout puts on Kafka for every accepted scan.
+
+[click] No service imports another service's code. These messages are how they talk.
+
+[click] Each shape is defined once, and both the sender and the receiver use that definition, so field names can't drift apart.
+
+[click] The v1 in the package is the version. A breaking change would go in a new v2 package, and consumers keep using v1 until they choose to move.
+
+[click] ignoreUnknown means a newer sender can add a field without breaking an older reader. Also note eventId: it's the key Analytics uses to drop duplicates.
 -->
 
 ---
@@ -238,6 +290,14 @@ An accidental format change fails a build before it ships.
 </div>
 </div>
 
+<!--
+Shared types aren't enough on their own, because each side could still turn them into JSON differently. So service-contracts keeps one canonical JSON sample for each message.
+
+The provider's test checks that what it actually sends matches the sample. The consumer's test checks that it can read the sample. FixtureCompatibilityTest checks the records themselves against the fixtures.
+
+If someone renames a field, one of these tests fails in the build, before anything is deployed.
+-->
+
 ---
 
 # Entry Point: `api-gateway` Routes
@@ -264,11 +324,25 @@ ResponseEntity<byte[]> scan(@PathVariable String transactionId, @RequestBody(req
 
 </v-clicks>
 
+<!--
+This is the first stop on the request path. The gateway is deliberately thin. Here is the scan route.
+
+[click] Its only check is that the body contains a sku. If it doesn't, the gateway answers 400 MISSING_SKU, a check the gateway has always made.
+
+[click] Everything else is forwarded to Checkout unchanged.
+
+[click] CheckoutRouteHandler has the four transaction routes: start, scan, get and complete. All of them go to Checkout.
+
+[click] ReadModelRouteHandler forwards the three reads to their owners: the item list to Catalog, low stock to Inventory, popular items to Analytics.
+
+[click] Every business decision belongs to the service that owns the data, not the gateway.
+-->
+
 ---
 
 # Entry Point: `UpstreamProxy`
 
-```java {all|3|8-11|12-14}
+```java {all|3-4|7-11|12-13}
 public ResponseEntity<byte[]> forward(Service service, HttpMethod method, String pathAndQuery,
                                       byte[] body, String contentType) {
   HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(baseUrls.get(service) + pathAndQuery))
@@ -292,6 +366,20 @@ public ResponseEntity<byte[]> forward(Service service, HttpMethod method, String
 - What the gateway deliberately lacks: no datasource, no Kafka, no `/internal/**` routes
 
 </v-clicks>
+
+<!--
+Every route ends up in this one method.
+
+[click] The read timeout is 8 seconds, deliberately longer than Checkout's 5-second completion deadline. A slow completion therefore returns Checkout's own 503 rather than a gateway timeout.
+
+[click] The upstream status, content type and body are copied back as they are.
+
+[click] The gateway writes its own response only when the upstream can't be reached at all: 503 SERVICE_UNAVAILABLE.
+
+[click] Passing 4xx responses through matters. The baseline gateway turned every upstream 4xx into a 500, so clients never saw codes like INSUFFICIENT_STOCK.
+
+[click] The gateway has no datasource and no Kafka client, and it never routes /internal paths. A boundary test checks all three.
+-->
 
 ---
 
@@ -327,6 +415,16 @@ public ResponseEntity<byte[]> forward(Service service, HttpMethod method, String
 
 </v-click>
 
+<!--
+Catalog owns products and prices. It has two internal endpoints: a catalog version number and the paged product list. The gateway doesn't route them; they're only for the other services.
+
+The other services don't call Catalog on every request. Each one keeps a local copy, called a projection. Checkout keeps names and prices because it prices every scan. Inventory and Analytics only need names, for the low-stock and popular-items views.
+
+[click] The loader asks for the version every 15 seconds and reloads everything when it changes. The copy counts as CURRENT while the last successful check is at most 60 seconds old. If Catalog has been unreachable for longer, the copy is STALE. Before the first load, it's EMPTY.
+
+Those states matter on the next slide.
+-->
+
 ---
 
 # Scan Path: Resolving the Product
@@ -357,6 +455,22 @@ public Result lookup(String sku) {
 
 </v-clicks>
 
+<!--
+This is the first thing a scan does inside Checkout: work out which product it is.
+
+[click] If the SKU is in the local copy, we accept it with that name and price, whatever the copy's state. A slightly old price is better than failing the scan.
+
+[click] If it isn't in the copy and the copy is current, the SKU really is unknown, so the answer is 404 SKU_NOT_FOUND.
+
+[click] Otherwise the copy may be out of date, so we ask Catalog directly, once. If it's found, we add it to the copy and accept it. If Catalog says it doesn't exist, it's a 404. If Catalog can't be reached, the result is Unverifiable, which becomes a 503. We never claim "not found" when we couldn't actually check.
+
+[click] So a hit always wins.
+
+[click] And 404 only means "not found" when we're sure.
+
+[click] The most important point: this runs before Checkout opens any database transaction. A slow Catalog call never holds a lock.
+-->
+
 ---
 
 # Scan Path: One Local Transaction
@@ -380,9 +494,23 @@ db.update("INSERT INTO accepted_scan_outbox (event_id, transaction_id, station_i
 
 <v-click>
 
-Lock victims are retried up to 8 times with backoff, counted in `checkout.db.retries`. A scan never reserves or checks stock.
+A lock conflict is retried with backoff, up to 8 attempts, and counted in `checkout.db.retries`. A scan never reserves or checks stock.
 
 </v-click>
+
+<!--
+Now the scan itself: one short local transaction.
+
+[click] First we read the transaction row FOR SHARE. Completion's freeze takes FOR UPDATE on the same row, so a scan and a freeze can't interleave. The scan either commits before the freeze and is in the frozen basket, or it sees the busy flag.
+
+[click] If the transaction doesn't exist, isn't open, or has a completion in progress, we stop. A busy transaction gets 409 TRANSACTION_BUSY immediately; the scan is not queued.
+
+[click] The basket line is an upsert. The first scan of a SKU inserts it with the captured price, and later scans add one to the quantity. The price never changes after the first scan.
+
+[click] In the same transaction we write the accepted-scan event to the outbox table. If the transaction commits, the event exists. If it rolls back, neither the basket change nor the event exists. That's the transactional outbox, and we'll come back to it.
+
+[click] A lock conflict is retried with backoff. Note that a scan never touches stock: stock is only decided at completion.
+-->
 
 ---
 
@@ -421,6 +549,25 @@ sequenceDiagram
 
 </div>
 </div>
+
+<!--
+Completion is the hard part. Stock lives in Inventory's database, while the basket and the receipt live in Checkout's, and no single transaction can cover both. So completion is a saga: five local transactions, coordinated by Checkout.
+
+Following the diagram:
+1. Freeze copies the basket into a completion attempt and marks the transaction busy.
+2. Reserve asks Inventory to hold whatever stock is available.
+3. Prepare records what was granted. This is the receipt intent, and the attempt moves to COMMITTING.
+4. Commit tells Inventory the sale is final.
+5. Finalize writes the receipt, removes the purchased units from the basket and clears the busy flag.
+
+[click] Each step is a transaction in one database only.
+
+[click] Each Inventory call is keyed by the attempt ID, so repeating it is safe. If a response is lost, we send the same call again and get the same result.
+
+[click] Checkout never holds a database transaction open while it waits on HTTP.
+
+[click] Partial purchases: if only two of three units are available, we buy two and leave one in the basket. A later completion can buy it.
+-->
 
 ---
 
@@ -466,6 +613,18 @@ public enum AttemptState {
 </div>
 </div>
 
+<!--
+This is the same saga drawn as states. The state is stored in Checkout's database, so after a restart we know exactly where every attempt was.
+
+The normal path is RESERVING, then COMMITTING, then FINALIZED. If Inventory granted nothing at all, the attempt is REJECTED. If recovery gives up on a stuck reservation, it goes to CANCELLING and then CANCELLED. It can also go straight to CANCELLED when the reserve call finds that a cancel already reached Inventory first; that's the tombstone case, which I'll explain on the Inventory slides.
+
+[click] COMMITTING is the point of no return. Once the receipt intent is stored, the attempt is never cancelled, only retried until it finishes.
+
+[click] REJECTED is the "nothing in stock" answer: 409 INSUFFICIENT_STOCK, with the basket left as it was.
+
+[click] RESERVING is the only state an attempt can be abandoned from.
+-->
+
 ---
 
 # Completion: Freeze or Join
@@ -493,6 +652,22 @@ private Freeze freeze(String transactionId, String owner) {
 - Then `complete` drives the saga **outside** any transaction, within a 5 s deadline
 
 </v-clicks>
+
+<!--
+This is step one, the freeze, which runs as a single local transaction.
+
+[click] Lock the transaction row, or answer 404 if it doesn't exist. If the transaction isn't open, answer 409 TRANSACTION_NOT_OPEN.
+
+[click] If an attempt is already running, join it instead of starting a second purchase. That's why a double-click or a client retry doesn't buy twice.
+
+[click] An empty basket is 409 EMPTY_BASKET.
+
+[click] Otherwise create a new attempt with a time-ordered UUIDv7 ID, snapshot the basket lines into it, and lease it to this request for 10 seconds so the recovery worker leaves it alone.
+
+[click] So two concurrent completes produce one purchase.
+
+[click] Once the freeze commits, the request drives the saga with no transaction open, and gives up after 5 seconds.
+-->
 
 ---
 
@@ -538,6 +713,24 @@ while (true) {
 </div>
 </div>
 
+<!--
+This loop moves an attempt forward. The request and the recovery worker both use it. The excerpt is simplified; the comment under it says what was left out.
+
+[click] It stops when the attempt reaches a final state, or when the deadline has passed. In that case the result is UNRESOLVED and the attempt stays where it is.
+
+[click] Otherwise it runs one step for the current state: reserve, commit or cancel. Each step calls Inventory, then records the result in a short local transaction.
+
+[click] If Inventory is unreachable or times out, we don't know whether it applied the command, so we must not cancel. We record the failure, schedule a retry with backoff, and return UNRESOLVED. Recovery later repeats the same command, which is safe because it's keyed by the attempt ID.
+
+[click] Each state change is a conditional update on the expected state. If it updates nothing, another driver already moved the attempt on, and we re-read it.
+
+[click] Inventory calls time out after 300 ms to connect and 1.5 seconds to read.
+
+[click] When the request runs out of time, the shopper gets a 503 and the attempt carries on in the background.
+
+[click] The receipt lists only what this attempt bought, in exact cents. An earlier partial purchase on the same transaction has its own receipt.
+-->
+
 ---
 
 # Inventory: Reserve Without Holding Hot Rows
@@ -560,6 +753,22 @@ WHERE sku = ?
 - Zero granted in total → the reservation is `RELEASED` and Checkout rejects the attempt
 
 </v-clicks>
+
+<!--
+This is the Inventory side of reserve: one UPDATE per SKU.
+
+Read the expression from the inside out. Available stock is physical minus reserved, floored at zero. The grant is the smaller of what was requested and what's available. That grant is added to reserved_stock. Physical stock doesn't change yet.
+
+[click] So each SKU gets min(requested, available) in one statement.
+
+[click] LAST_INSERT_ID is a MySQL trick: it stores the grant so the client can read it back without a second query.
+
+[click] SKUs are always locked in descending order. Two reservations that share SKUs take the locks in the same order, which avoids deadlock cycles. withLockRetries retries the rare lock-wait or deadlock victim, up to 3 attempts.
+
+[click] There is no SELECT ... FOR UPDATE first. An earlier version had one, and under load it made completions queue on the popular SKUs; that was the main bottleneck in our measurements.
+
+[click] If nothing at all was granted, the reservation is RELEASED, Checkout marks the attempt REJECTED, and the shopper gets 409.
+-->
 
 ---
 
@@ -594,6 +803,19 @@ LIMIT ? FOR UPDATE SKIP LOCKED
 
 </div>
 </div>
+
+<!--
+Every Inventory command can be repeated safely. On the left:
+- Repeating reserve returns what was stored the first time. Reusing an ID with different lines is an error: RESERVATION_MISMATCH.
+- Repeating commit returns COMMITTED. A released or cancelled reservation can't be committed.
+- Repeating cancel returns the same result. A committed reservation can't be cancelled: RESERVATION_COMMITTED, and Checkout must finalize instead.
+
+The tombstone covers a race. Say the reserve request is delayed in the network and the cancel arrives first. The cancel creates a CANCELLED record for that ID, so when the late reserve arrives, it finds the record and holds nothing.
+
+On the right: commit doesn't touch the stock rows at all. It only queues the lines in sale_queue. About every 100 milliseconds SaleApplier takes a batch, using SKIP LOCKED so several instances could share the queue, and adds up the quantities per SKU. One update per SKU moves the quantity from reserved to physical stock, writes the SALE movements and deletes the queue rows.
+
+Availability stays exact, because the units stay reserved until they're applied. Only the physical figure lags, by at most one interval.
+-->
 
 ---
 
@@ -637,6 +859,20 @@ On shutdown, `RecoveryLifecycle` stops picking up attempts and hands its leases 
 </div>
 </div>
 
+<!--
+A request can run out of time, or the process can crash in the middle of a saga. The recovery worker finishes those attempts. It runs every second and reads its state from Checkout's database, so it survives restarts.
+
+[click] It takes the attempt's lease first. If another driver holds it, whether a request or another replica, it skips the attempt.
+
+[click] If the attempt is still RESERVING, has already failed, and is older than 30 seconds, recovery gives up and moves it to CANCELLING, which releases the reservation. This is only allowed before the receipt intent is stored.
+
+[click] Then it drives the attempt with the same AttemptDriver a request uses, so recovery never has separate logic.
+
+[click] After 20 consecutive failures the attempt is flagged needs_attention for operators, but recovery keeps retrying.
+
+The table has the defaults. On shutdown, RecoveryLifecycle stops picking up attempts and hands its leases back, so a restarted process can continue right away instead of waiting for them to expire.
+-->
+
 ---
 
 # Fault Injection
@@ -668,6 +904,16 @@ On shutdown, `RecoveryLifecycle` stops picking up attempts and hands its leases 
 </div>
 </div>
 
+<!--
+To test recovery we need failures at exact points in the saga. Checkout calls a checkpoint at four places, and the table shows which failure each one simulates.
+
+In normal runs NoopFaultInjector does nothing. Under the fault-injection profile, HaltingFaultInjector can be armed through FaultController's operator endpoint. A HALT point fires once and stops the process. A LOSE point keeps throwing away Inventory's response until it's disarmed, which simulates a lost reply.
+
+At the network level, the faults override file puts Toxiproxy between Checkout and Inventory, so tests can slow down or cut the connection.
+
+All of this is switched on only with the override file and -Dstack.faults=true. Measured runs never use it.
+-->
+
 ---
 
 # Accepted Scans: Outbox to Kafka
@@ -690,13 +936,27 @@ flowchart LR
 
 </v-clicks>
 
+<!--
+Back to the outbox row the scan wrote. The problem: Checkout has to tell Analytics about every accepted scan, but its database and Kafka are two separate systems. A crash between writing one and the other would lose or duplicate an event.
+
+The solution is to write the event to an outbox table in the same database transaction as the scan. A separate relay then ships the rows to Kafka.
+
+[click] There is exactly one relay per Checkout database. It holds a MySQL named lock, so a second Checkout instance can't send the same rows or reorder them.
+
+[click] If Kafka is down, rows pile up in the outbox and scans keep working.
+
+[click] If the relay crashes after Kafka acknowledged a row but before marking it, the row is sent again with the same eventId, and Analytics drops the duplicate. At-least-once delivery plus a consumer that ignores duplicates gives the effect of exactly once.
+
+[click] Published rows are purged after 24 hours, and health reports how many rows are still pending.
+-->
+
 ---
 
 # `OutboxRelay.publishOnce`
 
 <span class="path">checkout-service/.../outbox/OutboxRelay.java</span>
 
-```java {all|2-4|5-6|7-14|15-18}
+```java {all|1-4|5-6|7-14|15-18}
 List<OutboxRow> rows = db.query(
     "SELECT outbox_id, event_id, transaction_id, station_id, sku, accepted_at FROM accepted_scan_outbox "
         + "WHERE published_at IS NULL ORDER BY outbox_id LIMIT ?", ..., BATCH);
@@ -716,6 +976,18 @@ if (!acknowledged.isEmpty()) {
 }
 if (failure != null) throw failure;   // the loop backs off and retries
 ```
+
+<!--
+This is one pass of the relay.
+
+[click] Select a batch of unpublished rows, in outbox order. If there are none, there's nothing to do.
+
+[click] Send them all to Kafka, then flush.
+
+[click] Wait up to 15 seconds for each acknowledgment. Collect the IDs that were acknowledged, and remember the first failure.
+
+[click] Mark only the acknowledged rows as published. Then, if anything failed, throw so the loop backs off, doubling up to 5 seconds, and tries again. Every pass selects whatever is still unpublished, so a failed row is never skipped.
+-->
 
 ---
 
@@ -742,6 +1014,14 @@ flowchart LR
 All three filters run in **one** Analytics transaction. Offsets are acknowledged only after it commits; a failed batch is sought back and redelivered (`KafkaConsumerConfig`).
 
 </v-click>
+
+<!--
+Analytics consumes the topic in batches. ScanPipeline is a pipes-and-filters design: three filters in one line, each one's output feeding the next.
+
+Before the pipeline, the listener checks each event. Events it can't read, or with a newer schema version than it understands, go to ingest_rejections instead.
+
+[click] The whole batch runs in one Analytics transaction. Kafka offsets are acknowledged only after it commits. If the batch fails, the consumer seeks back and the same batch is delivered again. That's safe because ingest ignores events it has already seen.
+-->
 
 ---
 
@@ -791,6 +1071,14 @@ Window window(long end) {
 </div>
 </div>
 
+<!--
+IngestFilter locks the single ingest_state row and gives new events the next sequence numbers in order. Events are deduplicated by eventId, so replaying a batch changes nothing.
+
+WindowFilter turns sequence numbers into windows. A window holds the latest 1,000 scans, and a new one is published every 500 scans, plus a first one at sequence 1. The window ending at e covers sequence max(1, e minus 999) through e.
+
+RankAndPublishFilter counts scans per SKU in the window and ranks by count, then by SKU. It writes the snapshot rows, and only then moves the published pointer. If a SKU has no known name, the batch fails and is retried; it never publishes a SKU code in place of a name.
+-->
+
 ---
 
 # Read Models
@@ -817,6 +1105,16 @@ Window window(long end) {
 
 </div>
 </div>
+
+<!--
+These are the two public read endpoints, each answered by the service that owns the data.
+
+Popular items reads the pointer and its snapshot in one read-only transaction, so a response never mixes two windows. Before the first publication the ranking is empty. Operators can see ingest progress (ingested count, last sequence, current window and consumer lag) at the ingest-status endpoint.
+
+Low stock reads physical stock below the threshold and never counts reservations. Names come from Inventory's copy of the catalog. If an alerted SKU has no known name, the answer is 503 rather than showing the SKU code as its name.
+
+InventoryOpsController provides the data that reconciliation uses.
+-->
 
 ---
 
@@ -862,6 +1160,16 @@ DROP VIEW published_popularity;
 </div>
 </div>
 
+<!--
+This is where private data ownership shows up in the code.
+
+Each service has its own Flyway migrations, which run at startup against its own database. You can read the history in them. Earlier migrations created shared views and a stored procedure, and the private_store migrations drop them: active_items, fulfill_checkout, low_stock and published_popularity.
+
+Readiness checks only the service's own database, so any service can start on its own. The state of its dependencies, such as whether Inventory is reachable, whether Kafka is up and how fresh the catalog copy is, appears as health detail, not as readiness.
+
+Each service also has its own error types. Apart from the contracts, nothing is shared.
+-->
+
 ---
 
 # Tests: Four Layers
@@ -885,6 +1193,20 @@ DROP VIEW published_popularity;
 
 </div>
 </div>
+
+<!--
+The tests come in four layers.
+
+Unit tests cover logic with no database. AttemptDriverTest, for example, runs the saga against a fake Inventory and an in-memory repository.
+
+Testcontainers tests run each module against a real MySQL or Kafka in a container.
+
+Contract tests check both sides against the shared fixtures.
+
+System tests in integration-tests drive the whole running stack through the public API.
+
+The completion scenarios are the ones to remember. PartialFulfillmentTest checks that the available units are bought and the rest stay in the basket. In ConcurrentLastUnitTest, fifty stations compete for the last unit and at most one gets it. LostResponseTest and CancelCommitRaceTest cover the failure cases. The support helpers start and inspect the stack, inject faults and run reconciliation.
+-->
 
 ---
 
@@ -916,6 +1238,16 @@ DROP VIEW published_popularity;
 
 </div>
 </div>
+
+<!--
+The architecture rules aren't just written down; they're tests.
+
+ModuleBoundaryTest checks the code without running anything. No domain module depends on another one. No service's SQL names another service's schema. The contracts module has no persistence types. The gateway has no database or Kafka dependency and contains only routing and translation classes.
+
+PrivateStoreAccessTest runs against the live stack. It tries every service account against every database instance. Each account works only on its own instance, and the old cross-store views and procedure exist nowhere.
+
+IndependentStartupTest starts each service with the others stopped and checks that it still becomes ready.
+-->
 
 ---
 
@@ -956,6 +1288,14 @@ GET  /internal/v1/ops/ingest-status
 </div>
 </div>
 
+<!--
+For operators, each service has endpoints on its loopback-only port. You can list completion attempts, inspect one, retry one, export reconciliation data, and check ingest status.
+
+reconcile.sh runs after a load run. It reads those exports and checks six invariants: stock never negative and never over-reserved, no reservation left hanging, no attempt left unresolved, stock sold equal to receipt quantities, committed reservations matching finalized attempts, and every accepted scan ingested by Analytics. The last line it prints is RECONCILIATION PASS or FAIL.
+
+The measurement scripts run the load client, record observations, and write the reports and the baseline-versus-redesign comparison into deployment/reports.
+-->
+
 ---
 layout: center
 class: text-center
@@ -968,3 +1308,11 @@ class: text-center
 Start at `domain-services/deployment/README.md` and `ARCHITECTURE.md`
 
 </div>
+
+<!--
+That's the tour, from the gateway to the analytics view.
+
+If you want to read further, start with the deployment README. It links the architecture document, the contracts, the reports and the validation runs.
+
+I'm happy to open any class we passed for a closer look.
+-->
