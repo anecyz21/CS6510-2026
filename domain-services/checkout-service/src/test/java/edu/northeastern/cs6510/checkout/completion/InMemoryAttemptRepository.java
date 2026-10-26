@@ -27,6 +27,9 @@ public class InMemoryAttemptRepository implements CompletionAttemptRepository {
   public final List<String> parked = new ArrayList<>();
   /** When set, the next transition loses to a concurrent driver that already prepared the attempt. */
   public boolean loseNextTransition;
+  /** Reads through {@link #find} and lease writes, to check what the driver costs the database. */
+  public int finds;
+  public int leaseWrites;
 
   public InMemoryAttemptRepository(BooleanSupplier insideTransaction, Clock clock) {
     this.insideTransaction = insideTransaction;
@@ -46,7 +49,10 @@ public class InMemoryAttemptRepository implements CompletionAttemptRepository {
   }
 
   @Override
-  public Optional<CompletionAttempt> find(String attemptId) { return Optional.ofNullable(store.get(attemptId)); }
+  public Optional<CompletionAttempt> find(String attemptId) {
+    finds++;
+    return Optional.ofNullable(store.get(attemptId));
+  }
 
   @Override
   public boolean transition(String attemptId, AttemptState from, AttemptState to, Instant now) {
@@ -113,6 +119,7 @@ public class InMemoryAttemptRepository implements CompletionAttemptRepository {
   @Override
   public boolean acquireLease(String attemptId, String owner, Instant until, Instant now) {
     write();
+    leaseWrites++;
     Instant held = leaseUntil.get(attemptId);
     if (held != null && !held.isBefore(now) && !owner.equals(leaseOwner.get(attemptId))) return false;
     holdLease(attemptId, owner, until);
@@ -122,6 +129,7 @@ public class InMemoryAttemptRepository implements CompletionAttemptRepository {
   @Override
   public void releaseLease(String attemptId, String owner) {
     write();
+    leaseWrites++;
     if (owner.equals(leaseOwner.get(attemptId))) {
       leaseOwner.remove(attemptId);
       leaseUntil.remove(attemptId);

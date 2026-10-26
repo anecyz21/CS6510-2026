@@ -1,7 +1,15 @@
 # Checkout database pool size (task T118)
 
-**Chosen value: `CHECKOUT_DB_POOL_SIZE=10`**, the same as the baseline. It is the default in
-[`../../docker-compose.yml`](../../docker-compose.yml) and is used by every measured redesign run.
+**Chosen value: `CHECKOUT_DB_POOL_SIZE=10`**, the same as the baseline. Every measured redesign run
+(T119) used it.
+
+> **Update 2026-10-26: the default is now 15.** After the Inventory locking fix, the merged
+> completion steps and the binlog change, Checkout's pool became the limit again. Raising it from
+> 10 to 15 added 38% more stress transactions, and 20 and 30 added only 6% and 3% more. The
+> evidence is in
+> [`exploratory/throughput-methods/NOTES.md`](exploratory/throughput-methods/NOTES.md). The measured
+> comparison in `COMPARISON.md` still reflects pool 10. Any re-measurement at 15 must declare the
+> pool difference from the baseline (F9) and attribute the gain to it.
 
 ## Evidence
 

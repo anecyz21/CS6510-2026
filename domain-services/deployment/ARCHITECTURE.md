@@ -34,6 +34,10 @@ contract and has no data store. Design decisions are in
   interface only, and the gateway never routes `/internal/**`.
 - **Readiness** (`/actuator/health/readiness`) covers only the service's own database. Each service
   starts and becomes ready while every other service is stopped (US3-1, research R17).
+- **MySQL settings:** every instance runs with `--disable-log-bin` (`MYSQL_SERVER_OPTIONS`; set it
+  to `--log-bin` to restore the image default). Nothing replicates from the binlog, and commits
+  stay durable through the redo log. This is a declared configuration difference from the
+  baseline; see [`reports/redesign/exploratory/throughput-methods/`](reports/redesign/exploratory/throughput-methods/NOTES.md).
 - **Fault injection:** `docker-compose.faults.yml` adds Toxiproxy between Checkout and Inventory
   and enables Checkout's fault endpoint. It is used only by the V7 recovery tests, never by
   measured runs.

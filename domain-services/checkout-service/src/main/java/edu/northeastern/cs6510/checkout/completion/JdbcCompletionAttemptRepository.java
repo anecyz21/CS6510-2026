@@ -5,6 +5,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +25,9 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
 
   @Override
   public Optional<TransactionLock> lockTransaction(String transactionId) {
-    return db.query("SELECT status, active_attempt_id FROM checkout_transactions WHERE transaction_id = ? FOR UPDATE",
-        (rs, row) -> new TransactionLock(rs.getString(1), rs.getString(2)), transactionId).stream().findFirst();
+    return db.query("SELECT status, active_attempt_id, station_id, started_at FROM checkout_transactions WHERE transaction_id = ? FOR UPDATE",
+        (rs, row) -> new TransactionLock(rs.getString(1), rs.getString(2), rs.getString(3), rs.getTimestamp(4).toInstant()),
+        transactionId).stream().findFirst();
   }
 
   @Override
@@ -73,12 +76,22 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
         to.name(), Timestamp.from(now), attemptId, from.name()) == 1;
   }
 
+  /** One statement for every line: {@code SET reserved_quantity = CASE sku WHEN ? THEN ? ... END}. */
   @Override
   public void storeReserved(String attemptId, Map<String, Integer> reservedBySku) {
+    if (reservedBySku.isEmpty()) return;
+    StringBuilder sql = new StringBuilder("UPDATE completion_attempt_lines SET reserved_quantity = CASE sku");
+    List<Object> args = new ArrayList<>();
     for (Map.Entry<String, Integer> entry : reservedBySku.entrySet()) {
-      db.update("UPDATE completion_attempt_lines SET reserved_quantity = ? WHERE attempt_id = ? AND sku = ?",
-          entry.getValue(), attemptId, entry.getKey());
+      sql.append(" WHEN ? THEN ?");
+      args.add(entry.getKey());
+      args.add(entry.getValue());
     }
+    sql.append(" END WHERE attempt_id = ? AND sku IN (")
+        .append(String.join(",", Collections.nCopies(reservedBySku.size(), "?"))).append(")");
+    args.add(attemptId);
+    args.addAll(reservedBySku.keySet());
+    db.update(sql.toString(), args.toArray());
   }
 
   @Override
@@ -87,33 +100,44 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
         transactionId, attemptId);
   }
 
+  /**
+   * Set-based, so the statement count does not grow with the basket: the purchased quantities are
+   * read from the stored receipt intent ({@code completion_attempt_lines.reserved_quantity}). The
+   * terminal attempt's lease is cleared in the same statement that finalizes it.
+   */
   @Override
   public boolean finalizeAttempt(CompletionAttempt attempt, Instant now) {
     Timestamp at = Timestamp.from(now);
-    if (db.update("UPDATE completion_attempts SET state = 'FINALIZED', finalized_at = ?, updated_at = ?, step_failures = 0 WHERE attempt_id = ? AND state = 'COMMITTING'",
-        at, at, attempt.attemptId()) != 1) {
+    String attemptId = attempt.attemptId();
+    String transactionId = attempt.transactionId();
+    if (db.update("UPDATE completion_attempts SET state = 'FINALIZED', finalized_at = ?, updated_at = ?, step_failures = 0, "
+        + "lease_owner = NULL, lease_until = NULL WHERE attempt_id = ? AND state = 'COMMITTING'", at, at, attemptId) != 1) {
       return false;
     }
-    db.update("INSERT INTO receipts (attempt_id, transaction_id, completed_at) VALUES (?, ?, ?)", attempt.attemptId(), attempt.transactionId(), at);
-    for (AttemptLine line : attempt.lines()) {
-      int purchased = line.reservedQuantity() == null ? 0 : line.reservedQuantity();
-      if (purchased == 0) continue;
-      db.update("INSERT INTO receipt_lines (attempt_id, sku, quantity, unit_price_cents, name) VALUES (?, ?, ?, ?, ?)",
-          attempt.attemptId(), line.sku(), purchased, line.unitPriceCents(), line.name());
-      // The basket was frozen by this attempt, so it still holds at least the requested quantity.
-      if (db.update("UPDATE basket_lines SET quantity = quantity - ? WHERE transaction_id = ? AND sku = ? AND quantity > ?",
-          purchased, attempt.transactionId(), line.sku(), purchased) == 0
-          && db.update("DELETE FROM basket_lines WHERE transaction_id = ? AND sku = ? AND quantity = ?",
-              attempt.transactionId(), line.sku(), purchased) == 0) {
-        // Rolls the whole finalize back: the frozen basket no longer covers the purchase.
-        throw new IllegalStateException("basket line " + line.sku() + " of " + attempt.transactionId() + " is smaller than the purchase");
-      }
+    db.update("INSERT INTO receipts (attempt_id, transaction_id, completed_at) VALUES (?, ?, ?)", attemptId, transactionId, at);
+    int purchasedLines = db.update("INSERT INTO receipt_lines (attempt_id, sku, quantity, unit_price_cents, name) "
+        + "SELECT attempt_id, sku, reserved_quantity, unit_price_cents, name FROM completion_attempt_lines "
+        + "WHERE attempt_id = ? AND reserved_quantity > 0", attemptId);
+    // The basket was frozen by this attempt, so each purchased line still holds at least its purchase:
+    // lines bought in full are deleted, the rest are reduced.
+    int emptied = db.update("DELETE b FROM basket_lines b JOIN completion_attempt_lines l ON l.sku = b.sku "
+        + "WHERE l.attempt_id = ? AND b.transaction_id = ? AND l.reserved_quantity > 0 AND b.quantity = l.reserved_quantity",
+        attemptId, transactionId);
+    int reduced = db.update("UPDATE basket_lines b JOIN completion_attempt_lines l ON l.sku = b.sku "
+        + "SET b.quantity = b.quantity - l.reserved_quantity "
+        + "WHERE l.attempt_id = ? AND b.transaction_id = ? AND l.reserved_quantity > 0 AND b.quantity > l.reserved_quantity",
+        attemptId, transactionId);
+    if (emptied + reduced != purchasedLines) {
+      // Rolls the whole finalize back: the frozen basket no longer covers the purchase.
+      throw new IllegalStateException("basket of " + transactionId + " does not cover the purchase of attempt " + attemptId);
     }
-    Integer remaining = db.queryForObject("SELECT COUNT(*) FROM basket_lines WHERE transaction_id = ?", Integer.class, attempt.transactionId());
-    if (remaining != null && remaining == 0) {
-      db.update("UPDATE checkout_transactions SET status = 'COMPLETED', completed_at = ? WHERE transaction_id = ?", at, attempt.transactionId());
-    }
-    clearActiveAttempt(attempt.transactionId(), attempt.attemptId());
+    // COMPLETED when nothing is left; the freeze flag is cleared only if this attempt still holds it.
+    db.update("UPDATE checkout_transactions SET "
+            + "completed_at = IF(EXISTS (SELECT 1 FROM basket_lines WHERE transaction_id = ?), completed_at, ?), "
+            + "status = IF(EXISTS (SELECT 1 FROM basket_lines WHERE transaction_id = ?), status, 'COMPLETED'), "
+            + "active_attempt_id = IF(active_attempt_id = ?, NULL, active_attempt_id), version = version + 1 "
+            + "WHERE transaction_id = ?",
+        transactionId, at, transactionId, attemptId, transactionId);
     return true;
   }
 

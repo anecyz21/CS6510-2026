@@ -57,6 +57,32 @@ class AttemptDriverTest {
   }
 
   @Test
+  void heldLeaseDriveFinalizesWithoutReadsOrLeaseWrites() {
+    add("a-1", line("SKU-A", 2), line("SKU-B", 1));
+    attempts.holdLease("a-1", OWNER, NOW.plusSeconds(10));   // as created by the freeze
+    inventory.grants = Map.of("SKU-A", 1, "SKU-B", 1);
+
+    AttemptDriver.Result result = driver.driveHeld(attempts.get("a-1"), DEADLINE, OWNER);
+    assertEquals(AttemptDriver.Outcome.FINALIZED, result.outcome());
+    assertEquals(NOW, result.attempt().finalizedAt(), "the finalize time travels back for the receipt");
+    assertEquals(Map.of("SKU-A", 1, "SKU-B", 1), result.attempt().lines().stream()
+        .collect(java.util.stream.Collectors.toMap(AttemptLine::sku, AttemptLine::reservedQuantity)));
+    assertEquals(0, attempts.finds, "the driver carries the attempt instead of re-reading it");
+    assertEquals(0, attempts.leaseWrites, "a terminal attempt needs no lease release");
+    assertEquals(List.of("reserve a-1", "commit a-1"), inventory.calls);
+  }
+
+  @Test
+  void heldLeaseDriveReleasesTheLeaseWhenUnresolved() {
+    add("a-1", line("SKU-A", 1));
+    attempts.holdLease("a-1", OWNER, NOW.plusSeconds(10));
+    inventory.unavailable = true;
+
+    assertEquals(AttemptDriver.Outcome.UNRESOLVED, driver.driveHeld(attempts.get("a-1"), DEADLINE, OWNER).outcome());
+    assertEquals(1, attempts.leaseWrites, "recovery must be able to take the attempt over");
+  }
+
+  @Test
   void allZeroReservationIsRejectedAndUnfreezesTheBasket() {
     add("a-1", line("SKU-A", 3));
     inventory.grants = Map.of("SKU-A", 0);

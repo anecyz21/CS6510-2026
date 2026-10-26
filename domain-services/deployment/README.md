@@ -103,4 +103,13 @@ domain-services/deployment/scripts/compare-reports.sh
 
 The measured comparison was taken before the Inventory locking fix and with Checkout's pool at 10.
 [`COMPARISON.md`](reports/COMPARISON.md) records two SC-009 targets as **UNMET** (throughput and
-complete p95) for that code. The exploratory notes show how the fix and pool size change this.
+complete p95) for that code. Since then:
+- **Inventory locking fix:** Inventory no longer queues completions on hot SKUs.
+- **Merged completion steps:** a completion costs Checkout three local transactions instead of
+  five.
+- **Binlog off:** the MySQL binary log is disabled.
+- **Pool 15:** Checkout's pool default is now 15.
+
+Exploratory runs with all four reached 52,102 stress transactions against the baseline's 23,511. See
+[`throughput-methods/NOTES.md`](reports/redesign/exploratory/throughput-methods/NOTES.md), including
+which part of the gain belongs to configuration rather than architecture.

@@ -75,8 +75,8 @@ public interface CompletionAttemptRepository {
   /** Makes a non-terminal attempt due now and clears its attention flag; false when the attempt is terminal or unknown. */
   boolean requestRetry(String attemptId, Instant now);
 
-  /** The public status and active attempt of a transaction, as read under a row lock. */
-  record TransactionLock(String status, String activeAttemptId) { }
+  /** The public status, active attempt and receipt header fields of a transaction, as read under a row lock. */
+  record TransactionLock(String status, String activeAttemptId, String stationId, Instant startedAt) { }
 
   enum OperatorFilter { UNRESOLVED, NEEDS_ATTENTION, ALL }
 }

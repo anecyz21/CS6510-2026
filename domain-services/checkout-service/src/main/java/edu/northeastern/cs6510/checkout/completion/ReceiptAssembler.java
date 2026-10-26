@@ -1,6 +1,9 @@
 package edu.northeastern.cs6510.checkout.completion;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +48,40 @@ public class ReceiptAssembler {
           receipt.put("lines", lines);
           return receipt;
         }, attemptId);
+  }
+
+  /**
+   * The same receipt, built from the attempt the driver just finalized and the header fields read
+   * under the freeze lock, so the completing request reads nothing back. Lines are the purchased
+   * ones in SKU order, exactly as {@link #receipt(String)} returns them.
+   */
+  public Map<String, Object> receipt(CompletionAttempt finalized, String stationId, Instant startedAt) {
+    List<Map<String, Object>> lines = new ArrayList<>();
+    int itemCount = 0;
+    long totalCents = 0;
+    List<AttemptLine> bySku = new ArrayList<>(finalized.lines());
+    bySku.sort(Comparator.comparing(AttemptLine::sku));
+    for (AttemptLine l : bySku) {
+      int quantity = l.reservedQuantity() == null ? 0 : l.reservedQuantity();
+      if (quantity == 0) continue;
+      Map<String, Object> line = new LinkedHashMap<>();
+      line.put("sku", l.sku());
+      line.put("name", l.name());
+      line.put("unitPrice", money(l.unitPriceCents()));
+      line.put("quantity", quantity);
+      lines.add(line);
+      itemCount += quantity;
+      totalCents += quantity * l.unitPriceCents();
+    }
+    Map<String, Object> receipt = new LinkedHashMap<>();
+    receipt.put("transactionId", finalized.transactionId());
+    receipt.put("stationId", stationId);
+    receipt.put("itemCount", itemCount);
+    receipt.put("totalAmount", money(totalCents));
+    receipt.put("startedAt", startedAt.toString());
+    receipt.put("completedAt", finalized.finalizedAt().toString());
+    receipt.put("lines", lines);
+    return receipt;
   }
 
   private static BigDecimal money(long cents) { return BigDecimal.valueOf(cents, 2); }

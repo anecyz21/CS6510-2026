@@ -13,6 +13,7 @@ import edu.northeastern.cs6510.contracts.inventory.v1.ReserveRequestV1;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +29,15 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * Drives one completion attempt through the saga (research R8): reserve in Inventory, durably
  * record the receipt intent, commit in Inventory, then finalize in Checkout; or, before the
- * intent is durable, cancel. One driver at a time holds the attempt's lease. It re-reads the
- * attempt before every step, every local write is its own short transaction, and no remote call
- * is made while a local transaction is open (FR-018). Inventory commands repeat safely because
- * they are keyed by the attempt id.
+ * intent is durable, cancel. One driver at a time holds the attempt's lease. Every local write is
+ * its own short transaction and a conditional update on the expected state, and no remote call is
+ * made while a local transaction is open (FR-018). Inventory commands repeat safely because they
+ * are keyed by the attempt id.
+ *
+ * <p>While it holds the lease the driver carries the attempt in memory from step to step. It
+ * re-reads it only when a conditional update loses, which means another driver moved it on. A
+ * terminal step leaves the lease in place (recovery never picks up terminal attempts), so the
+ * happy path costs Checkout three local transactions: freeze, prepare and finalize.
  */
 @Component
 public class AttemptDriver {
@@ -42,6 +48,9 @@ public class AttemptDriver {
 
   /** How a drive ended. UNRESOLVED means the attempt is still in progress and stays recoverable. */
   public enum Outcome { FINALIZED, REJECTED, CANCELLED, UNRESOLVED }
+
+  /** The outcome and the attempt as the driver last knew it (finalized lines and time when FINALIZED). */
+  public record Result(Outcome outcome, CompletionAttempt attempt) { }
 
   /** Sleeping is injectable so unit tests run without waiting. */
   public interface Sleeper { void sleep(Duration d) throws InterruptedException; }
@@ -81,36 +90,52 @@ public class AttemptDriver {
     Instant now = clock.instant();
     Boolean leased = transactions.execute(s -> attempts.acquireLease(attemptId, owner, now.plus(recovery.leaseDuration()), now));
     if (!Boolean.TRUE.equals(leased)) return awaitOtherDriver(attemptId, deadline);
+    return driveHeld(find(attemptId), deadline, owner).outcome();
+  }
+
+  /**
+   * Drives an attempt whose lease {@code owner} already holds, starting from {@code attempt} as just
+   * written: the request that froze the basket created the attempt leased to itself, so it neither
+   * re-acquires the lease nor re-reads the attempt.
+   */
+  public Result driveHeld(CompletionAttempt attempt, Instant deadline, String owner) {
+    Result result = null;
     try {
-      return run(attemptId, deadline);
+      result = run(attempt, deadline);
+      return result;
     } finally {
-      transactions.executeWithoutResult(s -> attempts.releaseLease(attemptId, owner));
+      if (result == null || result.outcome() == Outcome.UNRESOLVED) {
+        // Only an unresolved attempt needs its lease back, so that recovery can continue it.
+        transactions.executeWithoutResult(s -> attempts.releaseLease(attempt.attemptId(), owner));
+      }
     }
   }
 
-  private Outcome run(String attemptId, Instant deadline) {
+  private Result run(CompletionAttempt start, Instant deadline) {
+    CompletionAttempt attempt = start;
     while (true) {
-      CompletionAttempt attempt = find(attemptId);
       Outcome terminal = terminal(attempt.state());
-      if (terminal != null) return terminal;
-      if (!clock.instant().isBefore(deadline)) return Outcome.UNRESOLVED;
+      if (terminal != null) return new Result(terminal, attempt);
+      if (!clock.instant().isBefore(deadline)) return new Result(Outcome.UNRESOLVED, attempt);
       try {
-        boolean progressed = switch (attempt.state()) {
+        CompletionAttempt next = switch (attempt.state()) {
           case RESERVING -> reserveStep(attempt, deadline);
           case COMMITTING -> commitStep(attempt, deadline);
           case CANCELLING -> cancelStep(attempt, deadline);
-          default -> false;
+          default -> null;
         };
-        if (!progressed) return Outcome.UNRESOLVED;
+        if (next == null) return new Result(Outcome.UNRESOLVED, attempt);
+        attempt = next;
       } catch (NoTimeLeft noTime) {
         // The deadline cannot fit another Inventory call; nothing failed, so nothing is recorded.
-        return Outcome.UNRESOLVED;
+        return new Result(Outcome.UNRESOLVED, attempt);
       } catch (InventoryUnavailableException unknownOutcome) {
         // Not a cancellation: the attempt keeps its state and recovery repeats the same command.
         Instant failedAt = clock.instant();
         Instant retryAt = failedAt.plus(recovery.backoff(attempt.stepFailures()));
+        String attemptId = attempt.attemptId();
         transactions.executeWithoutResult(s -> attempts.recordStepFailure(attemptId, unknownOutcome.getMessage(), retryAt, failedAt));
-        return Outcome.UNRESOLVED;
+        return new Result(Outcome.UNRESOLVED, attempt);
       }
     }
   }
@@ -129,8 +154,8 @@ public class AttemptDriver {
     }
   }
 
-  /** RESERVING: ask Inventory for every requested unit, then record what was granted. */
-  private boolean reserveStep(CompletionAttempt attempt, Instant deadline) {
+  /** RESERVING: ask Inventory for every requested unit, then record what was granted. Returns the next attempt, or null. */
+  private CompletionAttempt reserveStep(CompletionAttempt attempt, Instant deadline) {
     ReserveRequestV1 request = new ReserveRequestV1(attempt.transactionId(),
         attempt.lines().stream().map(l -> new ReserveLineV1(l.sku(), l.requestedQuantity())).toList());
     InventoryClient.Result result = call(() -> inventory.reserve(attempt.attemptId(), request), deadline);
@@ -142,33 +167,34 @@ public class AttemptDriver {
       case RESERVED -> {
         Map<String, Integer> granted = grants(attempt, reservation);
         if (granted == null) return park(attempt, "reservation lines do not match the attempt snapshot");
-        transactions.executeWithoutResult(s -> {
+        boolean won = Boolean.TRUE.equals(transactions.execute(s -> {
           // Durable receipt intent: from here on the attempt only moves forward.
-          if (attempts.transition(attempt.attemptId(), AttemptState.RESERVING, AttemptState.COMMITTING, now)) {
-            attempts.storeReserved(attempt.attemptId(), granted);
-          }
-        });
+          if (!attempts.transition(attempt.attemptId(), AttemptState.RESERVING, AttemptState.COMMITTING, now)) return false;
+          attempts.storeReserved(attempt.attemptId(), granted);
+          return true;
+        }));
         faults.checkpoint(FaultPoint.AFTER_PREPARE);
-        return true;
+        return won ? moved(attempt, AttemptState.COMMITTING, granted, null) : find(attempt.attemptId());
       }
       case RELEASED -> {
         // Nothing was available: the basket stays open and unchanged.
-        transactions.executeWithoutResult(s -> {
-          if (attempts.transition(attempt.attemptId(), AttemptState.RESERVING, AttemptState.REJECTED, now)) {
-            attempts.storeReserved(attempt.attemptId(), zeroGrants(attempt));
-            attempts.clearActiveAttempt(attempt.transactionId(), attempt.attemptId());
-          }
-        });
-        return true;
+        Map<String, Integer> none = zeroGrants(attempt);
+        boolean won = Boolean.TRUE.equals(transactions.execute(s -> {
+          if (!attempts.transition(attempt.attemptId(), AttemptState.RESERVING, AttemptState.REJECTED, now)) return false;
+          attempts.storeReserved(attempt.attemptId(), none);
+          attempts.clearActiveAttempt(attempt.transactionId(), attempt.attemptId());
+          return true;
+        }));
+        return won ? moved(attempt, AttemptState.REJECTED, none, null) : find(attempt.attemptId());
       }
       case CANCELLED -> {
         // A cancel tombstone won the race: this reservation never holds stock.
-        transactions.executeWithoutResult(s -> {
-          if (attempts.transition(attempt.attemptId(), AttemptState.RESERVING, AttemptState.CANCELLED, now)) {
-            attempts.clearActiveAttempt(attempt.transactionId(), attempt.attemptId());
-          }
-        });
-        return true;
+        boolean won = Boolean.TRUE.equals(transactions.execute(s -> {
+          if (!attempts.transition(attempt.attemptId(), AttemptState.RESERVING, AttemptState.CANCELLED, now)) return false;
+          attempts.clearActiveAttempt(attempt.transactionId(), attempt.attemptId());
+          return true;
+        }));
+        return won ? moved(attempt, AttemptState.CANCELLED, null, null) : find(attempt.attemptId());
       }
       default -> {
         return park(attempt, "reserve returned state " + reservation.state() + " for a RESERVING attempt");
@@ -177,30 +203,31 @@ public class AttemptDriver {
   }
 
   /** COMMITTING: commit the reservation (idempotent), then finalize the receipt and basket. Never cancelled. */
-  private boolean commitStep(CompletionAttempt attempt, Instant deadline) {
+  private CompletionAttempt commitStep(CompletionAttempt attempt, Instant deadline) {
     InventoryClient.Result result = call(() -> inventory.commit(attempt.attemptId()), deadline);
     faults.checkpoint(FaultPoint.AFTER_COMMIT_RESPONSE);
     if (!(result instanceof InventoryClient.Ok ok) || ok.reservation().state() != ReservationStateV1.COMMITTED) {
       // Commit is only sent from COMMITTING and cancel only from CANCELLING, so this cannot happen.
       return park(attempt, "commit returned " + result);
     }
-    Instant now = clock.instant();
-    transactions.executeWithoutResult(s -> attempts.finalizeAttempt(attempt, now));
-    return true;
+    // Stored in TIMESTAMP(6): truncated here so the receipt built from memory equals the stored one.
+    Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+    boolean finalized = Boolean.TRUE.equals(transactions.execute(s -> attempts.finalizeAttempt(attempt, now)));
+    return finalized ? moved(attempt, AttemptState.FINALIZED, null, now) : find(attempt.attemptId());
   }
 
   /** CANCELLING: release the reservation (or leave a tombstone); the basket stays open and unchanged. */
-  private boolean cancelStep(CompletionAttempt attempt, Instant deadline) {
+  private CompletionAttempt cancelStep(CompletionAttempt attempt, Instant deadline) {
     InventoryClient.Result result = call(() -> inventory.cancel(attempt.attemptId()), deadline);
     if (result instanceof InventoryClient.Ok ok
         && (ok.reservation().state() == ReservationStateV1.RELEASED || ok.reservation().state() == ReservationStateV1.CANCELLED)) {
       Instant now = clock.instant();
-      transactions.executeWithoutResult(s -> {
-        if (attempts.transition(attempt.attemptId(), AttemptState.CANCELLING, AttemptState.CANCELLED, now)) {
-          attempts.clearActiveAttempt(attempt.transactionId(), attempt.attemptId());
-        }
-      });
-      return true;
+      boolean won = Boolean.TRUE.equals(transactions.execute(s -> {
+        if (!attempts.transition(attempt.attemptId(), AttemptState.CANCELLING, AttemptState.CANCELLED, now)) return false;
+        attempts.clearActiveAttempt(attempt.transactionId(), attempt.attemptId());
+        return true;
+      }));
+      return won ? moved(attempt, AttemptState.CANCELLED, null, null) : find(attempt.attemptId());
     }
     if (result instanceof InventoryClient.Conflict conflict && "RESERVATION_COMMITTED".equals(conflict.code())) {
       return park(attempt, "cancel observed COMMITTED");
@@ -255,12 +282,20 @@ public class AttemptDriver {
     };
   }
 
-  /** An impossible state: flag it for operators and stop retrying it automatically. */
-  private boolean park(CompletionAttempt attempt, String problem) {
+  /** An impossible state: flag it for operators and stop retrying it automatically. Returns null (no progress). */
+  private CompletionAttempt park(CompletionAttempt attempt, String problem) {
     log.error("completion attempt {} needs attention: {}", attempt.attemptId(), problem);
     Instant now = clock.instant();
     transactions.executeWithoutResult(s -> attempts.parkForOperator(attempt.attemptId(), problem, now));
-    return false;
+    return null;
+  }
+
+  /** The attempt after a transition this driver won, without reading it back. */
+  private static CompletionAttempt moved(CompletionAttempt a, AttemptState state, Map<String, Integer> reserved, Instant finalizedAt) {
+    List<AttemptLine> lines = reserved == null ? a.lines() : a.lines().stream()
+        .map(l -> new AttemptLine(l.sku(), l.requestedQuantity(), l.unitPriceCents(), l.name(), reserved.get(l.sku()))).toList();
+    return new CompletionAttempt(a.attemptId(), a.transactionId(), state, a.createdAt(), a.updatedAt(),
+        finalizedAt != null ? finalizedAt : a.finalizedAt(), 0, a.nextRetryAt(), a.needsAttention(), a.lastError(), lines);
   }
 
   private CompletionAttempt find(String attemptId) {

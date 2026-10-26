@@ -47,16 +47,25 @@ public class CompletionService {
     Instant deadline = Instant.now().plus(completion.requestDeadline());
     String owner = "request-" + UUID.randomUUID();
     Freeze freeze = transactions.execute(status -> freeze(transactionId, owner));
+    AttemptDriver.Outcome outcome;
+    CompletionAttempt finalized = null;
     if (freeze.joined()) {
       outcome("joined");
+      outcome = driver.drive(freeze.attemptId(), deadline, owner);
     } else {
       faults.checkpoint(FaultPoint.AFTER_FREEZE);
+      // The new attempt was created leased to this request, so it is driven without re-reading it.
+      AttemptDriver.Result result = driver.driveHeld(freeze.attempt(), deadline, owner);
+      outcome = result.outcome();
+      finalized = result.attempt();
     }
-    AttemptDriver.Outcome outcome = driver.drive(freeze.attemptId(), deadline, owner);
+    String attemptId = freeze.attemptId();
     return switch (outcome) {
       case FINALIZED -> {
         outcome("receipt");
-        yield receipts.receipt(freeze.attemptId());
+        yield finalized != null && finalized.finalizedAt() != null
+            ? receipts.receipt(finalized, freeze.stationId(), freeze.startedAt())
+            : receipts.receipt(attemptId);
       }
       case REJECTED -> {
         outcome("insufficient");
@@ -78,16 +87,19 @@ public class CompletionService {
     CompletionAttemptRepository.TransactionLock tx = attempts.lockTransaction(transactionId)
         .orElseThrow(() -> ApiException.transactionNotFound(transactionId));
     if (!"OPEN".equals(tx.status())) throw ApiException.transactionNotOpen(transactionId);
-    if (tx.activeAttemptId() != null) return new Freeze(tx.activeAttemptId(), true);
+    if (tx.activeAttemptId() != null) return new Freeze(tx.activeAttemptId(), true, null, tx.stationId(), tx.startedAt());
     List<AttemptLine> basket = attempts.basketLines(transactionId);
     if (basket.isEmpty()) throw ApiException.emptyBasket(transactionId);
     String attemptId = UuidV7.next();
     Instant now = Instant.now();
     attempts.insertAttemptWithLines(attemptId, transactionId, basket, now, owner, now.plus(recovery.leaseDuration()));
-    return new Freeze(attemptId, false);
+    CompletionAttempt created = new CompletionAttempt(attemptId, transactionId, AttemptState.RESERVING, now, now, null, 0, now,
+        false, null, basket);
+    return new Freeze(attemptId, false, created, tx.stationId(), tx.startedAt());
   }
 
-  private record Freeze(String attemptId, boolean joined) { }
+  /** The frozen attempt (null when joining another one) and the receipt header fields read under the lock. */
+  private record Freeze(String attemptId, boolean joined, CompletionAttempt attempt, String stationId, Instant startedAt) { }
 
   private void outcome(String result) { meters.counter("checkout.completion.outcome", "result", result).increment(); }
 }
