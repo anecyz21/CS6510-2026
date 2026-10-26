@@ -36,6 +36,7 @@ class ReservationCancelIT {
 
   private static JdbcTemplate db;
   private static ReservationService service;
+  private static SaleApplier applier;
 
   @BeforeAll
   static void migrate() {
@@ -43,6 +44,7 @@ class ReservationCancelIT {
     Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").load().migrate();
     db = new JdbcTemplate(dataSource);
     service = new ReservationService(new ReservationRepository(db), new DataSourceTransactionManager(dataSource), new SimpleMeterRegistry());
+    applier = new SaleApplier(db, new ReservationRepository(db), new DataSourceTransactionManager(dataSource));
   }
 
   @Test
@@ -140,10 +142,12 @@ class ReservationCancelIT {
   }
 
   private static int physical(String sku) {
+    applier.drain();   // committed sales reach stock asynchronously
     return db.queryForObject("SELECT physical_stock FROM inventory_positions WHERE sku = ?", Integer.class, sku);
   }
 
   private static int reserved(String sku) {
+    applier.drain();   // committed sales reach stock asynchronously
     return db.queryForObject("SELECT reserved_stock FROM inventory_positions WHERE sku = ?", Integer.class, sku);
   }
 }

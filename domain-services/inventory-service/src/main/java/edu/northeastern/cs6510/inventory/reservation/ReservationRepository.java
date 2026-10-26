@@ -3,19 +3,23 @@ package edu.northeastern.cs6510.inventory.reservation;
 import edu.northeastern.cs6510.contracts.inventory.v1.ReservationLineV1;
 import edu.northeastern.cs6510.contracts.inventory.v1.ReservationStateV1;
 import edu.northeastern.cs6510.contracts.inventory.v1.ReservationV1;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 /**
  * Inventory-owned reservation persistence. Every method runs inside the caller's single local
- * transaction; locks are always taken on the reservation row first, then on positions in ascending
- * SKU order (research R11), so two commands never wait on each other in a cycle.
+ * transaction. Locks are always taken on the reservation row first, then on positions in
+ * <em>descending</em> SKU order, one row per statement (research R11, revised for the completion
+ * bottleneck). Any fixed order prevents lock cycles; descending order takes the low-numbered SKUs,
+ * which the measured workload makes hot, last, so they are held only until the commit that follows.
  */
 @Repository
 public class ReservationRepository {
@@ -38,24 +42,23 @@ public class ReservationRepository {
         attemptId, transactionId, state.name(), Timestamp.from(now)) == 1;
   }
 
-  /** Locks the positions of the given SKUs in ascending SKU order. Unknown SKUs are absent. */
-  public List<Position> lockPositions(Collection<String> skus) {
-    if (skus.isEmpty()) return List.of();
-    String marks = skus.stream().map(s -> "?").collect(Collectors.joining(","));
-    return db.query("SELECT sku, physical_stock, reserved_stock FROM inventory_positions WHERE sku IN (" + marks + ") ORDER BY sku FOR UPDATE",
-        (rs, row) -> new Position(rs.getString(1), rs.getInt(2), rs.getInt(3)), skus.toArray());
-  }
-
-  /** Adds {@code quantity} to reserved stock only if that much is still available. */
-  public boolean reserve(String sku, int quantity) {
-    return db.update("UPDATE inventory_positions SET reserved_stock = reserved_stock + ? WHERE sku = ? AND physical_stock - reserved_stock >= ?",
-        quantity, sku, quantity) == 1;
-  }
-
-  /** Converts a reserved quantity into a physical decrement: the only path that lowers physical stock for a sale. */
-  public boolean commitLine(String sku, int quantity) {
-    return db.update("UPDATE inventory_positions SET physical_stock = physical_stock - ?, reserved_stock = reserved_stock - ? WHERE sku = ? AND reserved_stock >= ?",
-        quantity, quantity, sku, quantity) == 1;
+  /**
+   * Reserves up to {@code quantity} of what is available, in one statement that locks only this
+   * row, and returns the quantity granted (0 for an unknown or exhausted SKU). The grant travels back
+   * through {@code LAST_INSERT_ID(expr)}, which the driver reports as the statement's generated key,
+   * so no extra round trip is made while the row is locked.
+   */
+  public int reserveUpTo(String sku, int quantity) {
+    KeyHolder grant = new GeneratedKeyHolder();
+    int rows = db.update(connection -> {
+      PreparedStatement s = connection.prepareStatement(
+          "UPDATE inventory_positions SET reserved_stock = reserved_stock + LAST_INSERT_ID(LEAST(?, GREATEST(physical_stock - reserved_stock, 0))) WHERE sku = ?",
+          Statement.RETURN_GENERATED_KEYS);
+      s.setInt(1, quantity);
+      s.setString(2, sku);
+      return s;
+    }, grant);
+    return rows == 0 ? 0 : generated(grant);
   }
 
   /** Returns a reserved quantity to availability without touching physical stock. */
@@ -64,14 +67,47 @@ public class ReservationRepository {
         quantity, sku, quantity) == 1;
   }
 
-  public void insertLine(String attemptId, String sku, int requested, int reserved) {
-    db.update("INSERT INTO reservation_lines (attempt_id, sku, requested_quantity, reserved_quantity) VALUES (?, ?, ?, ?)",
-        attemptId, sku, requested, reserved);
+  /** Writes every line of a new reservation in one batched statement. */
+  public void insertLines(String attemptId, List<ReservationLineV1> lines) {
+    db.batchUpdate("INSERT INTO reservation_lines (attempt_id, sku, requested_quantity, reserved_quantity) VALUES (?, ?, ?, ?)",
+        lines, lines.size(), (ps, line) -> {
+          ps.setString(1, attemptId);
+          ps.setString(2, line.sku());
+          ps.setInt(3, line.requestedQuantity());
+          ps.setInt(4, line.reservedQuantity());
+        });
   }
 
-  public void insertSaleMovement(String attemptId, String sku, int quantityDelta, int physicalAfter, Instant now) {
-    db.update("INSERT INTO inventory_movements (sku, attempt_id, movement_type, quantity_delta, physical_after, occurred_at) VALUES (?, ?, 'SALE', ?, ?, ?)",
-        sku, attemptId, quantityDelta, physicalAfter, Timestamp.from(now));
+  /** Queues the held lines of a committed reservation for {@link SaleApplier}; touches no position row. */
+  public void enqueueSales(String attemptId, List<ReservationLineV1> held, Instant committedAt) {
+    if (held.isEmpty()) return;
+    db.batchUpdate("INSERT INTO sale_queue (attempt_id, sku, quantity, committed_at) VALUES (?, ?, ?, ?)",
+        held, held.size(), (ps, line) -> {
+          ps.setString(1, attemptId);
+          ps.setString(2, line.sku());
+          ps.setInt(3, line.reservedQuantity());
+          ps.setTimestamp(4, Timestamp.from(committedAt));
+        });
+  }
+
+  /**
+   * Converts {@code quantity} of reserved stock into a physical decrement, the only path that lowers
+   * physical stock for a sale, and returns the physical stock after it. Empty when the row does not
+   * hold that much reserved stock.
+   */
+  public Optional<Integer> applySale(String sku, int quantity) {
+    KeyHolder after = new GeneratedKeyHolder();
+    int rows = db.update(connection -> {
+      PreparedStatement s = connection.prepareStatement(
+          "UPDATE inventory_positions SET physical_stock = LAST_INSERT_ID(physical_stock - ?), reserved_stock = reserved_stock - ? WHERE sku = ? AND reserved_stock >= ?",
+          Statement.RETURN_GENERATED_KEYS);
+      s.setInt(1, quantity);
+      s.setInt(2, quantity);
+      s.setString(3, sku);
+      s.setInt(4, quantity);
+      return s;
+    }, after);
+    return rows == 0 ? Optional.empty() : Optional.of(generated(after));
   }
 
   public void updateState(String attemptId, ReservationStateV1 state, Instant resolvedAt) {
@@ -89,7 +125,8 @@ public class ReservationRepository {
         attemptId).stream().findFirst();
   }
 
-  public record Position(String sku, int physicalStock, int reservedStock) {
-    public int available() { return physicalStock - reservedStock; }
+  /** The value set by {@code LAST_INSERT_ID(expr)}; MySQL reports a zero value as no key. */
+  private static int generated(KeyHolder keys) {
+    return keys.getKeyList().isEmpty() ? 0 : ((Number) keys.getKeyList().get(0).values().iterator().next()).intValue();
   }
 }

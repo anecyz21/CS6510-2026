@@ -22,7 +22,9 @@ public final class InventoryProvisioning {
   /** Adds {@code quantity} units to the SKU's physical stock. */
   public static void addStock(String sku, int quantity) { adjust(sku, quantity); }
 
+  /** The SKU's stock once every committed sale has been applied. */
   public static Position position(String sku) {
+    InventoryDb.awaitSalesApplied();
     try (Connection c = Stack.ownerConnection("inventory");
          PreparedStatement s = c.prepareStatement("SELECT initial_stock, physical_stock, reserved_stock FROM inventory_positions WHERE sku = ?")) {
       s.setString(1, sku);

@@ -11,13 +11,16 @@ import edu.northeastern.cs6510.inventory.api.InternalApiException;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -59,12 +62,17 @@ public class ReservationService {
   public ReserveResult reserve(String attemptId, ReserveRequestV1 request) {
     // INSERT IGNORE would silently truncate an oversized key, so reject it up front.
     if (attemptId == null || attemptId.isBlank() || attemptId.length() > 64) throw invalid();
-    Map<String, Integer> requested = validate(request);
+    NavigableMap<String, Integer> requested = validate(request);
     return withLockRetries("reserve", () -> transactions.execute(status -> reserveOnce(attemptId, request.transactionId(), requested)));
   }
 
-  private ReserveResult reserveOnce(String attemptId, String transactionId, Map<String, Integer> requested) {
-    Instant now = clock.instant();
+  /**
+   * Creates the reservation row, then reserves line by line in descending SKU order, each with one
+   * conditional update that locks only its row. Nothing is read with FOR UPDATE, and after the last
+   * position update only the batched line insert and the commit remain, so hot rows are held briefly.
+   */
+  private ReserveResult reserveOnce(String attemptId, String transactionId, NavigableMap<String, Integer> requested) {
+    Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);   // as stored in TIMESTAMP(6)
     if (!repository.insertReservation(attemptId, transactionId, ReservationStateV1.RESERVED, now)) {
       // Existing id: return the stored outcome unchanged, whatever its state (including a tombstone).
       repository.lockReservation(attemptId);
@@ -74,26 +82,33 @@ public class ReservationService {
       }
       return new ReserveResult(existing, false);
     }
-    Map<String, ReservationRepository.Position> positions = repository.lockPositions(requested.keySet()).stream()
-        .collect(Collectors.toMap(ReservationRepository.Position::sku, p -> p));
+    Map<String, Integer> granted = new HashMap<>();
     int total = 0;
-    for (Map.Entry<String, Integer> line : requested.entrySet()) {   // ascending SKU order
-      ReservationRepository.Position position = positions.get(line.getKey());
-      int grant = position == null ? 0 : Math.max(0, Math.min(line.getValue(), position.available()));
-      if (grant > 0 && !repository.reserve(line.getKey(), grant)) {
-        throw new IllegalStateException("position " + line.getKey() + " changed while locked");
-      }
-      repository.insertLine(attemptId, line.getKey(), line.getValue(), grant);
+    for (Map.Entry<String, Integer> line : requested.descendingMap().entrySet()) {
+      int grant = repository.reserveUpTo(line.getKey(), line.getValue());
+      granted.put(line.getKey(), grant);
       total += grant;
     }
-    if (total == 0) repository.updateState(attemptId, ReservationStateV1.RELEASED, now);
-    return new ReserveResult(repository.find(attemptId).orElseThrow(), true);
+    List<ReservationLineV1> lines = requested.entrySet().stream()   // ascending, as find() returns them
+        .map(line -> new ReservationLineV1(line.getKey(), line.getValue(), granted.get(line.getKey()))).toList();
+    repository.insertLines(attemptId, lines);
+    if (total == 0) {
+      repository.updateState(attemptId, ReservationStateV1.RELEASED, now);
+      return new ReserveResult(new ReservationV1(attemptId, transactionId, ReservationStateV1.RELEASED, lines, now, now), true);
+    }
+    return new ReserveResult(new ReservationV1(attemptId, transactionId, ReservationStateV1.RESERVED, lines, now, null), true);
   }
 
   public ReservationV1 commit(String attemptId) {
     return withLockRetries("commit", () -> transactions.execute(status -> commitOnce(attemptId)));
   }
 
+  /**
+   * Marks the reservation COMMITTED and queues its held lines for {@link SaleApplier}, which moves
+   * them from reserved to physical stock shortly afterwards. No position row is locked here, so a
+   * completion locks hot rows once (in reserve), not twice. The sale is final from this commit: the
+   * quantity can no longer be released, and it stays out of availability until it is applied.
+   */
   private ReservationV1 commitOnce(String attemptId) {
     ReservationStateV1 state = repository.lockReservation(attemptId).orElseThrow(() -> notFound(attemptId));
     ReservationV1 reservation = repository.find(attemptId).orElseThrow();
@@ -108,24 +123,17 @@ public class ReservationService {
         break;
     }
     List<ReservationLineV1> held = reservation.lines().stream().filter(l -> l.reservedQuantity() > 0).toList();
-    Map<String, ReservationRepository.Position> positions = repository.lockPositions(held.stream().map(ReservationLineV1::sku).toList())
-        .stream().collect(Collectors.toMap(ReservationRepository.Position::sku, p -> p));
-    Instant now = clock.instant();
-    for (ReservationLineV1 line : held) {
-      if (!repository.commitLine(line.sku(), line.reservedQuantity())) {
-        throw new IllegalStateException("reserved stock for " + line.sku() + " is lower than reservation " + attemptId);
-      }
-      int physicalAfter = positions.get(line.sku()).physicalStock() - line.reservedQuantity();
-      repository.insertSaleMovement(attemptId, line.sku(), -line.reservedQuantity(), physicalAfter, now);
-    }
+    Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+    repository.enqueueSales(attemptId, held, now);
     repository.updateState(attemptId, ReservationStateV1.COMMITTED, now);
-    return repository.find(attemptId).orElseThrow();
+    return new ReservationV1(reservation.attemptId(), reservation.transactionId(), ReservationStateV1.COMMITTED,
+        reservation.lines(), reservation.createdAt(), now);
   }
 
   /**
    * Releases an uncommitted reservation. An unknown id gets a CANCELLED tombstone, so a reserve
    * that arrives later for the same id reserves nothing. Locks like commit (reservation row first,
-   * then positions in SKU order), so commit and cancel of one id are mutually exclusive.
+   * then each position by a single-row update), so commit and cancel of one id are mutually exclusive.
    */
   public ReservationV1 cancel(String attemptId) {
     return withLockRetries("cancel", () -> transactions.execute(status -> cancelOnce(attemptId)));
@@ -150,8 +158,8 @@ public class ReservationService {
       default:
         break;
     }
-    List<ReservationLineV1> held = reservation.lines().stream().filter(l -> l.reservedQuantity() > 0).toList();
-    repository.lockPositions(held.stream().map(ReservationLineV1::sku).toList());
+    List<ReservationLineV1> held = reservation.lines().stream().filter(l -> l.reservedQuantity() > 0)
+        .sorted(Comparator.comparing(ReservationLineV1::sku).reversed()).toList();   // the repository's lock order
     for (ReservationLineV1 line : held) {
       if (!repository.releaseLine(line.sku(), line.reservedQuantity())) {
         throw new IllegalStateException("reserved stock for " + line.sku() + " is lower than reservation " + attemptId);
@@ -166,12 +174,12 @@ public class ReservationService {
   }
 
   /** 1–1,000 distinct SKUs, each with quantity >= 1, returned in ascending SKU order. */
-  private static Map<String, Integer> validate(ReserveRequestV1 request) {
+  private static NavigableMap<String, Integer> validate(ReserveRequestV1 request) {
     if (request == null || request.transactionId() == null || request.transactionId().isBlank()
         || request.lines() == null || request.lines().isEmpty() || request.lines().size() > MAX_DISTINCT_SKUS) {
       throw invalid();
     }
-    Map<String, Integer> lines = new TreeMap<>();
+    NavigableMap<String, Integer> lines = new TreeMap<>();
     Set<String> seen = new HashSet<>();
     for (ReserveLineV1 line : request.lines()) {
       if (line == null || line.sku() == null || line.sku().isBlank() || line.quantity() < 1 || !seen.add(line.sku())) throw invalid();

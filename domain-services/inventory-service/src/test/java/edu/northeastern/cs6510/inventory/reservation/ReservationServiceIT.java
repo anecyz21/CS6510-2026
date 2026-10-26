@@ -40,6 +40,7 @@ class ReservationServiceIT {
 
   private static JdbcTemplate db;
   private static ReservationService service;
+  private static SaleApplier applier;
 
   @BeforeAll
   static void migrate() {
@@ -47,6 +48,7 @@ class ReservationServiceIT {
     Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").load().migrate();
     db = new JdbcTemplate(dataSource);
     service = new ReservationService(new ReservationRepository(db), new DataSourceTransactionManager(dataSource), new SimpleMeterRegistry());
+    applier = new SaleApplier(db, new ReservationRepository(db), new DataSourceTransactionManager(dataSource));
   }
 
   @Test
@@ -112,6 +114,29 @@ class ReservationServiceIT {
   }
 
   @Test
+  void committedSalesStayReservedUntilAppliedThenGetOrderedMovements() {
+    stock("SKU-000009", 10);
+    String first = id();
+    String second = id();
+    service.reserve(first, request(Map.of("SKU-000009", 2)));
+    service.reserve(second, request(Map.of("SKU-000009", 3)));
+    service.commit(first);
+    service.commit(second);
+
+    // Before the applier runs, the sold units are still held: availability is already exact.
+    assertEquals(10, db.queryForObject("SELECT physical_stock FROM inventory_positions WHERE sku = 'SKU-000009'", Integer.class));
+    assertEquals(5, db.queryForObject("SELECT reserved_stock FROM inventory_positions WHERE sku = 'SKU-000009'", Integer.class));
+    assertEquals(5, service.reserve(id(), request(Map.of("SKU-000009", 6))).reservation().lines().get(0).reservedQuantity(),
+        "only 10 - 5 units are available");
+
+    assertEquals(5, physicalStock("SKU-000009"));   // drains the queue: one position update for both sales
+    assertEquals(List.of(8, 5), db.queryForList(
+        "SELECT physical_after FROM inventory_movements WHERE sku = 'SKU-000009' AND movement_type = 'SALE' ORDER BY physical_after DESC",
+        Integer.class), "each sale keeps its own physical_after, in commit order");
+    assertEquals(0, db.queryForObject("SELECT COUNT(*) FROM sale_queue", Integer.class));
+  }
+
+  @Test
   void releasedReservationIsNotCommittable() {
     stock("SKU-000007", 0);
     String id = id();
@@ -161,10 +186,12 @@ class ReservationServiceIT {
   }
 
   private static int physicalStock(String sku) {
+    applier.drain();   // committed sales reach stock asynchronously
     return db.queryForObject("SELECT physical_stock FROM inventory_positions WHERE sku = ?", Integer.class, sku);
   }
 
   private static int reservedStock(String sku) {
+    applier.drain();   // committed sales reach stock asynchronously
     return db.queryForObject("SELECT reserved_stock FROM inventory_positions WHERE sku = ?", Integer.class, sku);
   }
 }

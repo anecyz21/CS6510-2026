@@ -70,7 +70,7 @@ Responses: `201` with the resource when created, `200` with the resource when it
 
 | Current state | Response | Effect |
 |---|---|---|
-| `RESERVED` | `200`, state `COMMITTED` | For each line with reserved > 0, `physical_stock −= reserved` and `reserved_stock −= reserved`, and one `SALE` movement `(attempt_id, sku)` is written |
+| `RESERVED` | `200`, state `COMMITTED` | Each line with reserved > 0 is queued as a sale. Shortly afterwards (about 100 ms), `physical_stock −= reserved` and `reserved_stock −= reserved` are applied and one `SALE` movement `(attempt_id, sku)` is written. The sale is final at the commit; until it is applied the units stay reserved, so availability is never overstated |
 | `COMMITTED` | `200`, state `COMMITTED` | none (idempotent) |
 | `RELEASED` / `CANCELLED` | `409 RESERVATION_NOT_COMMITTABLE`, body includes the resource | none |
 | not found | `404 RESERVATION_NOT_FOUND` | none |

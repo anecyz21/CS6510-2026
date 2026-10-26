@@ -14,7 +14,20 @@ public final class InventoryDb {
     return single("SELECT state FROM reservations WHERE attempt_id = ?", attemptId);
   }
 
+  /**
+   * Waits until Inventory has applied every committed sale to stock. Commits only queue their sales
+   * (SaleApplier applies them every ~100 ms), so stock and SALE movements lag a commit briefly.
+   */
+  public static void awaitSalesApplied() {
+    long deadline = System.nanoTime() + 10_000_000_000L;
+    while (Integer.parseInt(single("SELECT COUNT(*) FROM sale_queue")) > 0) {
+      if (System.nanoTime() > deadline) throw new IllegalStateException("committed sales still unapplied after 10 s");
+      CheckoutDb.sleep(50);
+    }
+  }
+
   public static int saleMovements(String attemptId, String sku) {
+    awaitSalesApplied();
     return Integer.parseInt(single(
         "SELECT COUNT(*) FROM inventory_movements WHERE movement_type = 'SALE' AND attempt_id = ? AND sku = ?", attemptId, sku));
   }

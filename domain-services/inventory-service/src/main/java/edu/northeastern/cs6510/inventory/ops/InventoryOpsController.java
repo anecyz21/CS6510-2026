@@ -32,6 +32,8 @@ public class InventoryOpsController {
           return p;
         });
     Integer open = db.queryForObject("SELECT COUNT(*) FROM reservations WHERE state = 'RESERVED'", Integer.class);
+    // Committed sales not yet applied to stock (SaleApplier); R-4 and R-5 hold only once this is 0.
+    Integer pendingSales = db.queryForObject("SELECT COUNT(*) FROM sale_queue", Integer.class);
     List<String> committed = db.queryForList("SELECT attempt_id FROM reservations WHERE state = 'COMMITTED' ORDER BY attempt_id", String.class);
     Map<String, Long> sales = new LinkedHashMap<>();
     db.query("SELECT sku, -SUM(quantity_delta) FROM inventory_movements WHERE movement_type = 'SALE' GROUP BY sku ORDER BY sku",
@@ -39,6 +41,7 @@ public class InventoryOpsController {
     Map<String, Object> export = new LinkedHashMap<>();
     export.put("positions", positions);
     export.put("openReservations", open == null ? 0 : open);
+    export.put("pendingSaleLines", pendingSales == null ? 0 : pendingSales);
     export.put("committedAttemptIds", committed);
     export.put("saleQuantityBySku", sales);
     return export;

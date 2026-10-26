@@ -1,0 +1,4 @@
+baseline reconciliation: domain-services/integration-tests/scripts/reconcile-inventory.sql (root, shared instance)
+rule: available_stock >= 0 and initial_stock - available_stock = completed receipt-line quantity, per SKU
+violating SKUs: none
+RECONCILIATION PASS

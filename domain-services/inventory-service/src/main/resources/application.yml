@@ -11,6 +11,11 @@ spring:
     hikari: { maximum-pool-size: "${DB_POOL_SIZE:10}" }
   flyway: { enabled: true }
   lifecycle: { timeout-per-shutdown-phase: 20s }
+  # The name-projection poll and the sale applier must not wait on each other.
+  task:
+    scheduling:
+      pool:
+        size: 2
 management:
   endpoint:
     health:
@@ -30,6 +35,9 @@ catalog:
     poll-interval: 15s
     max-staleness: 60s
 inventory:
+  # Committed sales are applied to stock in batches this often (SaleApplier).
+  sales:
+    apply-interval: 100ms
   low-stock:
     # Default threshold for GET /inventory/low-stock when the request names none.
     threshold: "${LOW_STOCK_THRESHOLD:10}"

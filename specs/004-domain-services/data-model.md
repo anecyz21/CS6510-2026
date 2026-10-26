@@ -195,15 +195,17 @@ joined request and the recovery worker race, exactly one wins and the other re-r
 |---|---|---|
 | `sku` | VARCHAR(64) PK | |
 | `initial_stock` | INT | ≥ 0. Reconciliation baseline. Provisioning, including controlled test restocking (US1-4), adds the same amount to `initial_stock` and `physical_stock` and writes a `PROVISION` movement |
-| `physical_stock` | INT | Renamed from `available_stock`. Changed **only** by commit (or provisioning) |
-| `reserved_stock` | INT | Sum of `RESERVED` reservation lines for this SKU |
+| `physical_stock` | INT | Renamed from `available_stock`. Changed **only** by applying committed sales (or provisioning) |
+| `reserved_stock` | INT | Sum of `RESERVED` reservation lines for this SKU, plus committed lines still waiting in `sale_queue` |
 
 Constraints:
 - `CHECK (physical_stock >= reserved_stock)`
 - `CHECK (reserved_stock >= 0)`
 
 Available-to-reserve = `physical_stock − reserved_stock`. Low-stock reports `physical_stock`, so
-a reservation alone does not show as a decrement (US4-1).
+a reservation alone does not show as a decrement (US4-1). A committed sale shows there once the
+sale applier has run (about 100 ms later); availability is exact throughout, because the sold
+quantity stays in `reserved_stock` until it is applied.
 
 ### Reservation (`reservations`, new) and Reservation line (`reservation_lines`, new)
 
@@ -223,7 +225,7 @@ Reservation states:
 | none | reserve, Σ reserved > 0 | `RESERVED` | `reserved_stock += reserved` per SKU |
 | none | reserve, Σ reserved = 0 | `RELEASED` | none (nothing held) |
 | none | cancel | `CANCELLED` (tombstone, no lines) | none. A later reserve returns this state and reserves nothing |
-| `RESERVED` | commit | `COMMITTED` | `physical_stock −= reserved`, `reserved_stock −= reserved`, insert a movement per line |
+| `RESERVED` | commit | `COMMITTED` | insert one `sale_queue` row per held line; no position row is touched. The sale applier later does `physical_stock −= Σ queued`, `reserved_stock −= Σ queued` once per SKU per batch and writes one `SALE` movement per line |
 | `RESERVED` | cancel | `RELEASED` | `reserved_stock −= reserved` (physical unchanged) |
 | `COMMITTED` | commit | `COMMITTED` | none (idempotent repeat) |
 | `COMMITTED` | cancel | error `409 RESERVATION_COMMITTED` | none |
@@ -232,8 +234,25 @@ Reservation states:
 | any existing | reserve | unchanged | none; returns the stored result (idempotent) |
 
 Each command runs in one local transaction. The command first locks the reservation row
-(`SELECT … FOR UPDATE`, or insert-or-lock for new ids), then locks positions in SKU order. This
-makes commit and cancel mutually exclusive (FR-017).
+(`SELECT … FOR UPDATE`, or insert-or-lock for new ids). This makes commit and cancel mutually
+exclusive (FR-017). Positions are then locked one row at a time by their own conditional updates,
+in **descending** SKU order, with no up-front `FOR UPDATE` read. Reserve updates positions last,
+just before its commit, and commit touches none. The sale applier uses the same order, so no two
+transactions wait on each other in a cycle. Before this change (measured in
+`reports/redesign/exploratory/pool-10`), reserve and commit each locked every basket SKU in
+ascending order up front, and hot SKUs queued for about 49 ms per locking read.
+
+### Sale queue (`sale_queue`, new)
+
+| Field | Type | Rules |
+|---|---|---|
+| `queue_id` | BIGINT AUTO_INCREMENT PK | Commit order |
+| `attempt_id`, `sku` | | `UNIQUE (attempt_id, sku)`: a commit queues each line once |
+| `quantity` | INT | ≥ 1, the line's reserved quantity |
+| `committed_at` | TIMESTAMP(6) | Becomes the `SALE` movement's `occurred_at` |
+
+Written in the commit's transaction; read and deleted by the sale applier (`FOR UPDATE SKIP
+LOCKED`, up to 2,000 rows per batch, every 100 ms) in the transaction that applies them.
 
 ### Stock movement (`inventory_movements`, altered)
 
@@ -252,7 +271,8 @@ semantics as Checkout's projection, without prices (R7).
 ### Inventory invariants
 
 - `0 ≤ reserved_stock ≤ physical_stock` for every SKU, at all times.
-- `reserved_stock(sku) = Σ reservation_lines.reserved_quantity` over reservations in `RESERVED`.
+- `reserved_stock(sku) = Σ reservation_lines.reserved_quantity` over reservations in `RESERVED`,
+  plus `Σ sale_queue.quantity` for the SKU.
 - `initial_stock − physical_stock = Σ SALE movements` (in absolute value) for the SKU, adjusted by
   any `PROVISION` movements.
 
@@ -324,6 +344,6 @@ Each owner exports through its own credentials, and `combine-reconciliation` com
 | R-1 | Inventory | `physical_stock ≥ reserved_stock ≥ 0` for every SKU |
 | R-2 | Inventory | No reservation in `RESERVED` |
 | R-3 | Checkout | No attempt in `RESERVING`, `COMMITTING` or `CANCELLING`. `active_attempt_id IS NULL` everywhere |
-| R-4 | Inventory × Checkout | For every SKU: `initial_stock − physical_stock = Σ receipt_lines.quantity` |
+| R-4 | Inventory × Checkout | `sale_queue` is empty, and for every SKU: `initial_stock − physical_stock = Σ receipt_lines.quantity` |
 | R-5 | Inventory × Checkout | The set of `COMMITTED` reservation ids equals the set of receipt `attempt_id`s, and quantities match per SKU |
 | R-6 | Checkout × Analytics | Count of outbox events (published + pending) = count of `ingested_scans`, after the backlog drains |

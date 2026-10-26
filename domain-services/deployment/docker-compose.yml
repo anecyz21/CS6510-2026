@@ -128,7 +128,7 @@ services:
   inventory:
     build: ../inventory-service
     environment:
-      DB_URL: jdbc:mysql://inventory-db:3306/${INVENTORY_DB_NAME:-inventory}
+      DB_URL: jdbc:mysql://inventory-db:3306/${INVENTORY_DB_NAME:-inventory}?rewriteBatchedStatements=true
       DB_USERNAME: ${INVENTORY_DB_USERNAME:-inventory_service}
       DB_PASSWORD: ${INVENTORY_DB_PASSWORD}
       DB_POOL_SIZE: ${INVENTORY_DB_POOL_SIZE:-10}

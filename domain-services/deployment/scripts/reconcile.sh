@@ -3,8 +3,8 @@
 # read-only export over its operator port; it never connects to a database.
 #
 # Usage: reconcile.sh [--wait-settled SECONDS] [--out FILE]
-#   --wait-settled  poll until no completion attempt is unresolved, no reservation is open, the
-#                   scan outbox is drained and the analytics consumer has no lag (or the timeout
+#   --wait-settled  poll until no completion attempt is unresolved, no reservation is open, every
+#                   committed sale is applied to stock, the scan outbox is drained and the analytics consumer has no lag (or the timeout
 #                   passes), then evaluate
 #   --out           also write the report to FILE
 # Ports honour CHECKOUT_HOST_PORT, INVENTORY_HOST_PORT and ANALYTICS_HOST_PORT (environment or
@@ -42,6 +42,7 @@ while :; do
   fetch_analytics
   settled=$(jq -n --slurpfile c "$work/checkout.json" --slurpfile i "$work/inventory.json" --slurpfile a "$work/analytics.json" \
     '($c[0].unresolvedAttempts == 0) and ($i[0].openReservations == 0)
+     and (($i[0].pendingSaleLines // 0) == 0)
      and ($c[0].outboxPending == 0) and ($a[0] != null) and ($a[0].consumerLag == 0)' | tr -d '\r')
   [ "$settled" = true ] && break
   [ "$(date +%s)" -ge "$deadline" ] && break
@@ -63,7 +64,8 @@ report=$(jq -rn --slurpfile cs "$work/checkout.json" --slurpfile is "$work/inven
     line("R-2 no RESERVED reservation"; $i.openReservations == 0; "openReservations=\($i.openReservations)"),
     line("R-3 no unresolved attempt or freeze flag"; ($c.unresolvedAttempts == 0 and $c.activeAttemptFlags == 0);
          "unresolvedAttempts=\($c.unresolvedAttempts) activeAttemptFlags=\($c.activeAttemptFlags)"),
-    line("R-4 initial - physical = receipt quantity"; ($r4 | length) == 0; "skus=\($i.positions | length) violations=\($r4 | length)"),
+    line("R-4 initial - physical = receipt quantity"; (($r4 | length) == 0 and ($i.pendingSaleLines // 0) == 0);
+         "skus=\($i.positions | length) violations=\($r4 | length) pendingSaleLines=\($i.pendingSaleLines // 0)"),
     line("R-5 committed reservations = finalized attempts"; ($idsMatch and ($r5skus | length) == 0);
          "committed=\($i.committedAttemptIds | length) finalized=\($c.finalizedAttemptIds | length) skuMismatches=\($r5skus | length)"),
     (if $a == null then "R-6 accepted scans = ingested scans SKIPPED (analytics unreachable)"
