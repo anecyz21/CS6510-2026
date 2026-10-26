@@ -24,3 +24,12 @@ management:
     web:
       exposure:
         include: health,metrics
+catalog:
+  url: "${CATALOG_URL:http://localhost:8081}"
+  projection:
+    poll-interval: 15s
+    max-staleness: 60s
+inventory:
+  low-stock:
+    # Default threshold for GET /inventory/low-stock when the request names none.
+    threshold: "${LOW_STOCK_THRESHOLD:10}"

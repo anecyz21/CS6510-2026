@@ -44,7 +44,7 @@ public final class CheckoutDb {
   }
 
   public static int acceptedScanEvents(String transactionId) {
-    return count("SELECT COUNT(*) FROM accepted_scan_events WHERE transaction_id = ?", transactionId);
+    return count("SELECT COUNT(*) FROM accepted_scan_outbox WHERE transaction_id = ?", transactionId);
   }
 
   /** Waits until every attempt of the transaction is terminal and the basket is no longer frozen. */

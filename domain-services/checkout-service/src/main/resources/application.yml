@@ -11,6 +11,8 @@ spring:
     hikari: { maximum-pool-size: "${DB_POOL_SIZE:10}" }
   flyway: { enabled: true }
   lifecycle: { timeout-per-shutdown-phase: 20s }
+  kafka:
+    bootstrap-servers: "${KAFKA_BOOTSTRAP:localhost:9092}"
   # The catalog projection poll and the recovery worker must not wait on each other.
   task:
     scheduling:
@@ -50,3 +52,7 @@ checkout:
     backoff-cap: 5s
     in-request-retries: 3
     in-request-backoff: 100ms,200ms,400ms
+  # Accepted-scan outbox relay (research R4).
+  relay:
+    poll-interval: 200ms
+    retention: 24h

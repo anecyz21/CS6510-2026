@@ -90,6 +90,10 @@ public class OperationsController {
     export.put("activeAttemptFlags", flags == null ? 0 : flags);
     export.put("receiptQuantityBySku", quantities);
     export.put("finalizedAttemptIds", finalized);
+    // Accepted-scan events (data-model R-6). outboxTotal counts published and pending rows; it is
+    // exact only while the relay's 24 h purge of published rows has not run during the window.
+    export.put("outboxPending", db.queryForObject("SELECT COUNT(*) FROM accepted_scan_outbox WHERE published_at IS NULL", Long.class));
+    export.put("outboxTotal", db.queryForObject("SELECT COUNT(*) FROM accepted_scan_outbox", Long.class));
     return export;
   }
 

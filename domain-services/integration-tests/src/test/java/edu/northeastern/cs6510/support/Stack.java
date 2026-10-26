@@ -122,6 +122,57 @@ public final class Stack {
     fail(service + " did not exit within " + timeout);
   }
 
+  /**
+   * Returns the stack to empty stores (the {@code reset.sh} effect, without rebuilding images):
+   * removes every volume, starts all services again and waits until each one is ready and its
+   * catalog projection has loaded.
+   */
+  public static void reset() {
+    compose("down", "-v", "--remove-orphans");
+    compose("up", "-d");
+    for (String service : List.of("catalog", "checkout", "inventory", "analytics", "gateway")) awaitReady(service, Duration.ofSeconds(180));
+    awaitHealthy("kafka", Duration.ofSeconds(120));
+    for (String service : List.of("checkout", "inventory", "analytics")) awaitProjectionCurrent(service, Duration.ofSeconds(90));
+  }
+
+  /** Waits until a container's own healthcheck reports healthy (databases, Kafka). */
+  public static void awaitHealthy(String service, Duration timeout) {
+    Instant deadline = Instant.now().plus(timeout);
+    while (Instant.now().isBefore(deadline)) {
+      if (compose("ps", "--format", "{{.Health}}", service).strip().equals("healthy")) return;
+      sleep(1000);
+    }
+    fail(service + " was not healthy within " + timeout);
+  }
+
+  /** Waits until the service's health detail {@code catalogProjection.state} is CURRENT. */
+  public static void awaitProjectionCurrent(String service, Duration timeout) {
+    Instant deadline = Instant.now().plus(timeout);
+    while (Instant.now().isBefore(deadline)) {
+      try {
+        HttpResponse<String> response = HTTP.send(HttpRequest.newBuilder(URI.create(SERVICE_URLS.get(service) + "/actuator/health"))
+            .timeout(Duration.ofSeconds(3)).build(), HttpResponse.BodyHandlers.ofString());
+        if (response.body().matches("(?s).*\"catalogProjection\"\\s*:\\s*\\{[^}]*\"state\"\\s*:\\s*\"CURRENT\".*")) return;
+      } catch (IOException ignored) {
+        // not up yet
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException(e);
+      }
+      sleep(1000);
+    }
+    fail(service + " catalog projection was not CURRENT within " + timeout);
+  }
+
+  private static void sleep(long millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException(e);
+    }
+  }
+
   public static void stop(String service) { compose("stop", service); }
   public static void start(String service) { compose("start", service); }
   public static void pause(String service) { compose("pause", service); }

@@ -604,59 +604,59 @@ after the backlog drains.
 
 ### Tests for User Story 4 ⚠️ (write first and confirm they fail)
 
-- [ ] T090 [P] [US4] Replace `{ANA_TEST}/AnalyticsPipelineTest.java` with `{ANA_TEST}/window/WindowFilterTest.java`, a unit test. Cover:
+- [X] T090 [P] [US4] Replace `{ANA_TEST}/AnalyticsPipelineTest.java` with `{ANA_TEST}/window/WindowFilterTest.java`, a unit test. Cover:
   - boundaries are crossed at sequences 1, 500, 1000 and 1500;
   - the window for end `e` is `[max(1, e − 999), e]`, so `[1,1]`, `[1,500]`, `[1,1000]` and `[501,1500]`;
   - one batch crossing two boundaries publishes both;
   - ranking is by `scan_count DESC, sku ASC`;
   - a scan contributes once to every window containing it.
-- [ ] T091 [P] [US4] Create `{ANA_TEST}/ingest/ScanIngestIT.java` (Testcontainers `KafkaContainer` and `MySQLContainer`):
+- [X] T091 [P] [US4] Create `{ANA_TEST}/ingest/ScanIngestIT.java` (Testcontainers `KafkaContainer` and `MySQLContainer`):
   - duplicates of one `eventId` give a single `ingested_scans` row, and its `sequence_number` never changes;
   - a value of `not-json` and an event with `schemaVersion: 2` land in `ingest_rejections` and are acknowledged;
   - when the listener's transaction fails mid-batch (an injected exception), no offset is committed and redelivery produces the same sequence numbers.
-- [ ] T092 [P] [US4] Create `{CHK_TEST}/outbox/OutboxRelayIT.java` (Testcontainers Kafka and MySQL with Checkout's Flyway):
+- [X] T092 [P] [US4] Create `{CHK_TEST}/outbox/OutboxRelayIT.java` (Testcontainers Kafka and MySQL with Checkout's Flyway):
   - published rows get `published_at` only after the broker acknowledges them;
   - with Kafka stopped, rows stay pending and scans keep committing;
   - a row with a lower `outbox_id` committed after a higher one is still published on a later pass (no watermark skip);
   - when the process is killed between acknowledgment and marking (simulated by a test hook), the rows are republished with the same `eventId`;
   - with two relay instances, only one holds `GET_LOCK('checkout.scan-relay', 0)`.
-- [ ] T093 [P] [US4] Create `{IT}/analytics/KnownSequenceRankingTest.java` (quickstart V8.1, SC-006). After `reset.sh`, send 1,500 scans **sequentially** through the gateway, cycling a fixed SKU pattern across transactions (completions not required). Then poll `GET /analytics/popular-items?limit=2000` until `windowEnd == 1500`. Assert `windowStart == 501` and that the counts and ranks equal those computed in the test from scans 501–1500, with SKU-ascending ties. Also assert the earlier publications at 1 and 500 through `ingest-status` history or the snapshot table read with the analytics owner's credentials.
-- [ ] T094 [P] [US4] Create `{IT}/analytics/ReplayDuplicateTest.java` (quickstart V8.2):
+- [X] T093 [P] [US4] Create `{IT}/analytics/KnownSequenceRankingTest.java` (quickstart V8.1, SC-006). After `reset.sh`, send 1,500 scans **sequentially** through the gateway, cycling a fixed SKU pattern across transactions (completions not required). Then poll `GET /analytics/popular-items?limit=2000` until `windowEnd == 1500`. Assert `windowStart == 501` and that the counts and ranks equal those computed in the test from scans 501–1500, with SKU-ascending ties. Also assert the earlier publications at 1 and 500 through `ingest-status` history or the snapshot table read with the analytics owner's credentials.
+- [X] T094 [P] [US4] Create `{IT}/analytics/ReplayDuplicateTest.java` (quickstart V8.2):
   1. After T093's sequence, record the snapshot rows and `ingested_scans` count.
   2. Stop analytics and run `docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server kafka:29092 --group analytics-scan-ingest --topic checkout.accepted-scans.v1 --reset-offsets --to-earliest --execute`.
   3. Run `UPDATE accepted_scan_outbox SET published_at = NULL` with the checkout owner's credentials, then start analytics.
   4. After lag 0, assert identical `sequence_number`s, window boundaries, counts, ranks and `ingestedCount`.
-- [ ] T095 [P] [US4] Create `{IT}/analytics/OutageRecoveryTest.java` (quickstart V8.3, SC-007):
+- [X] T095 [P] [US4] Create `{IT}/analytics/OutageRecoveryTest.java` (quickstart V8.3, SC-007):
   1. Stop analytics and accept 5,000 scans.
   2. Stop kafka and accept 5,000 more scans. Every scan returns `200`.
   3. Start kafka, then analytics, and accept 1,000 more scans.
   4. Wait until `consumerLag == 0` and `outboxPending == 0`.
   5. Assert `outboxTotal == ingestedCount == 11,000` and `Reconciliation.assertPass()`, including R-6.
-- [ ] T096 [P] [US4] Create `{IT}/analytics/AnalyticsInterruptionTest.java` (quickstart V8.4, SC-010). Run 10 worker threads of start, scan (1–20) and complete through `PublicApi` for 90 s. Stop analytics at t=30 s and start it at t=60 s. Assert zero non-2xx responses for start, scan and complete, and that all scans are ingested after recovery. Delete `{IT}/checkout/AnalyticsOutageCheckoutTest.java`.
-- [ ] T097 [P] [US4] Create `{IT}/analytics/PopularItemsViewTest.java` (quickstart V8.5–6, US4-5, US4-6):
+- [X] T096 [P] [US4] Create `{IT}/analytics/AnalyticsInterruptionTest.java` (quickstart V8.4, SC-010). Run 10 worker threads of start, scan (1–20) and complete through `PublicApi` for 90 s. Stop analytics at t=30 s and start it at t=60 s. Assert zero non-2xx responses for start, scan and complete, and that all scans are ingested after recovery. Delete `{IT}/checkout/AnalyticsOutageCheckoutTest.java`.
+- [X] T097 [P] [US4] Create `{IT}/analytics/PopularItemsViewTest.java` (quickstart V8.5–6, US4-5, US4-6):
   - After `reset.sh`, `GET /analytics/popular-items` returns `200` with `items: []`, `windowStart: 0` and `windowEnd: 0`.
   - While 4,000 scans are being published, 8 reader threads poll continuously, and every response's items belong to one `windowEnd`: counts sum to at most `windowEnd − windowStart + 1` and match the stored snapshot for that `windowEnd`.
   Delete `{IT}/analytics/AnalyticsIdempotencyTest.java`.
-- [ ] T098 [P] [US4] Create `{IT}/inventory/LowStockViewTest.java` (US4-1, FR-026):
+- [X] T098 [P] [US4] Create `{IT}/inventory/LowStockViewTest.java` (US4-1, FR-026):
   - With `SKU-000020` set to 5, `GET /inventory/low-stock?threshold=10` lists it with `name` equal to the catalog name from `GET /items`, not the SKU, and `currentStock: 5`.
   - After `PUT http://127.0.0.1:8083/internal/v1/reservations/<uuid>` reserves 3, `currentStock` is still 5. Cancel that reservation afterwards.
   - After truncating `catalog_names` with inventory owner credentials and stopping `catalog`, the response is `503 SERVICE_UNAVAILABLE`. Restart catalog and wait for the reload.
-- [ ] T099 [P] [US4] Create the event fixture tests `{CHK_TEST}/outbox/AcceptedScanSerializationTest.java` and `{ANA_TEST}/ingest/AcceptedScanParsingTest.java`:
+- [X] T099 [P] [US4] Create the event fixture tests `{CHK_TEST}/outbox/AcceptedScanSerializationTest.java` and `{ANA_TEST}/ingest/AcceptedScanParsingTest.java`:
   - Producer side: Checkout's event serializer output for a known outbox row equals `{SC_FIX}/accepted-scan-v1.json` field by field.
   - Consumer side: Analytics parses the fixture, and the fixture with an extra unknown field.
 
 ### Implementation for User Story 4: Checkout outbox and relay
 
-- [ ] T100 [US4] Create `{CHK_DB}/V6__accepted_scan_outbox.sql`:
+- [X] T100 [US4] Create `{CHK_DB}/V6__accepted_scan_outbox.sql`:
   - `DROP TABLE accepted_scan_events;`
   - Create `accepted_scan_outbox` with columns `outbox_id BIGINT AUTO_INCREMENT PRIMARY KEY`, `event_id CHAR(36) NOT NULL UNIQUE`, `transaction_id VARCHAR(64) NOT NULL`, `station_id VARCHAR(255) NOT NULL`, `sku VARCHAR(64) NOT NULL`, `accepted_at TIMESTAMP(6) NOT NULL` and `published_at TIMESTAMP(6) NULL`, plus `INDEX idx_outbox_pending (published_at, outbox_id)`. Data-model rule: "Set only after broker acknowledgment".
-- [ ] T101 [US4] Modify `{CHK}/scan/ScanService.java`. Replace the `accepted_scan_events` insert with `INSERT INTO accepted_scan_outbox (event_id, transaction_id, station_id, sku, accepted_at) VALUES (UuidV7.next(), ?, ?, ?, CURRENT_TIMESTAMP(6))` in the **same** local transaction as the basket upsert (FR-020). Rejected scans (404, 409 or 503) write nothing. Read `station_id` in the same `FOR SHARE` select.
-- [ ] T102 [P] [US4] Create `{CHK}/outbox/KafkaProducerConfig.java` and add `spring-kafka` to `{DS}/checkout-service/pom.xml`:
+- [X] T101 [US4] Modify `{CHK}/scan/ScanService.java`. Replace the `accepted_scan_events` insert with `INSERT INTO accepted_scan_outbox (event_id, transaction_id, station_id, sku, accepted_at) VALUES (UuidV7.next(), ?, ?, ?, CURRENT_TIMESTAMP(6))` in the **same** local transaction as the basket upsert (FR-020). Rejected scans (404, 409 or 503) write nothing. Read `station_id` in the same `FOR SHARE` select.
+- [X] T102 [P] [US4] Create `{CHK}/outbox/KafkaProducerConfig.java` and add `spring-kafka` to `{DS}/checkout-service/pom.xml`:
   - **Producer**: bootstrap `${KAFKA_BOOTSTRAP}`, `enable.idempotence=true`, `acks=all`, `delivery.timeout.ms=10000`, String key and value serializers.
   - **Topic**: a `NewTopic` for `AcceptedScanV1.TOPIC` with 1 partition, replication 1, `retention.ms=604800000`, `cleanup.policy=delete` and `min.insync.replicas=1`.
   - **Admin**: `KafkaAdmin.setFatalIfBrokerNotAvailable(false)` and `setAutoCreate(true)`, so Checkout starts and becomes ready without Kafka (US3-1).
-- [ ] T103 [US4] Create `{CHK}/outbox/AcceptedScanEventMapper.java`, which maps an outbox row to `AcceptedScanV1` JSON. Set key `transactionId` and the headers `eventId`, `eventType=AcceptedScan` and `schemaVersion=1`.
-- [ ] T104 [US4] Create `{CHK}/outbox/OutboxRelay.java`, a single background thread started on `ApplicationReadyEvent`:
+- [X] T103 [US4] Create `{CHK}/outbox/AcceptedScanEventMapper.java`, which maps an outbox row to `AcceptedScanV1` JSON. Set key `transactionId` and the headers `eventId`, `eventType=AcceptedScan` and `schemaVersion=1`.
+- [X] T104 [US4] Create `{CHK}/outbox/OutboxRelay.java`, a single background thread started on `ApplicationReadyEvent`:
   - **Lock**: on a **dedicated** connection held for the relay's lifetime, run `SELECT GET_LOCK('checkout.scan-relay', 0)`. If the lock is not acquired, retry every 5 s.
   - **Loop**:
     1. `SELECT … FROM accepted_scan_outbox WHERE published_at IS NULL ORDER BY outbox_id LIMIT 500`.
@@ -667,12 +667,12 @@ after the backlog drains.
   - **Purge**: every 60 s, delete published rows older than `checkout.relay.retention` (24h) in batches of 1,000.
   - **Metric**: gauge `checkout.outbox.pending` (`COUNT(*) WHERE published_at IS NULL`, refreshed every 5 s).
   - **Shutdown**: a `SmartLifecycle` stop finishes the current batch, then `RELEASE_LOCK`.
-- [ ] T105 [US4] Create `{CHK}/health/KafkaHealthIndicator.java` (`describeCluster` with a 500 ms timeout, reporting `UP`/`DOWN` as detail `kafka`, outside readiness) and `{CHK}/health/OutboxHealthIndicator.java` (detail `outboxPending`, status always `UP`).
-- [ ] T106 [US4] Add `outboxPending` and `outboxTotal` (`COUNT(*)` over all outbox rows, published and pending) to the `GET /internal/v1/ops/reconciliation-export` response in `{CHK}/ops/OperationsController.java`. Document that `outboxTotal` assumes the 24 h purge has not run during the measured window.
+- [X] T105 [US4] Create `{CHK}/health/KafkaHealthIndicator.java` (`describeCluster` with a 500 ms timeout, reporting `UP`/`DOWN` as detail `kafka`, outside readiness) and `{CHK}/health/OutboxHealthIndicator.java` (detail `outboxPending`, status always `UP`).
+- [X] T106 [US4] Add `outboxPending` and `outboxTotal` (`COUNT(*)` over all outbox rows, published and pending) to the `GET /internal/v1/ops/reconciliation-export` response in `{CHK}/ops/OperationsController.java`. Document that `outboxTotal` assumes the 24 h purge has not run during the measured window.
 
 ### Implementation for User Story 4: Analytics
 
-- [ ] T107 [US4] Create `{ANA_DB}/V4__ingest_and_snapshots.sql`:
+- [X] T107 [US4] Create `{ANA_DB}/V4__ingest_and_snapshots.sql`:
   - `DROP TABLE processed_scans; DROP TABLE analytics_events;`
   - `ingested_scans`: `event_id CHAR(36) PRIMARY KEY`, `sequence_number BIGINT NOT NULL UNIQUE`, `sku VARCHAR(64) NOT NULL`, `accepted_at TIMESTAMP(6) NOT NULL` and `ingested_at TIMESTAMP(6) NOT NULL`. Data-model rule: "assigned on first ingest. Immutable".
   - `ingest_state`: `id TINYINT PRIMARY KEY CHECK (id = 1)` and `last_sequence BIGINT NOT NULL`, with the row `(1, 0)`.
@@ -682,8 +682,8 @@ after the backlog drains.
   - `ingest_rejections`: `kafka_offset BIGINT PRIMARY KEY`, `reason VARCHAR(255) NOT NULL`, `raw_value MEDIUMTEXT` and `rejected_at TIMESTAMP(6) NOT NULL`.
   - `catalog_names`: `sku VARCHAR(64) PRIMARY KEY`, `name VARCHAR(255) NOT NULL` and `catalog_version BIGINT NOT NULL`.
   - `projection_state`: `id TINYINT PRIMARY KEY CHECK (id = 1)`, `catalog_version BIGINT NULL`, `loaded_at TIMESTAMP(6) NULL` and `last_verified_at TIMESTAMP(6) NULL`, with the row `(1, NULL, NULL, NULL)`.
-- [ ] T108 [P] [US4] Create Analytics' name projection: `{ANA}/catalog/CatalogClient.java`, `{ANA}/catalog/CatalogNameProjection.java` and `{ANA}/catalog/CatalogNameProjectionLoader.java`. They follow the T032–T034 pattern (version probe every 15 s, paged load at a single version, atomic replace in one local transaction, `EMPTY`/`CURRENT`/`STALE` states) but store names only (R7). Add a `service-contracts` dependency to `{DS}/analytics-service/pom.xml`, and add `@EnableScheduling`.
-- [ ] T109 [US4] Create the three pipeline filters, each one class with one responsibility (constitution III):
+- [X] T108 [P] [US4] Create Analytics' name projection: `{ANA}/catalog/CatalogClient.java`, `{ANA}/catalog/CatalogNameProjection.java` and `{ANA}/catalog/CatalogNameProjectionLoader.java`. They follow the T032–T034 pattern (version probe every 15 s, paged load at a single version, atomic replace in one local transaction, `EMPTY`/`CURRENT`/`STALE` states) but store names only (R7). Add a `service-contracts` dependency to `{DS}/analytics-service/pom.xml`, and add `@EnableScheduling`.
+- [X] T109 [US4] Create the three pipeline filters, each one class with one responsibility (constitution III):
   - `{ANA}/ingest/IngestFilter.java`:
     - Within the caller's transaction, `SELECT last_sequence FROM ingest_state WHERE id = 1 FOR UPDATE`.
     - For each record in partition order, `INSERT IGNORE INTO ingested_scans`. When a row is inserted, assign `last_sequence + 1`.
@@ -693,26 +693,26 @@ after the backlog drains.
   - `{ANA}/rank/RankAndPublishFilter.java`: for each window, run `SELECT sku, COUNT(*) FROM ingested_scans WHERE sequence_number BETWEEN ? AND ? GROUP BY sku ORDER BY COUNT(*) DESC, sku ASC`, insert `popularity_snapshots` and items (with `name` from `CatalogNameProjection`), then run `UPDATE published_snapshot SET current_window_end = ?`.
   - `{ANA}/ingest/ScanPipeline.java` connects only adjacent filters, in the order `ingest → window → rank-and-publish`.
   - If a name is missing at publication, throw. The batch rolls back and is redelivered after the projection loads, so it is never published with a SKU as the name.
-- [ ] T110 [US4] Create `{ANA}/ingest/AcceptedScanListener.java` and `{ANA}/ingest/KafkaConsumerConfig.java`, and add `spring-kafka` to the analytics pom:
+- [X] T110 [US4] Create `{ANA}/ingest/AcceptedScanListener.java` and `{ANA}/ingest/KafkaConsumerConfig.java`, and add `spring-kafka` to the analytics pom:
   - **Consumer**: group `analytics-scan-ingest`, `enable.auto.commit=false`, `auto.offset.reset=earliest`, `max.poll.records=500`, and a batch listener on `AcceptedScanV1.TOPIC` with `AckMode.MANUAL`.
   - **Per batch**: parse each record. Write unparseable values or `schemaVersion > 1` to `ingest_rejections` and increment `analytics.ingest.rejected`. Run `ScanPipeline` for the valid records in **one** `TransactionTemplate`, then `ack.acknowledge()` after commit. On exception, do not acknowledge; the error handler seeks back for redelivery.
   - **Shutdown**: on graceful shutdown, stop the container after the in-flight batch.
   - Delete the legacy polling and publication code from `{ANA}/AnalyticsApplication.java`.
-- [ ] T111 [US4] Create `{ANA}/api/PopularItemsController.java`. `GET /analytics/popular-items?limit=` runs in one read-only transaction: read `published_snapshot.current_window_end`. If it is NULL, return `items: []`, `windowStart: 0` and `windowEnd: 0`. Otherwise read that snapshot's header and its items ordered by `rank_position` with `LIMIT`. The response follows the OpenAPI `PopularItemsResponse` shape exactly. `limit < 1` returns `400 INVALID_LIMIT`.
-- [ ] T112 [US4] Create `{ANA}/ops/IngestStatusController.java` and `{ANA}/health/AnalyticsHealthIndicators.java`:
+- [X] T111 [US4] Create `{ANA}/api/PopularItemsController.java`. `GET /analytics/popular-items?limit=` runs in one read-only transaction: read `published_snapshot.current_window_end`. If it is NULL, return `items: []`, `windowStart: 0` and `windowEnd: 0`. Otherwise read that snapshot's header and its items ordered by `rank_position` with `LIMIT`. The response follows the OpenAPI `PopularItemsResponse` shape exactly. `limit < 1` returns `400 INVALID_LIMIT`.
+- [X] T112 [US4] Create `{ANA}/ops/IngestStatusController.java` and `{ANA}/health/AnalyticsHealthIndicators.java`:
   - `GET /internal/v1/ops/ingest-status` returns `ingestedCount`, `lastSequence`, `currentWindowEnd`, `consumerLag` and `rejected`. `consumerLag` is the end offset minus the committed offset for the group, read through `AdminClient` with a 1 s timeout, or `null` if Kafka is unreachable.
   - The health indicators add the details `kafkaConsumer` and `catalogProjection` and stay outside readiness.
 
 ### Implementation for User Story 4: Inventory low-stock view
 
-- [ ] T113 [US4] Create `{INV_DB}/V7__catalog_names.sql` (`catalog_names` and `projection_state`, the same definitions as in T107) and the Inventory name projection `{INV}/catalog/CatalogClient.java`, `{INV}/catalog/CatalogNameProjection.java` and `{INV}/catalog/CatalogNameProjectionLoader.java`, following the T108 pattern. Add `@EnableScheduling` and `{INV}/health/CatalogProjectionHealthIndicator.java` (detail only).
-- [ ] T114 [US4] Create `{INV}/lowstock/LowStockController.java` and `{INV}/lowstock/LowStockRepository.java`. `GET /inventory/low-stock?threshold=` (default `${LOW_STOCK_THRESHOLD:10}`):
+- [X] T113 [US4] Create `{INV_DB}/V7__catalog_names.sql` (`catalog_names` and `projection_state`, the same definitions as in T107) and the Inventory name projection `{INV}/catalog/CatalogClient.java`, `{INV}/catalog/CatalogNameProjection.java` and `{INV}/catalog/CatalogNameProjectionLoader.java`, following the T108 pattern. Add `@EnableScheduling` and `{INV}/health/CatalogProjectionHealthIndicator.java` (detail only).
+- [X] T114 [US4] Create `{INV}/lowstock/LowStockController.java` and `{INV}/lowstock/LowStockRepository.java`. `GET /inventory/low-stock?threshold=` (default `${LOW_STOCK_THRESHOLD:10}`):
   - selects `sku` and `physical_stock` where `physical_stock < threshold`;
   - sets `name` from `CatalogNameProjection`; if any alerted SKU has no name, the response is `503 SERVICE_UNAVAILABLE`;
   - sets `currentStock = physical_stock`;
   - sets `triggeredAt` to the `occurred_at` of the most recent `SALE` movement whose `physical_after < threshold`, or the response time when there is none.
   The response follows the OpenAPI `LowStockResponse` exactly. Delete the legacy low-stock code from `{INV}/InventoryApplication.java`.
-- [ ] T115 [US4] Extend `{DEP}/scripts/reconcile.sh` with check R-6. It reads `http://127.0.0.1:8084/internal/v1/ops/ingest-status`, waits under `--wait-settled` until `outboxPending == 0` and `consumerLag == 0`, then asserts `outboxTotal == ingestedCount`. When Analytics is unreachable, R-6 prints `SKIPPED (analytics unreachable)` and the overall result is `RECONCILIATION FAIL`, never a silent pass.
+- [X] T115 [US4] Extend `{DEP}/scripts/reconcile.sh` with check R-6. It reads `http://127.0.0.1:8084/internal/v1/ops/ingest-status`, waits under `--wait-settled` until `outboxPending == 0` and `consumerLag == 0`, then asserts `outboxTotal == ingestedCount`. When Analytics is unreachable, R-6 prints `SKIPPED (analytics unreachable)` and the overall result is `RECONCILIATION FAIL`, never a silent pass.
 
 **Checkpoint**: Gate 6 passes. T090–T099 pass, and popular items, low stock and catalog views
 show correct names and physical stock.

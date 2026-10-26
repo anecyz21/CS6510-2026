@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-/** Runs {@code deployment/scripts/reconcile.sh}, the single implementation of checks R-1..R-5. */
+/** Runs {@code deployment/scripts/reconcile.sh}, the single implementation of checks R-1..R-6. */
 public final class Reconciliation {
   private Reconciliation() { }
 
