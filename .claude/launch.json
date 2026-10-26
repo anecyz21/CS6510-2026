@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "codewalk-slides",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--prefix", "domain-services/slides", "slidev", "domain-services/slides/slides.md", "--port", "3030"],
+      "port": 3030
+    }
+  ]
+}

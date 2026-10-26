@@ -1,6 +1,5 @@
 package edu.northeastern.cs6510.checkout;
 
-import edu.northeastern.cs6510.checkout.api.ApiException;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,17 +24,15 @@ public class CheckoutRepository {
     return db.query("SELECT transaction_id, station_id, status, started_at, completed_at FROM checkout_transactions WHERE transaction_id = ?", (rs, row) -> new Transaction(rs.getString(1), rs.getString(2), rs.getString(3), rs.getTimestamp(4).toInstant(), rs.getTimestamp(5) == null ? null : rs.getTimestamp(5).toInstant()), transactionId).stream().findFirst();
   }
 
-  /** Non-locking check used to give transaction errors (not found, not open, busy) precedence over SKU outcomes. */
-  public void requireOpen(String transactionId) {
-    String[] row = db.query("SELECT status, active_attempt_id FROM checkout_transactions WHERE transaction_id = ?",
-        rs -> rs.next() ? new String[] {rs.getString(1), rs.getString(2)} : null, transactionId);
-    if (row == null) throw ApiException.transactionNotFound(transactionId);
-    if (!"OPEN".equals(row[0])) throw ApiException.transactionNotOpen(transactionId);
-    if (row[1] != null) throw ApiException.transactionBusy(transactionId);
+  /** Non-locking read of a transaction's status and active attempt; empty when it does not exist. */
+  public Optional<OpenState> openState(String transactionId) {
+    return db.query("SELECT status, active_attempt_id FROM checkout_transactions WHERE transaction_id = ?",
+        (rs, row) -> new OpenState(rs.getString(1), rs.getString(2)), transactionId).stream().findFirst();
   }
 
   public Totals basketTotals(String transactionId) { return db.queryForObject("SELECT COALESCE(SUM(quantity),0), COALESCE(SUM(quantity * unit_price_cents),0) FROM basket_lines WHERE transaction_id=?", (rs, row) -> new Totals(rs.getInt(1), rs.getLong(2)), transactionId); }
 
   public record Transaction(String transactionId, String stationId, String status, Instant startedAt, Instant completedAt) { }
   public record Totals(int itemCount, long cents) { }
+  public record OpenState(String status, String activeAttemptId) { }
 }

@@ -36,12 +36,20 @@ public class ScanService {
     this.scanRetries = Counter.builder("checkout.db.retries").tag("operation", "scan").register(meters);
   }
 
+  /** Non-locking check: not found, then not open, then busy, as the scan precedence requires. */
+  private void requireOpen(String transactionId) {
+    CheckoutRepository.OpenState state = transactionsRepository.openState(transactionId)
+        .orElseThrow(() -> ApiException.transactionNotFound(transactionId));
+    if (!"OPEN".equals(state.status())) throw ApiException.transactionNotOpen(transactionId);
+    if (state.activeAttemptId() != null) throw ApiException.transactionBusy(transactionId);
+  }
+
   public ScanResult scan(String transactionId, String sku) {
     if (sku == null || sku.isBlank()) throw ApiException.missingSku();
     ProductLookup.Result product = products.lookup(sku);
     if (!(product instanceof ProductLookup.Accept accepted)) {
       // Transaction errors take precedence over SKU outcomes (public-api-amendment precedence).
-      transactionsRepository.requireOpen(transactionId);
+      requireOpen(transactionId);
       throw product instanceof ProductLookup.UnknownSku ? ApiException.skuNotFound(sku) : ApiException.serviceUnavailable("catalog");
     }
     for (int attempt = 1; ; attempt++) {
