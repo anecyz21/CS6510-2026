@@ -1,105 +1,137 @@
 ---
-title: Self-Checkout as Domain Microservices
+title: Self-Checkout Domain Services Codewalk
 ---
 
-# Self-Checkout as Domain Microservices
+# Self-Checkout Domain Services: A Codewalk
 
-- Feature 004: independently deployable services with private stores
-- CS6510, branch `microservice-new`
-
----
-
-# Problem and Goals
-
-- Same public API contract and the same unmodified load client as earlier architectures
-- Split the system into independently deployable services, each owning its own data
-- Keep purchases correct across services: no overselling, no double charges
-- Measure the redesign against the pre-migration baseline
+- Following one checkout through the code, from the gateway to the analytics view
+- `domain-services/` on branch `microservice-new`
 
 ---
 
-# Starting Point: The Service-Based Baseline
+# Repository Map
 
-- One shared MySQL instance, cross-schema reads and grants
-- Completion as a single stored-procedure call (`fulfill_checkout`)
-- Known baseline defects declared up front (F1–F12)
-
----
-
-# Target Architecture
-
-- API gateway with no data store, routing only
-- Catalog, Checkout, Inventory and Analytics, each with a private MySQL instance
-- Kafka for accepted-scan events
-- Docker Compose topology
+- Maven multi-module build: `domain-services/pom.xml`
+- One module per deployable: `api-gateway`, `catalog-service`, `checkout-service`, `inventory-service`, `analytics-service`
+- `service-contracts`: the only code the services share
+- `integration-tests` and `deployment/`
 
 ---
 
-# Data Ownership and Contracts
+# Running the Stack
 
-- Each service can reach only its own database, with no cross grants
-- Versioned internal HTTP contracts and one Kafka topic
-- Derived catalog projections in Checkout, Inventory and Analytics
-- Shared JSON fixtures for provider and consumer tests
-
----
-
-# Completion Saga
-
-- Freeze → Reserve → Prepare → Commit → Finalize, as local transactions
-- Partial purchases: available units are bought, the rest stay in the basket
-- Per-attempt receipts under the same transaction ID
+- `deployment/docker-compose.yml`: four private MySQL instances, Kafka, four services and the gateway
+- `scripts/start-services.sh`, `reset.sh`, `check-readiness.sh`
+- `services.env.example`: per-service credentials
 
 ---
 
-# Failure Handling and Recovery
+# Shared Contracts: `service-contracts`
 
-- Durable `attemptId`, with every Inventory command idempotent
-- Recovery worker with leases, retry and cancel rules
-- Bounded deadline: `503 SERVICE_UNAVAILABLE`, while recovery continues in the background
-- `409 TRANSACTION_BUSY` for scans during an unresolved completion
-
----
-
-# Accepted Scans and Analytics
-
-- Transactional outbox in Checkout, relayed to Kafka
-- Analytics pipeline: ingest → window → rank-and-publish
-- Atomic snapshot publication, so readers never see a partial ranking
+- Versioned records: `catalog/v1`, `inventory/v1`, `events/v1`
+- `AcceptedScanV1`, `ReserveRequestV1`, `ReservationV1`
+- JSON fixtures shared by provider and consumer tests
 
 ---
 
-# Verification
+# Entry Point: `api-gateway`
 
-- Module, contract and Testcontainers tests
-- System tests against the running stack
-- Fault injection with Toxiproxy (interruptions, lost responses, races)
-- Reconciliation checks R-1 to R-6
-
----
-
-# Measured Results: Baseline vs. Redesign
-
-- Scan and start p95 targets met
-- Throughput and complete p95 targets missed
-- Root cause: row-lock queuing on hot SKUs in Inventory
+- `CheckoutRouteHandler` and `ReadModelRouteHandler`: the public routes
+- `GatewayValidation`: field checks before forwarding
+- `UpstreamProxy`: forwarding and passing errors through
+- No datasource, so no domain logic
 
 ---
 
-# Performance Iteration
+# Catalog Service
 
-- Shorter Inventory hot-row locking
-- Merged completion steps (three Checkout transactions instead of five)
-- Binary log off and a Checkout pool of 15
-- Attributing each gain: architecture vs. configuration
+- `CatalogInternalController`: `/internal/v1/catalog-version` and `/internal/v1/products`
+- `CatalogRepository` and the seed migrations
+- Projection loaders in the other services consume it (`CatalogProjectionLoader`)
 
 ---
 
-# Lessons and Trade-offs
+# Scan Path in Checkout
 
-- Consistency across services costs completion latency
-- Environment artifacts can mislead (the gateway-hop stall from Docker port binding)
-- A fair comparison needs declared differences and attribution
+- `CheckoutController` → `ScanService.scan`
+- `ProductLookup`: prices from the local projection, with Catalog as the fallback
+- Basket update and outbox row written in one local transaction
+- `409 TRANSACTION_BUSY` while a completion is in progress
+
+---
+
+# Completion: Checkout Side
+
+- `CompletionService.complete`: freezes the basket into a `CompletionAttempt`
+- `AttemptDriver`: steps through the `AttemptState` machine
+- `HttpInventoryClient`: reserve and commit calls with timeouts
+- `ReceiptAssembler`: per-attempt receipts
+
+---
+
+# Completion: Inventory Side
+
+- `ReservationController` → `ReservationService`: reserve, commit, cancel, get
+- Idempotent by `attemptId`, with lock-retry handling
+- `SaleApplier`: moves committed quantities from `sale_queue` into physical stock
+- Migrations `V6__reservations.sql` and `V8__sale_queue.sql`
+
+---
+
+# Recovery and Fault Injection
+
+- `RecoveryWorker`: scheduled scan of unresolved attempts, with leases
+- `RecoveryProperties`: retry, backoff and cancel thresholds
+- `FaultInjector` and `docker-compose.faults.yml` (Toxiproxy) for the recovery tests
+
+---
+
+# Accepted Scans: Outbox to Kafka
+
+- `V6__accepted_scan_outbox.sql`: the outbox table
+- `OutboxRelay`: a single relay per database (MySQL named lock), ordered publishing
+- `AcceptedScanEventMapper` and `KafkaProducerConfig`
+
+---
+
+# Analytics Pipeline
+
+- `AcceptedScanListener` → `ScanPipeline.process`
+- `IngestFilter` → `WindowFilter` → `RankAndPublishFilter`
+- `PopularItemsController`: reads the published snapshot
+- `IngestStatusController`: ingest progress and consumer lag
+
+---
+
+# Read Models in Inventory
+
+- `LowStockController` and `LowStockRepository`
+- `CatalogNameProjection` for item names
+
+---
+
+# Data Ownership in Code
+
+- Flyway migrations per service under `db/migration`
+- `V*__private_store.sql`: removing the old cross-schema objects
+- Health indicators: readiness depends only on the service's own database
+
+---
+
+# Tests
+
+- Unit and Testcontainers tests per module (`AttemptDriverTest`, `ReservationServiceIT`, `OutboxRelayIT`, `ScanIngestIT`)
+- Contract tests against the shared fixtures
+- System tests in `integration-tests` (`PartialFulfillmentTest`, `ConcurrentLastUnitTest`, `LostResponseTest`)
+- Architecture tests: `ModuleBoundaryTest` and `PrivateStoreAccessTest`
+
+---
+
+# Operations and Evidence
+
+- Operator endpoints under `/internal/v1/ops/**`
+- `scripts/reconcile.sh`: checks R-1 to R-6
+- `scripts/run-measurement.sh` and the outputs in `reports/`
 
 ---
 
