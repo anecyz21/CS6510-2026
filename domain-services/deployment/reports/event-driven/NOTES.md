@@ -109,7 +109,7 @@ After the graded runs, `docker-compose.yml` was changed to publish the gateway a
 `127.0.0.1:8080:8080` instead of `8080:8080`. On Docker Desktop for Windows, the all-interfaces
 binding stalls every POST with a body from the host by about 44 ms (004
 [`GATEWAY-HOP.md`](../redesign/GATEWAY-HOP.md)). The services and the load client are unchanged.
-One run per profile on the 005 build (commit after `43b27f5`):
+One run per profile on the 005 build (service code as in `c4028ce`; only the port binding differs, committed in `dd6730b`):
 
 | Profile | Report | Transactions | Scan mean / p95 (ms) | Complete p95 (ms) | Errors | Reconciliation |
 |---|---|---:|---|---:|---:|---|
