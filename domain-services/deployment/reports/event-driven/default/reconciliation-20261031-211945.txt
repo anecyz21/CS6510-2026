@@ -1,0 +1,11 @@
+reconciliation at 2026-11-01T04:19:52Z (exports: http://127.0.0.1:8082/internal/v1/ops/reconciliation-export, http://127.0.0.1:8083/internal/v1/ops/reconciliation-export, http://127.0.0.1:8084/internal/v1/ops/ingest-status)
+R-1 physical >= reserved >= 0 PASS  violations=0
+R-2 no RESERVED reservation PASS  openReservations=0
+R-3 no unresolved attempt or freeze flag PASS  unresolvedAttempts=0 activeAttemptFlags=0
+R-4 initial - physical = receipt quantity PASS  skus=2000 violations=0 pendingSaleLines=0
+R-5 committed reservations = finalized attempts PASS  committed=4735 finalized=4735 skuMismatches=0
+R-6 accepted scans = ingested scans PASS  outboxTotal=49625 ingestedCount=49625 outboxPending=0 consumerLag=0
+R-7 every outbox drained PASS  commandOutboxPending=0 replyOutboxPending=0 scanOutboxPending=0
+R-8 no dead-lettered records PASS  checkout=0 inventory=0 analytics=0
+R-9 catalog published and every copy at its version PASS  catalogVersion=1 published=1 checkout=1 inventory=1 analytics=1
+RECONCILIATION PASS

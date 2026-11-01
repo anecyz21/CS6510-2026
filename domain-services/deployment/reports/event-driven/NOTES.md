@@ -1,18 +1,19 @@
 # Event-driven measurements: notes
 
 The 005 build, where services talk to each other only through Kafka, measured with the unchanged
-load client and compared with the 004 build re-measured on the same host and profiles. Every run is
-listed in [`COMPARISON.md`](COMPARISON.md).
+load client and compared with the 004 build re-measured on the same host, profiles and gateway
+binding. Every run is listed in [`COMPARISON.md`](COMPARISON.md).
 
 ## Graded reports
 
-| Profile | Command | Graded report (median scan p95 of 3 runs) | Errors | Reconciliation |
-|---|---|---|---:|---|
-| default | `cd load-client && java -cp out Main` (built-in defaults: 10 stations × 60 s) | [`default/report-20261031-194243.json`](default/report-20261031-194243.json) | 0 | PASS |
-| stress | `cd load-client && java -cp out Main --stations=100 --duration=120` | [`stress/report-20261031-195132.json`](stress/report-20261031-195132.json) | 0 | PASS |
+| Profile | Command | Graded report (median scan p95 of 3 runs) | Transactions | Errors | Reconciliation |
+|---|---|---|---:|---:|---|
+| default | `cd load-client && java -cp out Main` (built-in defaults: 10 stations × 60 s) | [`default/report-20261031-212155.json`](default/report-20261031-212155.json) | 8,185 | 0 | PASS |
+| stress | `cd load-client && java -cp out Main --stations=100 --duration=120` | [`stress/report-20261031-213406.json`](stress/report-20261031-213406.json) | 30,946 | 0 | PASS |
 
-The other two runs of each profile sit beside the graded one. All six 005 runs had zero errors and
-passed reconciliation R-1 to R-9.
+The other two runs of each profile sit beside the graded one: default 3,301 and 8,220
+transactions; stress 29,814 and 31,166. All six 005 runs had zero errors and passed
+reconciliation R-1 to R-9.
 
 ## How the runs were made
 
@@ -22,14 +23,27 @@ domain-services/deployment/scripts/run-measurement.sh --topology event-driven --
 
 The stress runs used the same command with `--profile stress100 --report-dir …/event-driven/stress`.
 The 004 runs used `--topology pre-event-driven` and the compose file of a worktree at tag
-`pre-event-driven`. Each run:
+`pre-event-driven`. That one file was edited in the worktree to publish the gateway the same way
+(see below). Each run:
 1. resets every volume, rebuilds the images and starts the stack;
 2. applies the measured stock seed;
 3. warms up for 30 s, discarding that report;
 4. runs the unchanged load client;
 5. reconciles.
 
-The runs were made one after another on 2026-10-31 (19:23 to 19:55 local time), 004 first.
+The runs were made one after another on 2026-10-31 (21:03 to 21:34 local time), 004 first.
+
+## Gateway binding
+
+Both builds publish the gateway as `127.0.0.1:8080:8080`. On Docker Desktop for Windows, the
+all-interfaces binding `8080:8080` stalls every POST with a body from the host by about 44 ms (004
+[`GATEWAY-HOP.md`](../redesign/GATEWAY-HOP.md)). Each scan is a POST, and the client is
+closed-loop, so that stall, not the services, used to set the transaction count.
+
+The first measured set kept `8080:8080` and produced 1,116 (default) and 19,491 (stress)
+transactions for 005. It is kept, with its own comparison, in
+[`archive-all-interfaces-binding/`](archive-all-interfaces-binding/COMPARISON.md). The single-run
+check that showed the effect is in [`localhost-binding/`](localhost-binding/).
 
 ## Environment
 
@@ -37,7 +51,7 @@ The runs were made one after another on 2026-10-31 (19:23 to 19:55 local time), 
 |---|---|
 | Host | 24 CPUs, 15.5 GiB for Docker Desktop (WSL2 kernel 6.18), Docker 29.1.3 |
 | Other containers | none running (an unrelated `cs6510-fixture` project was stopped first because it was crash-looping) |
-| Commits | 004: tag `pre-event-driven` (`601ba53`). 005: `c4028ce` (code identical to the validated build; the commit adds only measurement-script fixes) |
+| Commits | 004: tag `pre-event-driven` (`601ba53`) with only the gateway port binding changed in the worktree. 005: `6bc3b7a` |
 | Deployables | gateway, Catalog, Checkout, Inventory, Analytics: one container each, four private MySQL 8.4 instances (binlog off), one Kafka 3.8.1 KRaft node |
 | DB pools | Checkout 15, others 10 (same in both builds) |
 | Stock seed | `provisioning/measured-stock.sql` (same in both builds) |
@@ -50,77 +64,54 @@ The runs were made one after another on 2026-10-31 (19:23 to 19:55 local time), 
 
 | Metric | 004 default | 005 default | 004 stress | 005 stress |
 |---|---:|---:|---:|---:|
-| Scan p95 / p99 (ms) | 51.0 / 52.5 | 50.5 / 52.4 | 58.0 / 72.1 | 60.0 / 75.4 |
-| Successful scans/s | 191.3 | 190.8 | 1,779 | 1,686 (−5.2%) |
-| Complete p95 / p99 (ms) | 25.2 / 35.7 | 29.4 / 39.9 | 58.7 / 106.4 | 129.9 / 321.4 |
+| Transactions | 9,480 | 8,185 | 34,373 | 30,946 |
+| Successful scans/s | 1,668 | 1,434 (−14%) | 2,998 | 2,705 (−10%) |
+| Scan p95 / p99 (ms) | 5.4 / 8.8 | 6.0 / 10.5 | 45.6 / 63.0 | 20.1 / 30.2 |
+| Complete p95 / p99 (ms) | 29.7 / 40.1 | 42.0 / 56.2 | 133.7 / 164.8 | 584.6 / 760.4 |
 | Errors | 0 | 0 | 0 | 0 |
 
-**Scans are unchanged** (within 1% at default and 3.4% at stress). Both builds price scans from
-a local catalog copy. In 004 that copy was loaded over HTTP; in 005 it is built from
-`catalog.products.v1`. Either way, no scan leaves Checkout.
+**Completion is what the event-driven design costs.** A completion now makes four broker hops:
+reserve command, reserve reply, commit command, commit reply. Each hop goes through an outbox
+write, an after-commit send, a broker acknowledgment and a consumer poll, where 004 made two direct
+HTTP calls. Checkout's `checkout.saga.roundtrip` timer measures from the reserve command being
+written to the terminal reply being applied:
 
-**Completion is slower under stress.** At default load it costs about 4 ms more at p95. At 100
-stations its p95 is about 2.2× the 004 figure (59 → 130 ms) and its p99 about 3× (106 → 321 ms).
-That is expected, because a completion now makes four broker hops: reserve command, reserve reply,
-commit command, commit reply. Each hop goes through an outbox write, an after-commit send, a
-broker acknowledgment and a consumer poll, where 004 made two direct HTTP calls. Checkout's
-`checkout.saga.roundtrip` timer measures from the command being written to the terminal reply
-being applied:
-
-| | p50 | p95 | p99 | max |
+| Graded run | p50 | p95 | p99 | max |
 |---|---:|---:|---:|---:|
-| default run | 16 ms | 23 ms | 28 ms | 130 ms |
-| stress run | 27 ms | 62 ms | 96 ms | 821 ms |
+| default | 19 ms | 35 ms | 47 ms | 124 ms |
+| stress | 217 ms | 569 ms | 770 ms | 1,032 ms |
 
-Under stress the saga accounts for about half of the 130 ms the client sees at p95. The rest is
-the request thread waiting to be woken, plus the gateway hop and HTTP queuing. One likely
-contributor, not yet proven, is that all of a service's outbox rows go through **one sender
-thread**. That thread is what guarantees per-attempt ordering, and with 100 stations completing
-at once it becomes a queue.
+At default load the saga adds about 12 ms to completion p95. Under stress it accounts for almost
+all of the 585 ms completion p95. One likely cause, not yet proven, is that all of a service's
+outbox rows go through **one sender thread**. That thread is what guarantees per-attempt ordering,
+and with 100 stations completing at once it becomes a queue.
 
-**Throughput is 5% lower under stress.** The load client is closed-loop: each station waits for
-its completion before starting the next transaction. So the slower completion leaves fewer
-transactions per station in 120 s (19,491 vs 20,464 median). Scan latency itself did not change.
+**Scans stay fast, and are faster than 004 under stress.** Both builds price scans from a local
+catalog copy. Under stress, 005's scan p95 is less than half of 004's (20 ms against 46 ms). The
+likely reason is that stations spend more of their time waiting for completions, so fewer scans
+compete for Checkout's database at once. This comes from the closed-loop client, not from a faster
+scan path.
 
-**No retries and no duplicates were needed.** `checkout.recovery.resends` and
-`checkout.saga.reply.ignored` stayed at zero in both graded runs. Every reply arrived before its
-1-second resend time.
+**Throughput is 10–14% lower.** Each station waits for its completion before the next
+transaction, so the slower completion leaves fewer transactions per station.
+
+**No retries were needed.** `checkout.recovery.resends` stayed at zero in every graded run.
+Every reply arrived before its 1-second resend time.
+
+**One outlier run.** The first 005 default run (`default/report-20261031-211945.json`, 3,301
+transactions) was slower throughout: its saga p95 was 108 ms against 35 ms in the next two runs.
+It used the same reset, rebuild and warm-up as every other run. It was the first run of the 005
+images after the 004 set, and its cause is not known. It is included in the medians and in
+`COMPARISON.md`, not dropped.
 
 **What is not shown:**
 - **No architectural speed-up.** The point of 005 is decoupling: any one service can be down
-  without stopping the others, as the system tests show. It is not raw speed, and the
-  numbers do not show an improvement.
-- **Consumer lag was not captured.** The `kafka-consumer-groups.sh` sample failed during these
-  runs (`OCI runtime exec failed`), because Git Bash rewrote the container path. The script is
-  fixed for later runs. The reconciliations prove every group had drained by the end of each run
-  (R-6, R-7).
-- **Run-to-run spread is small but real.** Stress complete p95 ranged 121 to 140 ms across the
-  three 005 runs, and 58.6 to 60.5 ms across the 004 runs.
+  without stopping the others, as the system tests show. It is not raw speed, and the numbers
+  show 005 slower than 004.
+- **Consumer lag was not captured.** The `kafka-consumer-groups.sh` sample came back empty in these
+  runs. The reconciliations prove every group had drained by the end of each run (R-6, R-7).
 
-## Possible follow-ups (not done)
+## Possible follow-up (not done)
 
-These came out of the measurements and are not part of the graded work:
-- Send each partition's outbox rows on their own thread, keeping per-attempt order, so the outbox
-  sender stops being a single queue under load. Then re-measure the stress profile.
-
-## Experiment: gateway published on loopback only
-
-After the graded runs, `docker-compose.yml` was changed to publish the gateway as
-`127.0.0.1:8080:8080` instead of `8080:8080`. On Docker Desktop for Windows, the all-interfaces
-binding stalls every POST with a body from the host by about 44 ms (004
-[`GATEWAY-HOP.md`](../redesign/GATEWAY-HOP.md)). The services and the load client are unchanged.
-One run per profile on the 005 build (service code as in `c4028ce`; only the port binding differs, committed in `dd6730b`):
-
-| Profile | Report | Transactions | Scan mean / p95 (ms) | Complete p95 (ms) | Errors | Reconciliation |
-|---|---|---:|---|---:|---:|---|
-| default | [`localhost-binding/default/report-20261031-205123.json`](localhost-binding/default/report-20261031-205123.json) | 8,179 (was 1,116) | 4.1 / 5.9 | 40.6 | 0 | PASS |
-| stress | [`localhost-binding/stress/report-20261031-205443.json`](localhost-binding/stress/report-20261031-205443.json) | 30,248 (was 19,491) | 10.8 / 20.5 | 620.8 | 0 | PASS |
-
-Without the stall, the closed-loop client sends requests much faster:
-- **Default:** about 7× the transactions.
-- **Stress:** completion becomes the limit. Its p95 rises to 621 ms as many more purchases queue on
-  each service's single outbox sender thread, which is the follow-up listed above.
-
-These are single runs, and the 004 build was not re-measured with this binding. The graded
-reports and the 004 comparison above therefore keep the original `8080:8080` binding, and the two
-sets must not be compared with each other.
+Send each partition's outbox rows on their own thread, keeping per-attempt order, so the outbox
+sender stops being a single queue under load. Then re-measure the stress profile.

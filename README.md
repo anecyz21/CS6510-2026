@@ -15,8 +15,8 @@ that owns it.
 | Deliverable | Where |
 |---|---|
 | Architecture diagram (microservices and event broker) | [`domain-services/deployment/architecture.svg`](domain-services/deployment/architecture.svg), explained in [`ARCHITECTURE.md`](domain-services/deployment/ARCHITECTURE.md) |
-| Load-client report, default parameters (`java -cp out Main`) | [`reports/event-driven/default/report-20261031-194243.json`](domain-services/deployment/reports/event-driven/default/report-20261031-194243.json) (0 errors) |
-| Load-client report, stress (`java -cp out Main --stations=100 --duration=120`) | [`reports/event-driven/stress/report-20261031-195132.json`](domain-services/deployment/reports/event-driven/stress/report-20261031-195132.json) (0 errors) |
+| Load-client report, default parameters (`java -cp out Main`) | [`reports/event-driven/default/report-20261031-212155.json`](domain-services/deployment/reports/event-driven/default/report-20261031-212155.json) (8,185 transactions, 0 errors) |
+| Load-client report, stress (`java -cp out Main --stations=100 --duration=120`) | [`reports/event-driven/stress/report-20261031-213406.json`](domain-services/deployment/reports/event-driven/stress/report-20261031-213406.json) (30,946 transactions, 0 errors) |
 | Results, environment and comparison with 004 | [`NOTES.md`](domain-services/deployment/reports/event-driven/NOTES.md) · [`COMPARISON.md`](domain-services/deployment/reports/event-driven/COMPARISON.md) |
 | Topic and message contracts | [`specs/005-event-driven-services/contracts/`](specs/005-event-driven-services/contracts/README.md) |
 | Specification, plan and tasks | [`specs/005-event-driven-services/`](specs/005-event-driven-services/spec.md) |

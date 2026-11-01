@@ -8,33 +8,33 @@ Every measured run is listed; none is dropped. No improvement target is evaluate
 
 | Build | Profile | Report | Transactions | Successful scans | Scans/s | Scan mean / p95 / p99 (ms) | Start p95 | Complete mean / p95 / p99 (ms) | Errors | Reconciliation |
 |---|---|---|---:|---:|---:|---|---:|---|---|---|
-| 004 | default | `baseline-004/default/report-20261031-192357.json` | 1091 | 11637 | 191.5 | 45.9 / 51 / 52.5 | 49.8 | 18.9 / 25.2 / 34.1 | 0 | RECONCILIATION PASS |
-| 004 | default | `baseline-004/default/report-20261031-192609.json` | 1092 | 11616 | 191.3 | 45.9 / 50.9 / 52.3 | 49.6 | 18.8 / 25.1 / 59 | 0 | RECONCILIATION PASS |
-| 004 | default | `baseline-004/default/report-20261031-192820.json` | 1116 | 11579 | 190.8 | 45.9 / 51 / 52.5 | 49.6 | 19.1 / 26.2 / 35.7 | 0 | RECONCILIATION PASS |
-| 004 | stress | `baseline-004/stress/report-20261031-193136.json` | 20450 | 214945 | 1777.9 | 48.8 / 58.2 / 72.4 | 56.1 | 28.2 / 58.6 / 110.4 | 0 | RECONCILIATION PASS |
-| 004 | stress | `baseline-004/stress/report-20261031-193449.json` | 20464 | 215036 | 1779.1 | 48.8 / 58 / 72.1 | 55.9 | 28.2 / 60.5 / 106.4 | 0 | RECONCILIATION PASS |
-| 004 | stress | `baseline-004/stress/report-20261031-193801.json` | 20546 | 216645 | 1792.3 | 48.5 / 57.2 / 71.4 | 55.2 | 27.2 / 58.7 / 96.6 | 0 | RECONCILIATION PASS |
-| 005 | default | `default/report-20261031-194024.json` | 1109 | 11610 | 190.8 | 45.7 / 50.5 / 52.3 | 49.6 | 21.9 / 29.2 / 40.4 | 0 | RECONCILIATION PASS |
-| 005 | default | `default/report-20261031-194243.json` | 1116 | 11549 | 190.8 | 45.7 / 50.5 / 52.4 | 49.6 | 21.8 / 29.4 / 39.9 | 0 | RECONCILIATION PASS |
-| 005 | default | `default/report-20261031-194458.json` | 1095 | 11583 | 190.7 | 45.7 / 50.8 / 52.4 | 49.5 | 22.2 / 30.2 / 36.2 | 0 | RECONCILIATION PASS |
-| 005 | stress | `stress/report-20261031-194816.json` | 19492 | 204933 | 1694.3 | 49.5 / 59.6 / 75.4 | 55.7 | 52.1 / 121.4 / 321.4 | 0 | RECONCILIATION PASS |
-| 005 | stress | `stress/report-20261031-195132.json` | 19491 | 204027 | 1686.4 | 49.5 / 60 / 74.7 | 56 | 53.2 / 129.9 / 314.8 | 0 | RECONCILIATION PASS |
-| 005 | stress | `stress/report-20261031-195448.json` | 19323 | 202874 | 1678.6 | 49.7 / 60.8 / 76.5 | 56.3 | 55.8 / 140.1 / 336.4 | 0 | RECONCILIATION PASS |
+| 004 | default | `baseline-004/default/report-20261031-210308.json` | 9510 | 100262 | 1668.6 | 3.8 / 5.4 / 8.6 | 4.3 | 19.7 / 28.9 / 39.1 | 0 | RECONCILIATION PASS |
+| 004 | default | `baseline-004/default/report-20261031-210521.json` | 9480 | 100263 | 1668.4 | 3.8 / 5.3 / 8.8 | 4.2 | 19.9 / 29.7 / 40.2 | 0 | RECONCILIATION PASS |
+| 004 | default | `baseline-004/default/report-20261031-210734.json` | 9429 | 98848 | 1645.8 | 3.9 / 5.6 / 9.3 | 4.4 | 19.9 / 29.8 / 40.1 | 0 | RECONCILIATION PASS |
+| 004 | stress | `baseline-004/stress/report-20261031-211050.json` | 34398 | 360871 | 2999.9 | 23.3 / 45.5 / 62.4 | 44.3 | 82.7 / 133.7 / 164.8 | 0 | RECONCILIATION PASS |
+| 004 | stress | `baseline-004/stress/report-20261031-211405.json` | 34373 | 360518 | 2997.6 | 23.3 / 45.6 / 63 | 44.7 | 82.5 / 132.6 / 163.5 | 0 | RECONCILIATION PASS |
+| 004 | stress | `baseline-004/stress/report-20261031-211719.json` | 32865 | 344343 | 2863 | 24.4 / 47.1 / 65.4 | 46 | 86.8 / 140 / 176.1 | 0 | RECONCILIATION PASS |
+| 005 | default | `default/report-20261031-211945.json` | 3301 | 34523 | 574 | 10 / 16.9 / 29.4 | 16.2 | 68.7 / 120.4 / 161.1 | 0 | RECONCILIATION PASS |
+| 005 | default | `default/report-20261031-212155.json` | 8185 | 86321 | 1436.7 | 4.1 / 6 / 10.5 | 4.7 | 27.3 / 42 / 56.2 | 0 | RECONCILIATION PASS |
+| 005 | default | `default/report-20261031-212409.json` | 8220 | 86189 | 1433.8 | 4.1 / 5.9 / 9.9 | 4.9 | 27.4 / 41.7 / 55.5 | 0 | RECONCILIATION PASS |
+| 005 | stress | `stress/report-20261031-212728.json` | 29814 | 313586 | 2608.1 | 11.2 / 21.2 / 32.4 | 20 | 275.3 / 584.6 / 797.6 | 0 | RECONCILIATION PASS |
+| 005 | stress | `stress/report-20261031-213050.json` | 31166 | 327383 | 2723.6 | 10.5 / 19.8 / 29.4 | 18.8 | 265.4 / 567.7 / 758.4 | 0 | RECONCILIATION PASS |
+| 005 | stress | `stress/report-20261031-213406.json` | 30946 | 325276 | 2705 | 10.6 / 20.1 / 30.2 | 18.7 | 267.4 / 585.2 / 760.4 | 0 | RECONCILIATION PASS |
 
 ## Medians
 
 | Metric | 004 default | 005 default | Change | 004 stress | 005 stress | Change |
 |---|---:|---:|---:|---:|---:|---:|
-| Scan p95 (ms) | 51 | 50.5 | -0.9% | 58 | 60 | 3.4% |
-| Scan p99 (ms) | 52.5 | 52.4 | -0.2% | 72.1 | 75.4 | 4.5% |
-| Successful scans/s | 191.3 | 190.8 | -0.3% | 1779.1 | 1686.4 | -5.2% |
-| Start p95 (ms) | 49.6 | 49.6 | -0.1% | 55.9 | 56 | 0.3% |
-| Complete p95 (ms) | 25.2 | 29.4 | 16.7% | 58.7 | 129.9 | 121.3% |
-| Complete p99 (ms) | 35.7 | 39.9 | 11.9% | 106.4 | 321.4 | 202.1% |
+| Scan p95 (ms) | 5.4 | 6 | 10.1% | 45.6 | 20.1 | -56% |
+| Scan p99 (ms) | 8.8 | 10.5 | 18.6% | 63 | 30.2 | -52.1% |
+| Successful scans/s | 1668.4 | 1433.8 | -14.1% | 2997.6 | 2705 | -9.8% |
+| Start p95 (ms) | 4.3 | 4.9 | 12.7% | 44.7 | 18.8 | -57.9% |
+| Complete p95 (ms) | 29.7 | 42 | 41.1% | 133.7 | 584.6 | 337.2% |
+| Complete p99 (ms) | 40.1 | 56.2 | 40% | 164.8 | 760.4 | 361.3% |
 | Runs | 3 | 3 | | 3 | 3 | |
 | Errors (all runs) | 0 | 0 | | 0 | 0 | |
 
 ## Success rate (SC-002, SC-003)
 
-- 005 default: 41382 operations, 0 errors (100% succeeded).
-- 005 stress: 728446 operations, 0 errors (100% succeeded).
+- 005 default: 246445 operations, 0 errors (100% succeeded).
+- 005 stress: 1150097 operations, 0 errors (100% succeeded).
