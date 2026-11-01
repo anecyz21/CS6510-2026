@@ -79,7 +79,7 @@ flowchart LR
 
 | Deployable | Image or build | Compose service | Port inside the network | Host port |
 |---|---|---|---|---|
-| API gateway | `../api-gateway` | `gateway` | 8080 | `8080` (public) |
+| API gateway | `../api-gateway` | `gateway` | 8080 | `127.0.0.1:8080` (public API, loopback only since 005; see reports/event-driven/NOTES.md) |
 | Catalog | `../catalog-service` | `catalog` | 8081 | `127.0.0.1:8081` (operator only) |
 | Checkout | `../checkout-service` | `checkout` | 8082 | `127.0.0.1:8082` (operator only) |
 | Inventory | `../inventory-service` | `inventory` | 8083 | `127.0.0.1:8083` (operator only) |

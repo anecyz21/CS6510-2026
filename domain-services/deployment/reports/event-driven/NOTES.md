@@ -102,3 +102,25 @@ transactions per station in 120 s (19,491 vs 20,464 median). Scan latency itself
 These came out of the measurements and are not part of the graded work:
 - Send each partition's outbox rows on their own thread, keeping per-attempt order, so the outbox
   sender stops being a single queue under load. Then re-measure the stress profile.
+
+## Experiment: gateway published on loopback only
+
+After the graded runs, `docker-compose.yml` was changed to publish the gateway as
+`127.0.0.1:8080:8080` instead of `8080:8080`. On Docker Desktop for Windows, the all-interfaces
+binding stalls every POST with a body from the host by about 44 ms (004
+[`GATEWAY-HOP.md`](../redesign/GATEWAY-HOP.md)). The services and the load client are unchanged.
+One run per profile on the 005 build (commit after `43b27f5`):
+
+| Profile | Report | Transactions | Scan mean / p95 (ms) | Complete p95 (ms) | Errors | Reconciliation |
+|---|---|---:|---|---:|---:|---|
+| default | [`localhost-binding/default/report-20261031-205123.json`](localhost-binding/default/report-20261031-205123.json) | 8,179 (was 1,116) | 4.1 / 5.9 | 40.6 | 0 | PASS |
+| stress | [`localhost-binding/stress/report-20261031-205443.json`](localhost-binding/stress/report-20261031-205443.json) | 30,248 (was 19,491) | 10.8 / 20.5 | 620.8 | 0 | PASS |
+
+Without the stall, the closed-loop client sends requests much faster:
+- **Default:** about 7× the transactions.
+- **Stress:** completion becomes the limit. Its p95 rises to 621 ms as many more purchases queue on
+  each service's single outbox sender thread, which is the follow-up listed above.
+
+These are single runs, and the 004 build was not re-measured with this binding. The graded
+reports and the 004 comparison above therefore keep the original `8080:8080` binding, and the two
+sets must not be compared with each other.
