@@ -7,11 +7,15 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -24,11 +28,12 @@ import org.springframework.stereotype.Component;
  * so the caller does not acknowledge and the record is retried instead of lost.
  */
 @Component
-public class DeadLetterPublisher {
+public class DeadLetterPublisher implements DisposableBean {
   public static final String TOPIC = "analytics.dlt.v1";
 
   private final KafkaTemplate<String, String> template;
   private final MeterRegistry meters;
+  private final AdminClient admin;
 
   public DeadLetterPublisher(@Value("${spring.kafka.bootstrap-servers}") String bootstrap, MeterRegistry meters) {
     this.template = new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(Map.of(
@@ -39,6 +44,7 @@ public class DeadLetterPublisher {
         ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
         ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class)));
     this.meters = meters;
+    this.admin = AdminClient.create(Map.of("bootstrap.servers", bootstrap, "request.timeout.ms", 2000, "default.api.timeout.ms", 3000));
   }
 
   public void publish(ConsumerRecord<String, String> record, Throwable cause) {
@@ -60,6 +66,27 @@ public class DeadLetterPublisher {
     }
     meters.counter("messaging.dlt.published", "topic", record.topic()).increment();
   }
+
+  /**
+   * Records currently in this service's dead-letter topic (end minus start offset), read from the
+   * broker so it survives restarts; -1 when the broker cannot be asked. For reconciliation.
+   */
+  public long topicRecords() {
+    TopicPartition partition = new TopicPartition(TOPIC, 0);
+    try {
+      long end = admin.listOffsets(Map.of(partition, OffsetSpec.latest())).partitionResult(partition).get(3, TimeUnit.SECONDS).offset();
+      long start = admin.listOffsets(Map.of(partition, OffsetSpec.earliest())).partitionResult(partition).get(3, TimeUnit.SECONDS).offset();
+      return end - start;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return -1;
+    } catch (Exception e) {
+      return -1;
+    }
+  }
+
+  @Override
+  public void destroy() { admin.close(); }
 
   public double published() {
     var counters = meters.find("messaging.dlt.published").counters();

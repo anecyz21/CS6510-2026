@@ -3,6 +3,8 @@ package edu.northeastern.cs6510.inventory.ops;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import edu.northeastern.cs6510.inventory.catalog.CatalogNameProjection;
+import edu.northeastern.cs6510.inventory.messaging.DeadLetterPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class InventoryOpsController {
   private final JdbcTemplate db;
+  private final DeadLetterPublisher deadLetters;
+  private final CatalogNameProjection projection;
 
-  public InventoryOpsController(JdbcTemplate db) { this.db = db; }
+  public InventoryOpsController(JdbcTemplate db, DeadLetterPublisher deadLetters, CatalogNameProjection projection) {
+    this.db = db;
+    this.deadLetters = deadLetters;
+    this.projection = projection;
+  }
 
   @Transactional(readOnly = true)
   @GetMapping("/internal/v1/ops/reconciliation-export")
@@ -44,6 +52,10 @@ public class InventoryOpsController {
     export.put("pendingSaleLines", pendingSales == null ? 0 : pendingSales);
     export.put("committedAttemptIds", committed);
     export.put("saleQuantityBySku", sales);
+    // 005 reconciliation additions (data-model): unsent replies, dead letters, name copy version.
+    export.put("replyOutboxPending", db.queryForObject("SELECT COUNT(*) FROM reply_outbox WHERE published_at IS NULL", Long.class));
+    export.put("deadLetterRecords", deadLetters.topicRecords());
+    export.put("projectionCatalogVersion", projection.catalogVersion());
     return export;
   }
 }

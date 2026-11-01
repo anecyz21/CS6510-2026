@@ -1,16 +1,79 @@
-# Architecture: independently deployable domain services with private stores
+# Architecture: event-driven microservices
 
-> **Superseded guidance.** The previous version of this file described *database-only
-> coordination*: one shared MySQL instance, cross-schema reads and grants, and completion as one
-> stored-procedure call. That design is retired. Public behavior changes are recorded in
-> [`public-api-amendment.md`](../../specs/004-domain-services/contracts/public-api-amendment.md)
-> (research R19). The pre-migration system is kept at tag `baseline/service-based-v1`.
+![Architecture diagram: the gateway, four services with private MySQL databases, and Kafka topics](architecture.svg)
 
-Each domain service owns one MySQL instance that no other service can reach. Services talk only
-through versioned internal HTTP contracts and one Kafka topic. The gateway translates the public
-contract and has no data store. Design decisions are in
-[`research.md`](../../specs/004-domain-services/research.md); entities and state machines are in
-[`data-model.md`](../../specs/004-domain-services/data-model.md).
+> **Superseded guidance.** Until feature 004 the services also called each other over internal
+> HTTP: Catalog's product API and Inventory's reservation API. Feature 005
+> ([spec](../../specs/005-event-driven-services/spec.md),
+> [plan](../../specs/005-event-driven-services/plan.md)) removed every one of those calls. The 004
+> build is kept at tag `pre-event-driven`.
+
+Catalog, Checkout, Inventory and Analytics talk to each other **only through Kafka** (constitution
+v4.0.0, Principle III). Each owns one MySQL instance that no other service can reach. The API
+gateway is the single public HTTP surface. It forwards each public request to the one service that
+owns it and holds no data. `NoInterServiceHttpTest` fails the build if a domain service gains an
+HTTP client, a URL setting or another service's address.
+
+## Diagram
+
+The image above (`architecture.svg`) is drawn by hand from this Mermaid source, which GitHub also
+renders inline. `scripts/render-diagram.sh` renders the source to `architecture-mermaid.svg`.
+
+```mermaid
+flowchart LR
+  client(["Load client / shoppers"])
+  gw["API gateway :8080<br/>routing only, no data"]
+
+  subgraph services["Domain services (no HTTP between them)"]
+    direction TB
+    cat["Catalog :8081"]
+    co["Checkout :8082"]
+    inv["Inventory :8083"]
+    an["Analytics :8084"]
+  end
+
+  subgraph stores["Private MySQL 8.4 instances"]
+    direction TB
+    catdb[("catalog-db")]
+    codb[("checkout-db")]
+    invdb[("inventory-db")]
+    andb[("analytics-db")]
+  end
+
+  subgraph kafka["Apache Kafka 3.8.1 (KRaft)"]
+    direction TB
+    tprod[["catalog.products.v1<br/>compacted, key sku"]]
+    tcmd[["inventory.commands.v1<br/>12 partitions, key attemptId"]]
+    trep[["inventory.replies.v1<br/>12 partitions, key attemptId"]]
+    tscan[["checkout.accepted-scans.v1<br/>1 partition"]]
+    tdlt[["checkout / inventory / analytics .dlt.v1"]]
+  end
+
+  client -- "HTTP: public OpenAPI" --> gw
+  gw -- "GET /items" --> cat
+  gw -- "/transactions/**" --> co
+  gw -- "GET /inventory/low-stock" --> inv
+  gw -- "GET /analytics/popular-items" --> an
+
+  cat --- catdb
+  co --- codb
+  inv --- invdb
+  an --- andb
+
+  cat -- "ProductChanged" --> tprod
+  tprod -- "catalog copy" --> co
+  tprod -- "name copy" --> inv
+  tprod -- "name copy" --> an
+  co -- "Reserve / Commit / CancelRequested" --> tcmd
+  tcmd --> inv
+  inv -- "Reserved / Committed / Released / Cancelled / Conflict" --> trep
+  trep --> co
+  co -- "AcceptedScan" --> tscan
+  tscan --> an
+  co -. "poison records" .-> tdlt
+  inv -.-> tdlt
+  an -.-> tdlt
+```
 
 ## Deployables and ports
 
@@ -27,156 +90,110 @@ contract and has no data store. Design decisions are in
 | Analytics store | `mysql:8.4` | `analytics-db` | 3306 | `127.0.0.1:3314` |
 | Broker | `apache/kafka:3.8.1` (KRaft, one node) | `kafka` | 29092 | `127.0.0.1:9092` |
 
-- **Host ports:** the application host ports can be changed with `CATALOG_HOST_PORT`,
-  `CHECKOUT_HOST_PORT`, `INVENTORY_HOST_PORT` and `ANALYTICS_HOST_PORT`.
+- **Addresses:** each domain service is configured with its own database and `KAFKA_BOOTSTRAP`
+  only. The gateway's four `SERVICES_*_URL` values are the only service addresses in the
+  deployment.
 - **Operator ports** (`127.0.0.1:8081–8084`) serve actuator health and metrics and
-  `/internal/v1/ops/**` for reconciliation and diagnostics. They are bound to the loopback
-  interface only, and the gateway never routes `/internal/**`.
-- **Readiness** (`/actuator/health/readiness`) covers only the service's own database. Each service
-  starts and becomes ready while every other service is stopped (US3-1, research R17).
-- **MySQL settings:** every instance runs with `--disable-log-bin` (`MYSQL_SERVER_OPTIONS`; set it
-  to `--log-bin` to restore the image default). Nothing replicates from the binlog, and commits
-  stay durable through the redo log. This is a declared configuration difference from the
-  baseline; see [`reports/redesign/exploratory/throughput-methods/`](reports/redesign/exploratory/throughput-methods/NOTES.md).
-- **Fault injection:** `docker-compose.faults.yml` adds Toxiproxy between Checkout and Inventory
-  and enables Checkout's fault endpoint. It is used only by the V7 recovery tests, never by
-  measured runs.
+  `/internal/v1/ops/**`: reconciliation exports, projection rebuild, catalog republish, and
+  attempt retry. The gateway never routes `/internal/**`.
+- **Readiness** covers the service's own database, the broker, and, where the service has one, its
+  catalog copy (caught up with the topic). Nothing routes on readiness while services run. It
+  orders startup (`depends_on … service_healthy`) and feeds monitoring.
 
-## Data ownership and permissions
+## Data ownership
 
-| Owner | Instance | Database | Account | Can reach |
-|---|---|---|---|---|
-| Catalog | `catalog-db` | `catalog` | `catalog_service` | its own database only |
-| Checkout | `checkout-db` | `checkout` | `checkout_service` | its own database only |
-| Inventory | `inventory-db` | `inventory` | `inventory_service` | its own database only |
-| Analytics | `analytics-db` | `analytics` | `analytics_service` | its own database only |
-| Gateway | — | — | — | no datasource, no JDBC, Flyway or Kafka dependency |
+| Owner | Instance | Account | Owns |
+|---|---|---|---|
+| Catalog | `catalog-db` | `catalog_service` | items, prices, `catalog_publication` |
+| Checkout | `checkout-db` | `checkout_service` | transactions, baskets, attempts, receipts, `command_outbox`, `accepted_scan_outbox`, catalog copy |
+| Inventory | `inventory-db` | `inventory_service` | stock, reservations, sale queue, movements, `reply_outbox`, name copy |
+| Analytics | `analytics-db` | `analytics_service` | ingested scans, snapshots, name copy |
+| Gateway | — | — | nothing: no datasource, JDBC, Flyway or Kafka dependency |
 
-- **No cross grants exist.** Each account is created by its own instance's
-  `MYSQL_DATABASE`/`MYSQL_USER` settings, so it holds privileges on that database alone, and it has
-  no account on any other instance.
-- **Removed objects:** the former cross-store views (`active_items`, `low_stock`,
-  `published_popularity`, the `accepted_scan_outbox` view) and the `fulfill_checkout` procedure no
-  longer exist.
-- **Credentials** come only from `services.env`, which is never committed (`services.env.example`
-  is the template), and each service has its own password (FR-028).
-- **Tests:** `PrivateStoreAccessTest` proves the isolation. It tries every account against every
-  instance, checks that each owner sees only its own database, and looks for the old cross-store
-  objects. `ModuleBoundaryTest` checks the code statically: domain modules share only
-  `service-contracts`, no service SQL names another schema, and the gateway holds routing only.
-- **Derived copies:** Checkout's catalog projection and the name projections in Inventory and
-  Analytics are copies of Catalog's data, owned by the copying service and rebuilt from Catalog's
-  internal API. They are never authoritative.
+No account can reach another instance (`PrivateStoreAccessTest`). Credentials come only from
+`services.env`, which is never committed.
 
-## Internal contracts
+## Topics
 
-All are listed in [`contracts/`](../../specs/004-domain-services/contracts/README.md), with shared
-rules for idempotency keys, versioning, timeouts and failure semantics.
+| Topic | Owner (only publisher) | Consumers (group) | Key | Partitions | Cleanup |
+|---|---|---|---|---|---|
+| `catalog.products.v1` | Catalog | Checkout, Inventory, Analytics (`<service>-catalog-projection`) | `sku` | 1 | compact |
+| `inventory.commands.v1` | Checkout | Inventory (`inventory-reservations`) | `attemptId` | 12 | delete, 7 d |
+| `inventory.replies.v1` | Inventory | Checkout (`checkout-saga`) | `attemptId` | 12 | delete, 7 d |
+| `checkout.accepted-scans.v1` | Checkout | Analytics (`analytics-scan-ingest`) | `transactionId` | 1 | delete, 7 d |
+| `checkout.dlt.v1`, `inventory.dlt.v1`, `analytics.dlt.v1` | the consuming service | operators | original key | 1 | delete, 14 d |
 
-| Contract | Provider → consumer |
-|---|---|
-| [Catalog internal API](../../specs/004-domain-services/contracts/catalog-internal-api.md) (`/internal/v1/catalog-version`, `/internal/v1/products`) | Catalog → Checkout, Inventory, Analytics |
-| [Inventory internal API](../../specs/004-domain-services/contracts/inventory-internal-api.md) (reserve, commit, cancel, get, keyed by `attemptId`) | Inventory → Checkout |
-| [Operations API](../../specs/004-domain-services/contracts/checkout-operations-api.md) (`/internal/v1/ops/**`) | Checkout, Inventory, Analytics → operators and tests |
-| [Accepted-scan event](../../specs/004-domain-services/contracts/accepted-scan-event.md) (`checkout.accepted-scans.v1`) | Checkout → Analytics |
-| [Public API amendment](../../specs/004-domain-services/contracts/public-api-amendment.md) (OpenAPI 1.2.1, error catalog) | Gateway → clients |
+Message shapes, the envelope headers (`messageId`, `messageType`, `schemaVersion`, `producer`,
+`occurredAt`, `correlationId`, `causationId`) and the dead-letter rules are in the
+[005 contracts](../../specs/005-event-driven-services/contracts/README.md).
 
-Canonical JSON fixtures live in `../service-contracts/src/test/resources/fixtures/`. Provider and
-consumer tests in each module validate against them.
+## Completion: a reply-driven saga
 
-## Completion: saga and recovery
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant G as Gateway
+    participant CO as Checkout
+    participant K as Kafka
+    participant IN as Inventory
+    C->>G: POST /transactions/{id}/complete
+    G->>CO: forward (HTTP, single owner)
+    CO->>CO: tx: freeze basket, attempt RESERVING, outbox ReserveRequested
+    CO->>K: inventory.commands.v1 ReserveRequested (after commit)
+    K->>IN: ReserveRequested
+    IN->>IN: tx: reserve lines, reply_outbox Reserved
+    IN->>K: inventory.replies.v1 Reserved
+    K->>CO: Reserved
+    CO->>CO: tx: COMMITTING + grants, outbox CommitRequested
+    CO->>K: CommitRequested
+    K->>IN: CommitRequested
+    IN->>IN: tx: COMMITTED, sale_queue, reply_outbox Committed
+    IN->>K: Committed
+    K->>CO: Committed
+    CO->>CO: tx: FINALIZED, receipt, basket; wake the request
+    CO-->>G: 200 receipt
+    G-->>C: 200 receipt
+```
 
-Completion is a saga of local transactions, coordinated by Checkout and keyed by a durable
-`attemptId` (research R8). The state machine and per-transition effects are in
-[`data-model.md`, completion attempt state machine](../../specs/004-domain-services/data-model.md#completion-attempt-state-machine).
+- **Same-transaction outboxes:** every state change writes its outgoing message in the same
+  local transaction (`command_outbox` in Checkout, `reply_outbox` in Inventory). A sender thread
+  publishes it right after commit, sending older unsent rows of the same attempt first. A
+  one-second sweep resends anything still unsent after two seconds.
+- **Idempotent receivers:** Inventory's commands are keyed by `attemptId`, so a repeat returns
+  the stored outcome. Checkout applies a reply only as a conditional transition from the
+  expected state, and a stale or repeated reply changes nothing.
+- **Waiting:** the request waits for the outcome up to 5 s. Past that it returns
+  `503 SERVICE_UNAVAILABLE`, and the attempt keeps settling in the background.
+- **Recovery:** an attempt that has had no reply by its `next_retry_at` gets its current command
+  resent with backoff (250 ms doubling, 5 s cap). A `RESERVING` attempt older than 30 s is
+  cancelled. A `COMMITTING` attempt is only ever committed. After 20 sends the attempt is flagged
+  for operators.
 
-1. **Freeze** (Checkout transaction): snapshot the basket into an attempt in `RESERVING` and set
-   `active_attempt_id`. While the flag is set, scans answer `409 TRANSACTION_BUSY`, and a second
-   completion call joins the running attempt.
-2. **Reserve** (Inventory transaction): grant what is available per line. The grants are held in
-   `reserved_stock`; physical stock does not change.
-3. **Prepare** (Checkout transaction): store the reserved quantities as the receipt intent, then
-   move to `COMMITTING`. If nothing was reserved, the attempt is `REJECTED` and the call answers
-   `409 INSUFFICIENT_STOCK` with the basket unchanged.
-4. **Commit** (Inventory transaction): mark the reservation `COMMITTED` and queue its lines in
-   `sale_queue`. Inventory's `SaleApplier` moves the quantities from reserved to physical stock
-   within about 100 ms, with one update per SKU per batch, and writes the `SALE` movements.
-5. **Finalize** (Checkout transaction): write the per-attempt receipt, remove the purchased units
-   from the basket, set `COMPLETED` if the basket is empty, and clear the flag.
+## Catalog copies
 
-**Recovery rules** (research R9, Checkout `checkout.recovery.*`):
-- A recovery worker scans unresolved attempts every 1 s. It holds a 10 s lease per attempt, so
-  exactly one worker drives an attempt at a time.
-- `RESERVING` attempts are retried with backoff (250 ms doubling to 5 s). An attempt that is still
-  unconfirmed after 30 s is cancelled: Inventory's cancel releases the grant or writes a tombstone,
-  so a late reserve has no effect.
-- `COMMITTING` is forward-only and retried until Inventory confirms. After 20 failures the attempt
-  is marked `needs_attention` but is never cancelled.
-- Every Inventory command is idempotent by `attemptId`, so a repeat after a lost response has one
-  stock effect.
-- **Deadline:** a public completion waits at most 5 s. Past that it answers
-  `503 SERVICE_UNAVAILABLE`, and the attempt continues in the background (amendment A4).
-- **Inventory calls** use a 300 ms connect timeout, a 1.5 s read timeout and 3 in-request retries.
-
-**Inventory locking:**
-- Reserve and cancel lock position rows one at a time, by conditional updates in descending SKU
-  order, with no up-front `FOR UPDATE` read.
-- Commit locks no position row at all.
-- This removed the hot-SKU lock queue measured in
-  [`reports/redesign/exploratory/`](reports/redesign/exploratory/inventory-locking/NOTES.md).
-
-## Accepted scans: outbox, relay and Kafka
-
-1. **Outbox:** a scan's basket change and its `accepted_scan_outbox` row (with a UUIDv7 `eventId`)
-   commit in the same Checkout transaction (FR-020). A rejected scan writes nothing.
-2. **Relay:** `OutboxRelay` holds the MySQL named lock `checkout.scan-relay` on a dedicated
-   connection, so one relay runs per Checkout database. It sends unpublished rows in `outbox_id`
-   order to `checkout.accepted-scans.v1`, a single-partition topic with idempotent producer,
-   `acks=all` and 7-day retention. It marks a row `published_at` only after the broker acknowledges
-   it.
-3. **Kafka down:** scans keep succeeding, and the rows wait in the outbox. A crash between
-   acknowledgment and marking republishes the same `eventId`. Published rows are purged after
-   24 h.
-4. **Consumer:** Analytics consumes in batches (group `analytics-scan-ingest`, manual
-   acknowledgment). Offsets are committed only after the batch's local transaction commits, and a
-   failed batch is sought back and redelivered.
+Catalog publishes every item at each catalog version from a version-based outbox
+(`catalog_publication`). Each consumer keeps its copy and the topic offset it has applied in
+one transaction, seeks from that offset on start, and reports not ready until it has caught up
+with the end offset it saw at assignment. A scan of a SKU the copy doesn't hold yet returns 503
+while the copy is replaying, and the unknown-item error once it has caught up.
+`POST /internal/v1/ops/catalog-projection/rebuild` replays the topic from the beginning.
 
 ## Analytics pipeline: `ingest → window → rank-and-publish`
 
-Each batch runs the three filters in this order, inside one Analytics transaction (constitution
-III, research R5):
+Unchanged from 004. Each batch of accepted scans runs the three filters in one Analytics
+transaction:
+1. **Ingest** records each `eventId` once and assigns the canonical sequence.
+2. **Window** emits the latest 1,000 scans at every 500.
+3. **Rank and publish** ranks by count, then SKU, using names from the event-built copy, and
+   moves the published-snapshot pointer.
 
-1. **Ingest:** records each `eventId` once. Under a lock on `ingest_state`, it assigns the next
-   canonical `sequence_number`. Duplicates and replays change nothing. Unreadable values and newer
-   schema versions go to `ingest_rejections`.
-2. **Window:** for every boundary the batch crosses (sequence 1, then every 500), it emits the
-   window `[max(1, end − 999), end]`, which holds the latest 1,000 scans.
-3. **Rank and publish:**
-   - ranks the window by scan count descending, then SKU ascending, using projected catalog names;
-   - writes the snapshot rows;
-   - moves the `published_snapshot` pointer.
+Unreadable records are recorded in `ingest_rejections` and copied to `analytics.dlt.v1`.
 
-   Readers see a complete old or new ranking, never a mix. A missing name fails the batch, which is
-   retried rather than publishing a SKU as the name.
+## Reconciliation
 
-`GET /analytics/popular-items` reads the pointer and its snapshot in one read-only transaction.
-Before the first publication it returns an empty ranking. `GET /internal/v1/ops/ingest-status`
-reports ingested count, last sequence, current window and consumer lag.
-
-## Catalog projection policy
-
-- **Checkout's priced projection** (research R6):
-  - loaded at startup and whenever Catalog's `catalogVersion` changes, by paging
-    `/internal/v1/products` at one version and replacing the copy atomically;
-  - checked every 15 s and considered current while the last successful check is at most 60 s
-    old;
-  - a SKU missing from a *current* projection is `404 SKU_NOT_FOUND`;
-  - when the projection is stale or empty, Checkout asks Catalog directly (300 ms). If Catalog is
-    unreachable, the scan answers `503 SERVICE_UNAVAILABLE`, never "not found".
-- **Name projections in Inventory and Analytics** (research R7) follow the same load and freshness
-  rules but store names only.
-  - Low-stock answers `503` when an alerted SKU has no name.
-  - Analytics delays publication until the name is known.
-  - Deleting a projection's rows makes it forget the names and reload.
-- Health reports each projection's `state` (`EMPTY`, `CURRENT`, `STALE`) as detail, outside
-  readiness.
+`scripts/reconcile.sh` reads each owner's export over its operator port and checks R-1 to R-6
+from 004: stock and receipts agree, and no unresolved attempt or open reservation is left. It
+adds three 005 checks:
+- **R-7:** every outbox is drained.
+- **R-8:** every dead-letter topic is empty.
+- **R-9:** the catalog is fully published, and every copy is at its version.

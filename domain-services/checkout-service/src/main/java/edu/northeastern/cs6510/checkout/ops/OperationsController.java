@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import edu.northeastern.cs6510.checkout.catalog.CatalogProjection;
+import edu.northeastern.cs6510.checkout.messaging.DeadLetterPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,10 +33,15 @@ public class OperationsController {
   private static final int MAX_LIMIT = 1000;
   private final JdbcTemplate db;
   private final CompletionAttemptRepository attempts;
+  private final DeadLetterPublisher deadLetters;
+  private final CatalogProjection projection;
 
-  public OperationsController(JdbcTemplate db, CompletionAttemptRepository attempts) {
+  public OperationsController(JdbcTemplate db, CompletionAttemptRepository attempts, DeadLetterPublisher deadLetters,
+                              CatalogProjection projection) {
     this.db = db;
     this.attempts = attempts;
+    this.deadLetters = deadLetters;
+    this.projection = projection;
   }
 
   @GetMapping("/completion-attempts")
@@ -94,6 +101,10 @@ public class OperationsController {
     // exact only while the relay's 24 h purge of published rows has not run during the window.
     export.put("outboxPending", db.queryForObject("SELECT COUNT(*) FROM accepted_scan_outbox WHERE published_at IS NULL", Long.class));
     export.put("outboxTotal", db.queryForObject("SELECT COUNT(*) FROM accepted_scan_outbox", Long.class));
+    // 005 reconciliation additions (data-model): unsent commands, dead letters, catalog copy version.
+    export.put("commandOutboxPending", db.queryForObject("SELECT COUNT(*) FROM command_outbox WHERE published_at IS NULL", Long.class));
+    export.put("deadLetterRecords", deadLetters.topicRecords());
+    export.put("projectionCatalogVersion", projection.catalogVersion());
     return export;
   }
 

@@ -1,20 +1,22 @@
 # Domain services: deployment and evidence
 
-This is the entry point for the independently deployable checkout services (feature
-[`specs/004-domain-services`](../../specs/004-domain-services/spec.md)). Every design document,
-contract, report and script is linked from here.
+This is the entry point for the checkout microservices. Since feature
+[`specs/005-event-driven-services`](../../specs/005-event-driven-services/spec.md) they communicate
+only through Kafka. Feature [`004`](../../specs/004-domain-services/spec.md) gave each service a
+private database. Every design document, contract, report and script is linked from here.
 
 | You want | Go to |
 |---|---|
+| **Architecture diagram** (services, databases, Kafka topics) | [`architecture.svg`](architecture.svg) · [ARCHITECTURE.md](ARCHITECTURE.md) |
+| **Graded load-client reports** (default and `--stations=100 --duration=120`) | [`reports/event-driven/NOTES.md`](reports/event-driven/NOTES.md) · [`reports/event-driven/`](reports/event-driven/README.md) |
 | Deployables, ports and the Compose topology | [ARCHITECTURE.md: deployables and ports](ARCHITECTURE.md#deployables-and-ports) · [`docker-compose.yml`](docker-compose.yml) |
-| Who owns which database, and the absence of cross grants | [ARCHITECTURE.md: data ownership and permissions](ARCHITECTURE.md#data-ownership-and-permissions) |
-| Internal contracts (Catalog, Inventory, operations, Kafka event, public amendment) | [`specs/004-domain-services/contracts/`](../../specs/004-domain-services/contracts/README.md) |
-| Completion saga and recovery rules | [ARCHITECTURE.md: completion](ARCHITECTURE.md#completion-saga-and-recovery) · [state machine](../../specs/004-domain-services/data-model.md#completion-attempt-state-machine) |
-| Accepted scans and the analytics flow | [outbox, relay and Kafka](ARCHITECTURE.md#accepted-scans-outbox-relay-and-kafka) · [`ingest → window → rank-and-publish`](ARCHITECTURE.md#analytics-pipeline-ingest--window--rank-and-publish) |
-| Performance evidence | [`reports/baseline/`](reports/baseline/OBSERVATIONS.md) · [`reports/redesign/`](reports/redesign/) · [`reports/COMPARISON.md`](reports/COMPARISON.md) · [exploratory runs](reports/redesign/exploratory/inventory-locking/NOTES.md) |
-| Reconciliation | [`scripts/reconcile.sh`](scripts/reconcile.sh) (checks R-1 to R-6) · outputs in `reports/*/reconciliation-*.txt` |
-| Full validation run | [`reports/validation-2026-10-26/`](reports/validation-2026-10-26/README.md) |
-| Step-by-step scenarios | [quickstart V0–V11](../../specs/004-domain-services/quickstart.md) |
+| Who owns which database | [ARCHITECTURE.md: data ownership](ARCHITECTURE.md#data-ownership) |
+| Topics, message shapes, envelope, dead-letter rules | [`specs/005-event-driven-services/contracts/`](../../specs/005-event-driven-services/contracts/README.md) |
+| Completion saga and recovery rules | [ARCHITECTURE.md: completion](ARCHITECTURE.md#completion-a-reply-driven-saga) · [state machine](../../specs/005-event-driven-services/data-model.md#completion-attempt-state-machine-message-driven) |
+| Catalog copies and the analytics flow | [catalog copies](ARCHITECTURE.md#catalog-copies) · [`ingest → window → rank-and-publish`](ARCHITECTURE.md#analytics-pipeline-ingest--window--rank-and-publish) |
+| Performance evidence (004) | [`reports/baseline/`](reports/baseline/OBSERVATIONS.md) · [`reports/redesign/`](reports/redesign/) · [`reports/COMPARISON.md`](reports/COMPARISON.md) |
+| Reconciliation | [`scripts/reconcile.sh`](scripts/reconcile.sh) (checks R-1 to R-9) · outputs in `reports/*/reconciliation-*.txt` |
+| Step-by-step scenarios | [005 quickstart Q0–Q11](../../specs/005-event-driven-services/quickstart.md) · [004 quickstart V0–V11](../../specs/004-domain-services/quickstart.md) |
 
 ## Prerequisites
 

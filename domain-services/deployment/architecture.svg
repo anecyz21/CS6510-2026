@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13">
+  <title>Self-checkout microservices: event-driven communication through Kafka (feature 005)</title>
+  <defs>
+    <marker id="pub" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f5fa8"/>
+    </marker>
+    <marker id="sub" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2e7d4f"/>
+    </marker>
+    <marker id="http" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+    <marker id="dlt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b5462b"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="660" fill="#ffffff"/>
+  <text x="20" y="28" font-size="17" font-weight="600" fill="#222">Self-checkout: four microservices that talk only through Kafka</text>
+
+  <!-- Client and gateway -->
+  <rect x="20" y="285" width="110" height="54" rx="27" fill="#f3f3f3" stroke="#777"/>
+  <text x="75" y="308" text-anchor="middle" fill="#222">Load client /</text>
+  <text x="75" y="325" text-anchor="middle" fill="#222">shoppers</text>
+  <rect x="165" y="270" width="140" height="84" rx="6" fill="#f3f3f3" stroke="#555" stroke-width="1.5"/>
+  <text x="235" y="297" text-anchor="middle" font-weight="600" fill="#222">API gateway</text>
+  <text x="235" y="315" text-anchor="middle" fill="#444">:8080, public HTTP</text>
+  <text x="235" y="333" text-anchor="middle" fill="#444" font-size="12">routing only, no data</text>
+  <line x1="130" y1="312" x2="163" y2="312" stroke="#555" stroke-width="1.5" marker-end="url(#http)"/>
+
+  <!-- Domain services, each with its private database -->
+  <rect x="340" y="44" width="230" height="590" rx="8" fill="none" stroke="#bbb" stroke-dasharray="4 3"/>
+  <text x="455" y="62" text-anchor="middle" font-size="12" fill="#666">domain services (no HTTP between them)</text>
+
+  <g>
+    <rect x="360" y="72" width="190" height="50" rx="6" fill="#e8f0fb" stroke="#1f5fa8" stroke-width="1.5"/>
+    <text x="455" y="94" text-anchor="middle" font-weight="600" fill="#222">Catalog :8081</text>
+    <text x="455" y="111" text-anchor="middle" font-size="12" fill="#444">items, prices</text>
+    <path d="M410,132 a45,6 0 0,0 90,0 v22 a45,6 0 0,1 -90,0 z M410,132 a45,6 0 0,1 90,0" fill="#fff8e6" stroke="#a07a1a"/>
+    <text x="455" y="153" text-anchor="middle" font-size="12" fill="#333">catalog-db</text>
+    <line x1="455" y1="122" x2="455" y2="127" stroke="#a07a1a"/>
+  </g>
+  <g>
+    <rect x="360" y="212" width="190" height="50" rx="6" fill="#e8f0fb" stroke="#1f5fa8" stroke-width="1.5"/>
+    <text x="455" y="234" text-anchor="middle" font-weight="600" fill="#222">Checkout :8082</text>
+    <text x="455" y="251" text-anchor="middle" font-size="12" fill="#444">baskets, saga, receipts</text>
+    <path d="M410,272 a45,6 0 0,0 90,0 v22 a45,6 0 0,1 -90,0 z M410,272 a45,6 0 0,1 90,0" fill="#fff8e6" stroke="#a07a1a"/>
+    <text x="455" y="293" text-anchor="middle" font-size="12" fill="#333">checkout-db</text>
+    <line x1="455" y1="262" x2="455" y2="267" stroke="#a07a1a"/>
+  </g>
+  <g>
+    <rect x="360" y="352" width="190" height="50" rx="6" fill="#e8f0fb" stroke="#1f5fa8" stroke-width="1.5"/>
+    <text x="455" y="374" text-anchor="middle" font-weight="600" fill="#222">Inventory :8083</text>
+    <text x="455" y="391" text-anchor="middle" font-size="12" fill="#444">stock, reservations</text>
+    <path d="M410,412 a45,6 0 0,0 90,0 v22 a45,6 0 0,1 -90,0 z M410,412 a45,6 0 0,1 90,0" fill="#fff8e6" stroke="#a07a1a"/>
+    <text x="455" y="433" text-anchor="middle" font-size="12" fill="#333">inventory-db</text>
+    <line x1="455" y1="402" x2="455" y2="407" stroke="#a07a1a"/>
+  </g>
+  <g>
+    <rect x="360" y="492" width="190" height="50" rx="6" fill="#e8f0fb" stroke="#1f5fa8" stroke-width="1.5"/>
+    <text x="455" y="514" text-anchor="middle" font-weight="600" fill="#222">Analytics :8084</text>
+    <text x="455" y="531" text-anchor="middle" font-size="12" fill="#444">windows, rankings</text>
+    <path d="M410,552 a45,6 0 0,0 90,0 v22 a45,6 0 0,1 -90,0 z M410,552 a45,6 0 0,1 90,0" fill="#fff8e6" stroke="#a07a1a"/>
+    <text x="455" y="573" text-anchor="middle" font-size="12" fill="#333">analytics-db</text>
+    <line x1="455" y1="542" x2="455" y2="547" stroke="#a07a1a"/>
+  </g>
+
+  <!-- Gateway forwards each public route to its one owner -->
+  <g stroke="#555" stroke-width="1.2" fill="none">
+    <path d="M305,285 C330,250 330,110 358,97" marker-end="url(#http)"/>
+    <path d="M305,302 C330,290 335,240 358,237" marker-end="url(#http)"/>
+    <path d="M305,322 C330,330 335,375 358,377" marker-end="url(#http)"/>
+    <path d="M305,340 C330,380 330,505 358,517" marker-end="url(#http)"/>
+  </g>
+  <g font-size="11" fill="#555" paint-order="stroke" stroke="#ffffff" stroke-width="4" stroke-linejoin="round">
+    <text x="246" y="160">GET /items</text>
+    <text x="246" y="250">/transactions/**</text>
+    <text x="230" y="392">GET /inventory/low-stock</text>
+    <text x="214" y="470">GET /analytics/popular-items</text>
+  </g>
+
+  <!-- Kafka -->
+  <rect x="640" y="44" width="340" height="590" rx="8" fill="#f6f6f6" stroke="#444" stroke-width="1.5"/>
+  <text x="810" y="64" text-anchor="middle" font-weight="600" fill="#222">Apache Kafka 3.8.1 (KRaft)</text>
+
+  <rect x="680" y="80" width="280" height="44" rx="5" fill="#ffffff" stroke="#444"/>
+  <text x="820" y="99" text-anchor="middle" font-weight="600" fill="#222">catalog.products.v1</text>
+  <text x="820" y="116" text-anchor="middle" font-size="11" fill="#555">compacted, key sku, 1 partition</text>
+
+  <rect x="680" y="196" width="280" height="44" rx="5" fill="#ffffff" stroke="#444"/>
+  <text x="820" y="215" text-anchor="middle" font-weight="600" fill="#222">inventory.commands.v1</text>
+  <text x="820" y="232" text-anchor="middle" font-size="11" fill="#555">key attemptId, 12 partitions</text>
+
+  <rect x="680" y="290" width="280" height="44" rx="5" fill="#ffffff" stroke="#444"/>
+  <text x="820" y="309" text-anchor="middle" font-weight="600" fill="#222">inventory.replies.v1</text>
+  <text x="820" y="326" text-anchor="middle" font-size="11" fill="#555">key attemptId, 12 partitions</text>
+
+  <rect x="680" y="420" width="280" height="44" rx="5" fill="#ffffff" stroke="#444"/>
+  <text x="820" y="439" text-anchor="middle" font-weight="600" fill="#222">checkout.accepted-scans.v1</text>
+  <text x="820" y="456" text-anchor="middle" font-size="11" fill="#555">1 partition (canonical scan order)</text>
+
+  <rect x="680" y="560" width="280" height="44" rx="5" fill="#fdf1ee" stroke="#b5462b"/>
+  <text x="820" y="579" text-anchor="middle" font-weight="600" fill="#222">checkout / inventory / analytics .dlt.v1</text>
+  <text x="820" y="596" text-anchor="middle" font-size="11" fill="#555">records a consumer could not process</text>
+
+  <!-- Publishes (blue, solid) -->
+  <g stroke="#1f5fa8" stroke-width="1.8" fill="none">
+    <path d="M550,90 L678,96" marker-end="url(#pub)"/>
+    <path d="M550,222 L678,214" marker-end="url(#pub)"/>
+    <path d="M550,385 C610,380 620,320 678,316" marker-end="url(#pub)"/>
+    <path d="M550,250 C620,260 610,430 678,436" marker-end="url(#pub)"/>
+  </g>
+  <g font-size="11" fill="#1f5fa8" font-weight="600" paint-order="stroke" stroke="#ffffff" stroke-width="4" stroke-linejoin="round">
+    <text x="566" y="83">ProductChanged</text>
+    <text x="556" y="179">Reserve / Commit /</text>
+    <text x="556" y="192">CancelRequested</text>
+    <text x="556" y="410">Reserved, Committed,</text>
+    <text x="556" y="423">Released, Cancelled,</text>
+    <text x="556" y="436">Conflict</text>
+    <text x="600" y="482">AcceptedScan</text>
+  </g>
+
+  <!-- Consumes (green, dashed) -->
+  <g stroke="#2e7d4f" stroke-width="1.6" fill="none" stroke-dasharray="6 4">
+    <path d="M680,114 C620,140 600,220 552,232" marker-end="url(#sub)"/>
+    <path d="M680,118 C640,200 620,360 552,368" marker-end="url(#sub)"/>
+    <path d="M680,122 C660,260 640,500 552,508" marker-end="url(#sub)"/>
+    <path d="M680,230 C630,250 620,370 552,377" marker-end="url(#sub)"/>
+    <path d="M680,300 C630,280 600,245 552,240" marker-end="url(#sub)"/>
+    <path d="M680,450 C630,470 600,515 552,522" marker-end="url(#sub)"/>
+  </g>
+
+  <!-- Dead letters (red, dotted) -->
+  <g stroke="#b5462b" stroke-width="1.2" fill="none" stroke-dasharray="2 3">
+    <path d="M510,262 C600,320 640,560 678,574" marker-end="url(#dlt)"/>
+    <path d="M520,402 C610,450 640,575 678,580" marker-end="url(#dlt)"/>
+    <path d="M530,542 C600,560 640,586 678,586" marker-end="url(#dlt)"/>
+  </g>
+
+  <!-- Legend -->
+  <g font-size="12" fill="#333">
+    <line x1="24" y1="560" x2="64" y2="560" stroke="#555" stroke-width="1.5" marker-end="url(#http)"/>
+    <text x="72" y="564">HTTP (public API, gateway to owner)</text>
+    <line x1="24" y1="582" x2="64" y2="582" stroke="#1f5fa8" stroke-width="1.8" marker-end="url(#pub)"/>
+    <text x="72" y="586">publish (outbox, same transaction)</text>
+    <line x1="24" y1="604" x2="64" y2="604" stroke="#2e7d4f" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#sub)"/>
+    <text x="72" y="608">consume (offset after commit)</text>
+    <line x1="24" y1="626" x2="64" y2="626" stroke="#b5462b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#dlt)"/>
+    <text x="72" y="630">dead-letter after retries</text>
+  </g>
+  <text x="24" y="534" font-size="11" fill="#666">Cylinders: private MySQL 8.4, one per service.</text>
+</svg>

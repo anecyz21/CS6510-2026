@@ -27,6 +27,7 @@ port() { local v="${!1:-$(env_value "$1")}"; printf '%s' "${v:-$2}"; }
 checkout="http://127.0.0.1:$(port CHECKOUT_HOST_PORT 8082)/internal/v1/ops/reconciliation-export"
 inventory="http://127.0.0.1:$(port INVENTORY_HOST_PORT 8083)/internal/v1/ops/reconciliation-export"
 analytics="http://127.0.0.1:$(port ANALYTICS_HOST_PORT 8084)/internal/v1/ops/ingest-status"
+catalog="http://127.0.0.1:$(port CATALOG_HOST_PORT 8081)/internal/v1/ops/publication"
 
 # Exports go through files: Inventory's has one entry per SKU, too long for a command line on Windows.
 work=$(mktemp -d)
@@ -34,23 +35,27 @@ trap 'rm -rf "$work"' EXIT
 fetch() { curl -sf --max-time 30 -o "$2" "$1" || { echo "cannot read $1" >&2; exit 1; }; }
 # Analytics being away is reported by R-6 as SKIPPED (and the result FAIL), not as a script error.
 fetch_analytics() { curl -sf --max-time 10 -o "$work/analytics.json" "$analytics" || echo null > "$work/analytics.json"; }
+# Catalog publication progress (005 R-9); absent from the 004 build, so a missing endpoint is null.
+fetch_catalog() { curl -sf --max-time 10 -o "$work/catalog.json" "$catalog" || echo null > "$work/catalog.json"; }
 
 deadline=$(( $(date +%s) + wait_settled ))
 while :; do
   fetch "$checkout" "$work/checkout.json"
   fetch "$inventory" "$work/inventory.json"
   fetch_analytics
+  fetch_catalog
   settled=$(jq -n --slurpfile c "$work/checkout.json" --slurpfile i "$work/inventory.json" --slurpfile a "$work/analytics.json" \
     '($c[0].unresolvedAttempts == 0) and ($i[0].openReservations == 0)
      and (($i[0].pendingSaleLines // 0) == 0)
-     and ($c[0].outboxPending == 0) and ($a[0] != null) and ($a[0].consumerLag == 0)' | tr -d '\r')
+     and ($c[0].outboxPending == 0) and ($a[0] != null) and ($a[0].consumerLag == 0)
+     and (($c[0].commandOutboxPending // 0) == 0) and (($i[0].replyOutboxPending // 0) == 0)' | tr -d '\r')
   [ "$settled" = true ] && break
   [ "$(date +%s)" -ge "$deadline" ] && break
   sleep 2
 done
 
-report=$(jq -rn --slurpfile cs "$work/checkout.json" --slurpfile is "$work/inventory.json" --slurpfile as "$work/analytics.json" '
-  $cs[0] as $c | $is[0] as $i | $as[0] as $a |
+report=$(jq -rn --slurpfile cs "$work/checkout.json" --slurpfile is "$work/inventory.json" --slurpfile as "$work/analytics.json" --slurpfile ks "$work/catalog.json" '
+  $cs[0] as $c | $is[0] as $i | $as[0] as $a | $ks[0] as $k |
   def line(name; ok; detail): "\(name) \(if ok then "PASS" else "FAIL" end)  \(detail)";
   ($i.positions | map(select(.reservedStock < 0 or .physicalStock < .reservedStock))) as $r1 |
   ($i.positions | map(. as $p | ($c.receiptQuantityBySku[$p.sku] // 0) as $sold
@@ -72,7 +77,19 @@ report=$(jq -rn --slurpfile cs "$work/checkout.json" --slurpfile is "$work/inven
      else line("R-6 accepted scans = ingested scans";
                ($c.outboxPending == 0 and $a.consumerLag == 0 and $c.outboxTotal == $a.ingestedCount);
                "outboxTotal=\($c.outboxTotal) ingestedCount=\($a.ingestedCount) outboxPending=\($c.outboxPending) consumerLag=\($a.consumerLag)")
-     end)
+     end),
+    # 005 additions (data-model "Reconciliation additions"). Fields missing from a 004 build are skipped, not failed.
+    (if $c.commandOutboxPending == null then empty
+     else line("R-7 every outbox drained"; ($c.commandOutboxPending == 0 and $i.replyOutboxPending == 0 and $c.outboxPending == 0);
+               "commandOutboxPending=\($c.commandOutboxPending) replyOutboxPending=\($i.replyOutboxPending) scanOutboxPending=\($c.outboxPending)") end),
+    (if $c.deadLetterRecords == null then empty
+     else line("R-8 no dead-lettered records"; ($c.deadLetterRecords == 0 and $i.deadLetterRecords == 0 and (($a.deadLetterRecords // 0) == 0));
+               "checkout=\($c.deadLetterRecords) inventory=\($i.deadLetterRecords) analytics=\($a.deadLetterRecords // "n/a")") end),
+    (if $k == null then empty
+     else line("R-9 catalog published and every copy at its version";
+               ($k.publishedVersion == $k.catalogVersion and $c.projectionCatalogVersion == $k.catalogVersion
+                and $i.projectionCatalogVersion == $k.catalogVersion and ($a.projectionCatalogVersion // $k.catalogVersion) == $k.catalogVersion);
+               "catalogVersion=\($k.catalogVersion) published=\($k.publishedVersion) checkout=\($c.projectionCatalogVersion) inventory=\($i.projectionCatalogVersion) analytics=\($a.projectionCatalogVersion // "n/a")") end)
   ] + ($r1 | map("  R-1 \(.sku) physical=\(.physicalStock) reserved=\(.reservedStock)"))
     + ($r4 | map("  R-4 \(.sku) initial-physical=\(.initialMinusPhysical) receipts=\(.receiptQuantity)"))
     + ($r5skus | map("  R-5 \(.) sale=\($i.saleQuantityBySku[.] // 0) receipts=\($c.receiptQuantityBySku[.] // 0)"))

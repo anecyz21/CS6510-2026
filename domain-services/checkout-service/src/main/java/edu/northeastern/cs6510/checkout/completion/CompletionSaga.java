@@ -235,7 +235,7 @@ public class CompletionSaga {
   }
 
   private void roundtrip(CompletionAttempt attempt, AttemptState outcome, Instant at) {
-    Timer.builder("checkout.saga.roundtrip").tag("outcome", outcome.name()).publishPercentileHistogram()
+    Timer.builder("checkout.saga.roundtrip").tag("outcome", outcome.name()).publishPercentiles(0.5, 0.95, 0.99)
         .register(meters).record(Duration.between(attempt.createdAt(), at));
   }
 

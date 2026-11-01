@@ -6,6 +6,22 @@ unmodified load-testing client. Because the client and the contract never
 change, the differences you observe week to week come entirely from the
 architecture, not from a different test tool.
 
+## Event-driven submission (feature 005)
+
+Catalog, Checkout, Inventory and Analytics communicate **only through Kafka** events, commands and
+replies. The API gateway is the only HTTP hop, and it forwards each public request to the service
+that owns it.
+
+| Deliverable | Where |
+|---|---|
+| Architecture diagram (microservices and event broker) | [`domain-services/deployment/architecture.svg`](domain-services/deployment/architecture.svg), explained in [`ARCHITECTURE.md`](domain-services/deployment/ARCHITECTURE.md) |
+| Load-client report, default parameters (`java -cp out Main`) | the graded run named in [`reports/event-driven/NOTES.md`](domain-services/deployment/reports/event-driven/NOTES.md), under [`reports/event-driven/default/`](domain-services/deployment/reports/event-driven/default/) |
+| Load-client report, stress (`java -cp out Main --stations=100 --duration=120`) | the graded run named in [`NOTES.md`](domain-services/deployment/reports/event-driven/NOTES.md), under [`reports/event-driven/stress/`](domain-services/deployment/reports/event-driven/stress/) |
+| Topic and message contracts | [`specs/005-event-driven-services/contracts/`](specs/005-event-driven-services/contracts/README.md) |
+| Specification, plan and tasks | [`specs/005-event-driven-services/`](specs/005-event-driven-services/spec.md) |
+
+![Architecture diagram](domain-services/deployment/architecture.svg)
+
 ## What's in this folder
 
 ```

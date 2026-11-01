@@ -95,7 +95,18 @@ snapshot_metrics() { # full cumulative snapshot of every service
           "http.client.requests=http.client.requests")
     case "$svc" in
       checkout) args+=("checkout.db.retries=checkout.db.retries")
+                # 005: saga round trip (command written to terminal reply applied), outbox and reply handling.
+                args+=("checkout.saga.roundtrip=checkout.saga.roundtrip"
+                       "checkout.saga.roundtrip.p50=checkout.saga.roundtrip.percentile?tag=phi:0.5"
+                       "checkout.saga.roundtrip.p95=checkout.saga.roundtrip.percentile?tag=phi:0.95"
+                       "checkout.saga.roundtrip.p99=checkout.saga.roundtrip.percentile?tag=phi:0.99"
+                       "checkout.saga.reply.ignored=checkout.saga.reply.ignored"
+                       "checkout.command_outbox.pending=checkout.command_outbox.pending"
+                       "checkout.recovery.resends=checkout.recovery.resends"
+                       "messaging.dlt.published=messaging.dlt.published")
                 for route in $checkout_routes; do args+=("http.server.requests $route=$(uri_query "$route")"); done ;;
+      inventory) args+=("inventory.reply_outbox.pending=inventory.reply_outbox.pending" "messaging.dlt.published=messaging.dlt.published") ;;
+      analytics) args+=("messaging.dlt.published=messaging.dlt.published") ;;
       gateway)  for route in $gateway_routes; do args+=("http.server.requests $route=$(uri_query "$route")"); done ;;
     esac
     printf '%s"%s":%s' "$sep" "$svc" "$(service_metrics "$svc" "$port" "${args[@]}")"; sep=","
@@ -179,6 +190,10 @@ while :; do
 done
 
 ended=$(now)
+# Consumer lag per group at the end of the run (005 research R11); empty on a build without Kafka consumers.
+# Rows are joined with " | " so the text stays one valid JSON string after json_str.
+kafka_groups=$(compose exec -T kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --all-groups 2>/dev/null \
+  | tr -d '\r' | tr -s ' ' | grep -v '^ *$' | paste -sd'|' - | sed 's/|/ | /g' || true)
 snapshot_metrics > "$work/metrics-end"
 snapshot_mysql end > "$work/mysql-end"
 
@@ -193,6 +208,7 @@ file="$out/observations-$stamp.json"
   cat "$work/host"
   printf '"metrics":{"start":%s,"end":%s},' "$(cat "$work/metrics-start")" "$(cat "$work/metrics-end")"
   printf '"mysql":{"start":%s,"end":%s},' "$(cat "$work/mysql-start")" "$(cat "$work/mysql-end")"
+  printf '"kafkaConsumerGroups":%s,' "$(json_str "$kafka_groups")"
   printf '"samples":[%s]}\n' "$(cat "$work/samples")"
 } > "$file"
 echo "$file"
