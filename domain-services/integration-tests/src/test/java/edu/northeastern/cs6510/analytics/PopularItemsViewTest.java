@@ -87,6 +87,24 @@ class PopularItemsViewTest {
     }
   }
 
+  /**
+   * 005 US5, FR-019: popular-item names come from Analytics' copy of catalog.products.v1. Rebuilding
+   * that copy replays the topic and serves the same ranking, names included, as before.
+   */
+  @Test
+  void theRankingIsUnchangedAfterTheNameCopyIsRebuilt() {
+    PublicApi api = new PublicApi();
+    ScanDriver.sequential(api, 20, i -> String.format("SKU-%06d", 400 + i % 4));
+    AnalyticsOps.awaitDrained(Duration.ofSeconds(60));
+    JsonNode before = api.popularItems(10).body();
+
+    PublicApi.Response rebuild = new PublicApi(Stack.SERVICE_URLS.get("analytics")).post("/internal/v1/ops/catalog-projection/rebuild", null);
+    assertEquals(202, rebuild.status(), String.valueOf(rebuild.body()));
+    Stack.awaitProjectionCurrent("analytics", Duration.ofSeconds(60));
+
+    assertEquals(before.get("items"), api.popularItems(10).body().get("items"), "same SKUs, counts and names after the replay");
+  }
+
   /** One window per response: counts fit inside it and match every other response for that window. */
   private static void check(JsonNode body, Map<Long, List<String>> seen, List<String> violations) {
     long start = body.get("windowStart").asLong();

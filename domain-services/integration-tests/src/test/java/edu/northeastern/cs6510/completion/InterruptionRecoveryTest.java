@@ -21,16 +21,18 @@ import org.junit.jupiter.params.provider.CsvSource;
  * exactly one purchase or one released attempt (US2-1, US2-2, SC-004). Needs the faults stack.
  */
 @Tag("system")
-@Tag("needs-us2")   // Toxiproxy-based until 005 task T051 re-points it at the messaging faults
 class InterruptionRecoveryTest {
   private final PublicApi api = new PublicApi();
 
   @BeforeAll
-  static void stackIsRunning() { Stack.requireRunning(); }
+  static void stackIsRunning() { Stack.requireRunning(); Faults.requireFaultsStack(); }
 
   @ParameterizedTest(name = "halt {0}")
-  @CsvSource({"AFTER_FREEZE, SKU-000041, true", "AFTER_RESERVE_RESPONSE, SKU-000042, true",
-              "AFTER_PREPARE, SKU-000043, false", "AFTER_COMMIT_RESPONSE, SKU-000044, false"})
+  // 005 checkpoints: each halts right after that step's transaction commits. After AFTER_FREEZE the reserve
+  // command may still be unsent (the sweep sends it after restart); from AFTER_RESERVED_APPLIED on the
+  // receipt intent is durable and the attempt only moves forward.
+  @CsvSource({"AFTER_FREEZE, SKU-000041, true", "AFTER_RESERVED_APPLIED, SKU-000042, false",
+              "AFTER_COMMITTED_APPLIED, SKU-000043, false"})
   void recoveryResolvesAnAttemptInterruptedAt(String point, String sku, boolean mayCancel) {
     InventoryProvisioning.setStock(sku, 10);
     String tx = api.start("halt-" + point).text("transactionId");

@@ -9,6 +9,7 @@ import edu.northeastern.cs6510.support.PublicApi;
 import edu.northeastern.cs6510.support.PublicApi.Response;
 import edu.northeastern.cs6510.support.Reconciliation;
 import edu.northeastern.cs6510.support.Stack;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -21,13 +22,12 @@ import org.junit.jupiter.api.Test;
 
 /** Quickstart V7 g: concurrent completions of one transaction join one attempt and get the same answer (A5, US2-4). */
 @Tag("system")
-@Tag("needs-us2")   // Toxiproxy-based until 005 task T051 re-points it at the messaging faults
 class DuplicateCompletionJoinTest {
   private static final String SKU = "SKU-000080";
   private final PublicApi api = new PublicApi();
 
   @BeforeAll
-  static void stackIsRunning() { Stack.requireRunning(); }
+  static void stackIsRunning() { Stack.requireRunning(); Faults.requireFaultsStack(); }
 
   @Test
   void fiveConcurrentCompletionsShareOneAttempt() throws Exception {
@@ -36,7 +36,8 @@ class DuplicateCompletionJoinTest {
     assertEquals(200, api.scan(tx, SKU).status());
     assertEquals(200, api.scan(tx, SKU).status());
 
-    Faults.inventoryLatency(500, 0);
+    // Inventory paused for 1 s: the attempt stays unresolved while all five requests arrive and join it.
+    AutoCloseable paused = Faults.pauseFor("inventory", Duration.ofSeconds(1));
     List<Response> responses = new ArrayList<>();
     ExecutorService pool = Executors.newFixedThreadPool(5);
     try {
@@ -51,7 +52,7 @@ class DuplicateCompletionJoinTest {
       go.countDown();
       for (Future<Response> call : calls) responses.add(call.get());
     } finally {
-      Faults.clearToxics();
+      paused.close();
       pool.shutdownNow();
     }
 

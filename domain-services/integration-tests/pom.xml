@@ -5,7 +5,7 @@
   <description>System tests against the running Compose stack, plus static boundary checks.</description>
   <properties>
     <!-- Tests tagged "system" need the running stack; run them with -Psystem-tests. -->
-    <excluded.test.groups>system,needs-us2</excluded.test.groups>
+    <excluded.test.groups>system</excluded.test.groups>
   </properties>
   <dependencies>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
@@ -17,7 +17,6 @@
     <dependency><groupId>org.testcontainers</groupId><artifactId>mysql</artifactId><scope>test</scope></dependency>
     <dependency><groupId>org.testcontainers</groupId><artifactId>kafka</artifactId><scope>test</scope></dependency>
     <dependency><groupId>org.apache.kafka</groupId><artifactId>kafka-clients</artifactId><scope>test</scope></dependency>
-    <dependency><groupId>org.testcontainers</groupId><artifactId>toxiproxy</artifactId><scope>test</scope></dependency>
     <!-- Validates every public response against spec/self-checkout-openapi.yaml (task T121); the successor of swagger-request-validator-core, which relocated here at 3.0.0. -->
     <dependency><groupId>com.atlassian.oai</groupId><artifactId>openapi-request-validator-core</artifactId><version>3.0.0</version><scope>test</scope></dependency>
   </dependencies>
@@ -33,7 +32,7 @@
   <profiles>
     <profile>
       <id>system-tests</id>
-      <properties><excluded.test.groups>needs-us2</excluded.test.groups></properties>
+      <properties><excluded.test.groups>none</excluded.test.groups></properties>
     </profile>
   </profiles>
 </project>

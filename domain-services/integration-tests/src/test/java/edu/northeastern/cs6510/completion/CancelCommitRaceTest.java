@@ -21,38 +21,40 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Quickstart V7 h: with a 1 s cancel-after and slow Inventory responses, recovery's cancellation
- * races the request's reserve and commit. Each attempt must end with one unambiguous outcome:
- * FINALIZED with a COMMITTED reservation, or CANCELLED with nothing committed (FR-017).
+ * 005 quickstart Q5/Q6: with a 1 s cancel-after and Inventory paused for 0 to 1.6 s per attempt,
+ * recovery's CancelRequested races the reserve reply. The cancel queues behind the reserve on the
+ * attempt's partition. Each attempt must end with one unambiguous outcome: FINALIZED with a
+ * COMMITTED reservation, or CANCELLED with nothing held (FR-017).
  */
 @Tag("system")
-@Tag("needs-us2")   // Toxiproxy-based until 005 task T051 re-points it at the messaging faults
 class CancelCommitRaceTest {
   private final PublicApi api = new PublicApi();
 
   @BeforeAll
   static void shortCancelAfter() {
     Stack.requireRunning();
+    Faults.requireFaultsStack();
     Stack.recreate("checkout", Map.of("CHECKOUT_RECOVERY_CANCEL_AFTER", "1s"));
   }
 
   @AfterAll
   static void restoreCheckout() {
-    Faults.clearToxics();
     Stack.recreate("checkout", Map.of("CHECKOUT_RECOVERY_CANCEL_AFTER", "30s"));
   }
 
   @Test
-  void cancelAndCommitNeverBothTakeEffect() {
+  void cancelAndCommitNeverBothTakeEffect() throws Exception {
     Map<String, Integer> outcomes = new HashMap<>();
-    Faults.inventoryLatency(1300, 400);
-    try {
+    {
       for (int i = 0; i < 20; i++) {
         String sku = String.format("SKU-%06d", 200 + i);
         InventoryProvisioning.setStock(sku, 5);
         String tx = api.start("race-" + i).text("transactionId");
         assertEquals(200, api.scan(tx, sku).status());
-        int status = api.complete(tx).status();
+        int status;
+        try (AutoCloseable paused = Faults.pauseFor("inventory", Duration.ofMillis((i % 5) * 400L))) {
+          status = api.complete(tx).status();
+        }
         assertTrue(status == 200 || status == 503, "unexpected completion status " + status);
 
         List<CheckoutDb.Attempt> attempts = CheckoutDb.awaitResolved(tx, Duration.ofSeconds(60));
@@ -69,8 +71,6 @@ class CancelCommitRaceTest {
         int reservedNow = InventoryProvisioning.position(sku).reserved();
         assertEquals(0, reservedNow, sku + " still has reserved stock");
       }
-    } finally {
-      Faults.clearToxics();
     }
     System.out.println("cancel/commit race outcomes: " + outcomes);
     Reconciliation.assertPass();

@@ -3,56 +3,56 @@ package edu.northeastern.cs6510.support;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import eu.rekawek.toxiproxy.Proxy;
-import eu.rekawek.toxiproxy.ToxiproxyClient;
-import eu.rekawek.toxiproxy.model.Toxic;
-import eu.rekawek.toxiproxy.model.ToxicDirection;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.jupiter.api.Assumptions;
 
 /**
- * Fault injection for recovery tests. Needs the stack started with
- * {@code docker-compose.faults.yml} and tests run with {@code -Dstack.faults=true}.
+ * Fault injection for recovery tests (005 research R13). Needs the stack started with
+ * {@code docker-compose.faults.yml} and tests run with {@code -Dstack.faults=true}. Services no
+ * longer call each other, so there is no network hop to slow down: delays and lost replies are
+ * made by pausing a container, holding Inventory's reply sends, or halting Checkout after a step.
  */
 public final class Faults {
   private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
-  private static final ToxiproxyClient TOXIPROXY = new ToxiproxyClient("127.0.0.1", 8474);
 
   private Faults() { }
 
-  /** Halts Checkout's JVM the next time the saga reaches {@code point}. */
-  public static void haltAt(String point) { arm(point, "HALT"); }
+  /** Skips the calling test unless the stack runs with the fault override. */
+  public static void requireFaultsStack() {
+    Assumptions.assumeTrue(Boolean.getBoolean("stack.faults"), "needs -Dstack.faults=true and docker-compose.faults.yml");
+  }
 
-  /** Discards the Inventory response at {@code point} until {@link #disarm} (a lost response). */
-  public static void loseResponseAt(String point) { arm(point, "LOSE"); }
+  /** Halts Checkout's JVM right after the saga step {@code point} commits. */
+  public static void haltAt(String point) { send("POST", point, "?action=HALT"); }
 
   public static void disarm(String point) { send("DELETE", point, ""); }
 
-  /** Delays every Inventory response on the Checkout-to-Inventory hop. */
-  public static void inventoryLatency(long millis, long jitterMillis) {
-    try {
-      inventoryProxy().toxics().latency("latency", ToxicDirection.DOWNSTREAM, millis).setJitter(jitterMillis);
-    } catch (IOException e) {
-      throw new IllegalStateException("toxiproxy unavailable", e);
-    }
+  /**
+   * Pauses {@code service} (its consumers stop, and messages for it wait in Kafka) and unpauses it
+   * after {@code duration} on a background thread. Closing the handle unpauses at once if needed.
+   */
+  public static AutoCloseable pauseFor(String service, Duration duration) {
+    Stack.pause(service);
+    AtomicBoolean resumed = new AtomicBoolean();
+    Runnable resume = () -> { if (resumed.compareAndSet(false, true)) Stack.unpause(service); };
+    Thread timer = new Thread(() -> {
+      try {
+        Thread.sleep(duration.toMillis());
+        resume.run();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }, "unpause-" + service);
+    timer.setDaemon(true);
+    timer.start();
+    return resume::run;
   }
-
-  /** Removes every toxic from the Inventory proxy. */
-  public static void clearToxics() {
-    try {
-      for (Toxic toxic : inventoryProxy().toxics().getAll()) toxic.remove();
-    } catch (IOException e) {
-      throw new IllegalStateException("toxiproxy unavailable", e);
-    }
-  }
-
-  private static Proxy inventoryProxy() throws IOException { return TOXIPROXY.getProxy("inventory"); }
-
-  private static void arm(String point, String action) { send("POST", point, "?action=" + action); }
 
   private static void send(String method, String point, String query) {
     URI uri = URI.create(Stack.SERVICE_URLS.get("checkout") + "/internal/v1/ops/faults/" + point + query);

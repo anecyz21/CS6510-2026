@@ -15,7 +15,7 @@
 - **Versioning**: the version lives in the path or topic name. Additive fields are allowed within
   a version, and consumers ignore unknown fields. A breaking change gets a new version served in
   parallel until every consumer has moved. Services deploy independently for compatible changes.
-- **Timeouts**: every synchronous call has explicit connect and read timeouts and bounded retries
+- **Timeouts** (004 only; since [005](../../005-event-driven-services/contracts/README.md) services talk to each other only through Kafka): every synchronous call has explicit connect and read timeouts and bounded retries
   (research R9). Callers never hold a database transaction or row lock while waiting.
 - **Failure semantics**: a timeout is an *unknown* outcome, and the caller repeats or queries the
   same operation. Dependency failure is never reported as "not found" or as success.

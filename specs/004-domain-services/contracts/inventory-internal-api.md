@@ -1,5 +1,10 @@
 # Inventory Internal API v1
 
+> **Partly superseded by 005.** The reservation routes (`PUT /internal/v1/reservations/{id}`, `…/commit`,
+> `…/cancel`, `GET …/{id}`) were removed by feature 005 and replaced by `inventory.commands.v1` and
+> `inventory.replies.v1`. See [inventory-reservation-messages.md](../../005-event-driven-services/contracts/inventory-reservation-messages.md).
+> The command semantics, conflict codes and the public `GET /inventory/low-stock` route below are unchanged.
+
 **Provider**: Inventory service | **Consumer**: Checkout (completion saga and recovery) |
 **Transport**: HTTP/1.1 JSON, internal network (port 8083) | **Java records**:
 `service-contracts` → `edu.northeastern.cs6510.contracts.inventory.v1`

@@ -1,5 +1,10 @@
 # Catalog Internal API v1
 
+> **Superseded by 005.** This HTTP API was removed by feature 005: Catalog now publishes its items to
+> `catalog.products.v1`, and consumers build their copies from that topic. See the
+> [005 contracts](../../005-event-driven-services/contracts/README.md) and
+> [catalog-product-event.md](../../005-event-driven-services/contracts/catalog-product-event.md).
+
 **Provider**: Catalog service | **Consumers**: Checkout (price + name projection), Inventory and
 Analytics (name projections) | **Transport**: HTTP/1.1 JSON on the internal network (port 8081) |
 **Java records**: `service-contracts` → `edu.northeastern.cs6510.contracts.catalog.v1`

@@ -65,6 +65,21 @@ public final class Messaging {
     }
   }
 
+  /**
+   * Deletes every record now in a single-partition topic (moves its start offset to the end), so a
+   * test that dead-letters on purpose leaves the dead-letter topics empty for reconciliation R-8.
+   */
+  public static void purge(String topic) {
+    try (var admin = org.apache.kafka.clients.admin.AdminClient.create(Map.of("bootstrap.servers", BOOTSTRAP))) {
+      var partition = new org.apache.kafka.common.TopicPartition(topic, 0);
+      long end = admin.listOffsets(Map.of(partition, org.apache.kafka.clients.admin.OffsetSpec.latest()))
+          .partitionResult(partition).get().offset();
+      admin.deleteRecords(Map.of(partition, org.apache.kafka.clients.admin.RecordsToDelete.beforeOffset(end))).all().get();
+    } catch (Exception e) {
+      throw new IllegalStateException("cannot purge " + topic, e);
+    }
+  }
+
   private static InventoryReplyV1 roundTrip(InventoryCommandV1 command) {
     try (KafkaConsumer<String, String> replies = consumer("test-replies-" + UUID.randomUUID());
          KafkaProducer<String, String> producer = producer()) {
