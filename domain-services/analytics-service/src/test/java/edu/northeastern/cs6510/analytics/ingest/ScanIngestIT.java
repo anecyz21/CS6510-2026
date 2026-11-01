@@ -7,13 +7,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doAnswer;
 
-import com.sun.net.httpserver.HttpServer;
 import edu.northeastern.cs6510.analytics.ops.ConsumerLag;
+import edu.northeastern.cs6510.contracts.catalog.v1.ProductEventV1;
 import edu.northeastern.cs6510.contracts.events.v1.AcceptedScanV1;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
+import edu.northeastern.cs6510.contracts.messaging.Envelope;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -30,7 +27,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,7 +47,6 @@ class ScanIngestIT {
   static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.4").withDatabaseName("analytics");
   @Container
   static final KafkaContainer KAFKA = new KafkaContainer("apache/kafka:3.8.1");
-  private static final HttpServer CATALOG = stubCatalog();
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
@@ -62,15 +57,11 @@ class ScanIngestIT {
       createTopic(KAFKA.getBootstrapServers());
       return KAFKA.getBootstrapServers();
     });
-    registry.add("catalog.url", () -> "http://127.0.0.1:" + CATALOG.getAddress().getPort());
   }
 
   @Autowired JdbcTemplate db;
   @Autowired ConsumerLag lag;
   @MockitoSpyBean ScanPipeline pipeline;
-
-  @AfterAll
-  static void stopCatalog() { CATALOG.stop(0); }
 
   @Test
   void duplicatesOfOneEventIdGiveOneRowWhoseSequenceNeverChanges() {
@@ -174,40 +165,33 @@ class ScanIngestIT {
     fail("timed out waiting for " + what);
   }
 
+  /**
+   * Creates the scan and product topics and publishes names for SKU-000001..SKU-000010 at catalog
+   * version 1, as Catalog would (005: names come from catalog.products.v1, not an HTTP call).
+   */
   private static void createTopic(String bootstrap) {
     try (AdminClient admin = AdminClient.create(Map.of("bootstrap.servers", bootstrap))) {
-      if (!admin.listTopics().names().get().contains(AcceptedScanV1.TOPIC)) {
-        admin.createTopics(List.of(new NewTopic(AcceptedScanV1.TOPIC, 1, (short) 1))).all().get();
+      if (admin.listTopics().names().get().contains(AcceptedScanV1.TOPIC)) return;
+      admin.createTopics(List.of(new NewTopic(AcceptedScanV1.TOPIC, 1, (short) 1), new NewTopic(ProductEventV1.TOPIC, 1, (short) 1))).all().get();
+    } catch (Exception e) {
+      throw new IllegalStateException("cannot create topics", e);
+    }
+    Map<String, Object> props = Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap,
+        ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class, ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    try (KafkaProducer<String, String> producer = new KafkaProducer<>(props)) {
+      for (int i = 1; i <= 10; i++) {
+        String sku = String.format("SKU-%06d", i);
+        String messageId = UUID.randomUUID().toString();
+        String value = String.format("{\"schemaVersion\":1,\"messageId\":\"%s\",\"messageType\":\"ProductChanged\",\"catalogVersion\":1,"
+            + "\"sku\":\"%s\",\"name\":\"Catalog item %d\",\"priceCents\":%d,\"active\":true}", messageId, sku, i, 100 + i);
+        ProducerRecord<String, String> record = new ProducerRecord<>(ProductEventV1.TOPIC, sku, value);
+        new Envelope(messageId, ProductEventV1.MESSAGE_TYPE, 1, "catalog", Instant.now(), null, null).toHeaders()
+            .forEach((k, v) -> record.headers().add(k, v));
+        producer.send(record).get();
       }
     } catch (Exception e) {
-      throw new IllegalStateException("cannot create topic", e);
+      throw new IllegalStateException("cannot publish the catalog", e);
     }
   }
 
-  /** A Catalog that names SKU-000001..SKU-000010 at version 1. */
-  private static HttpServer stubCatalog() {
-    try {
-      HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-      server.createContext("/internal/v1/catalog-version", exchange -> reply(exchange,
-          "{\"catalogVersion\":1,\"updatedAt\":\"2026-10-24T12:00:00Z\",\"activeItemCount\":10}"));
-      String items = IntStream.rangeClosed(1, 10)
-          .mapToObj(i -> String.format("{\"sku\":\"SKU-%06d\",\"name\":\"Catalog item %d\",\"priceCents\":%d}", i, i, 100 + i))
-          .collect(Collectors.joining(","));
-      server.createContext("/internal/v1/products", exchange -> reply(exchange,
-          "{\"catalogVersion\":1,\"items\":[" + items + "],\"nextAfterSku\":null}"));
-      server.start();
-      return server;
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  private static void reply(com.sun.net.httpserver.HttpExchange exchange, String body) throws IOException {
-    byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-    exchange.getResponseHeaders().add("Content-Type", "application/json");
-    exchange.sendResponseHeaders(200, bytes.length);
-    try (OutputStream out = exchange.getResponseBody()) {
-      out.write(bytes);
-    }
-  }
 }

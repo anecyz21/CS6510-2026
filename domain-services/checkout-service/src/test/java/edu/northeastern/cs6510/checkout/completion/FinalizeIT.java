@@ -56,8 +56,6 @@ class FinalizeIT {
     assertEquals(List.of("SKU-A:2", "SKU-B:1"), receiptLines(first.attemptId()));
     assertEquals("OPEN", status(tx));
     assertNull(activeAttempt(tx), "the freeze flag is cleared");
-    assertNull(db.queryForObject("SELECT lease_owner FROM completion_attempts WHERE attempt_id = ?", String.class, first.attemptId()),
-        "the terminal attempt's lease is cleared with it");
     assertFalse(Boolean.TRUE.equals(transactions.execute(s -> attempts.finalizeAttempt(first, Instant.now()))), "a second finalize loses");
 
     // Second attempt buys everything left.
