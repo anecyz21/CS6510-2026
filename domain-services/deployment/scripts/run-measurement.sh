@@ -131,6 +131,9 @@ reconcile() { # file
   fi
 }
 
+# A run that aborts must not leave its stack holding the ports for the next topology.
+trap 'compose down -v --remove-orphans >/dev/null 2>&1 || true' EXIT
+
 log "building $tree with $(java -version 2>&1 | head -1)"
 mvn -q -f "$tree/domain-services/pom.xml" -DskipTests package
 

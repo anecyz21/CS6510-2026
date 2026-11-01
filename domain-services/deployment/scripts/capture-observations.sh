@@ -4,7 +4,7 @@
 # already return JSON, so their output is embedded verbatim and no JSON tool is required.
 #
 # Usage:
-#   capture-observations.sh --out DIR --topology baseline|redesign --compose-file FILE \
+#   capture-observations.sh --out DIR --topology baseline|redesign|pre-event-driven|event-driven --compose-file FILE \
 #       [--project NAME] [--env-file FILE] [--interval 5] [--duration SECONDS] \
 #       [--stop-file PATH] [--stock-seed NAME] [--profile normal|stress]
 #
@@ -32,7 +32,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -n "$out" ] && [ -n "$topology" ] && [ -n "$compose_file" ] || {
-  echo "usage: $0 --out DIR --topology baseline|redesign --compose-file FILE [...]" >&2; exit 2; }
+  echo "usage: $0 --out DIR --topology baseline|redesign|pre-event-driven|event-driven --compose-file FILE [...]" >&2; exit 2; }
 project="${project:-perf-$topology}"
 mkdir -p "$out"
 
@@ -52,13 +52,13 @@ case "$topology" in
     gateway_routes="/transactions /transactions/{transactionId}/items /transactions/{transactionId}/complete /items /inventory/low-stock /analytics/popular-items"
     mysqls="mysql:root"
     ;;
-  redesign)
+  redesign|pre-event-driven|event-driven)   # the 005 topologies share 004's private-store layout
     services="catalog:8081 checkout:8082 inventory:8083 analytics:8084 gateway:8080"
     checkout_routes="/transactions /transactions/{id}/items /transactions/{id}/complete /transactions/{id}"
     gateway_routes="/transactions /transactions/{transactionId}/items /transactions/{transactionId}/complete /items /inventory/low-stock /analytics/popular-items"
     mysqls="catalog-db:$(env_value CATALOG_DB_ROOT_PASSWORD) checkout-db:$(env_value CHECKOUT_DB_ROOT_PASSWORD) inventory-db:$(env_value INVENTORY_DB_ROOT_PASSWORD) analytics-db:$(env_value ANALYTICS_DB_ROOT_PASSWORD)"
     ;;
-  *) echo "--topology must be baseline or redesign" >&2; exit 2 ;;
+  *) echo "--topology must be baseline, redesign, pre-event-driven or event-driven" >&2; exit 2 ;;
 esac
 
 uri_query() { # route -> encoded metrics query for its uri tag
