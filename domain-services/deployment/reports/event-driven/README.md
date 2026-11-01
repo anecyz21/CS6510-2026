@@ -30,3 +30,5 @@ Results of the quickstart scenarios as they are run, newest last.
 | 2026-11-01 | Q6 crash points (AFTER_FREEZE, AFTER_RESERVED_APPLIED, AFTER_COMMITTED_APPLIED), cancel race, held Inventory replies | PASS | InterruptionRecoveryTest, CancelCommitRaceTest, LostResponseTest |
 | 2026-11-01 | Q1 independent startup with broker only, projection rebuilds; US5 views | PASS | IndependentStartupTest, ProjectionRebuildTest, LowStockViewTest, PopularItemsViewTest, ranking and replay tests |
 | 2026-11-01 | Full system suite (53 tests, `-Psystem-tests -Dstack.faults=true`) | PASS | after updating IndependentStartupTest and ordering PopularItemsViewTest for 005 |
+| 2026-11-01 | Q9 default and Q10 stress, 3 runs each on 004 and 005 (12 runs) | PASS | 0 errors in every run, every reconciliation R-1..R-9 PASS; see NOTES.md and COMPARISON.md |
+| 2026-11-01 | Q11 artifacts (diagram, graded reports, comparison linked from the root README) | PASS | |

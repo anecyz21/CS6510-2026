@@ -192,7 +192,7 @@ done
 ended=$(now)
 # Consumer lag per group at the end of the run (005 research R11); empty on a build without Kafka consumers.
 # Rows are joined with " | " so the text stays one valid JSON string after json_str.
-kafka_groups=$(compose exec -T kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --all-groups 2>/dev/null \
+kafka_groups=$(MSYS_NO_PATHCONV=1 compose exec -T kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --all-groups 2>/dev/null \
   | tr -d '\r' | tr -s ' ' | grep -v '^ *$' | paste -sd'|' - | sed 's/|/ | /g' || true)
 snapshot_metrics > "$work/metrics-end"
 snapshot_mysql end > "$work/mysql-end"
