@@ -19,14 +19,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Quickstart V8.5–6 (US4-5, US4-6): an empty store answers an empty ranking, and readers polling
  * while windows are published only ever see one complete published window.
  */
 @Tag("system")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class PopularItemsViewTest {
   private static final int READERS = 8;
 
@@ -37,6 +41,7 @@ class PopularItemsViewTest {
   }
 
   @Test
+  @Order(1)   // needs the empty store left by freshStack()
   void readersOnlyEverSeeOneCompletePublishedWindow() throws Exception {
     PublicApi.Response empty = new PublicApi().popularItems(null);
     assertEquals(200, empty.status());
@@ -92,6 +97,7 @@ class PopularItemsViewTest {
    * that copy replays the topic and serves the same ranking, names included, as before.
    */
   @Test
+  @Order(2)
   void theRankingIsUnchangedAfterTheNameCopyIsRebuilt() {
     PublicApi api = new PublicApi();
     ScanDriver.sequential(api, 20, i -> String.format("SKU-%06d", 400 + i % 4));

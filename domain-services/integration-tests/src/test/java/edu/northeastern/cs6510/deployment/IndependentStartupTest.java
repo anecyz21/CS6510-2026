@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Quickstart V1 (US3-1, US3-3, gate 1): every service starts, migrates and becomes ready with only
- * its own database, reports its dependencies truthfully, and can be redeployed alone.
+ * Quickstart V1 (US3-1, US3-3, gate 1; 005 Q1): every service starts, migrates and becomes ready with only
+ * its own database and the broker, reports its dependencies truthfully, and can be redeployed alone.
  */
 @Tag("system")
 class IndependentStartupTest {
@@ -37,20 +37,30 @@ class IndependentStartupTest {
     Stack.awaitReady("gateway", Duration.ofSeconds(120));
   }
 
+  /**
+   * 005: a service needs only its own database and the broker. With every other domain service
+   * stopped, Catalog included, each one becomes ready: Checkout, Inventory and Analytics rebuild
+   * readiness from the catalog topic Kafka retains. Checkout no longer checks Inventory's health at
+   * all, because it never calls Inventory.
+   */
   @Test
-  void eachServiceBecomesReadyWithOnlyItsOwnDatabase() {
+  void eachServiceBecomesReadyWithOnlyItsOwnDatabaseAndTheBroker() {
     Stack.compose(withServices("stop", allContainers()));
     try {
+      Stack.compose("up", "-d", "--no-deps", "kafka");
+      Stack.awaitHealthy("kafka", Duration.ofSeconds(120));
       for (String service : SERVICES) {
         Stack.compose("up", "-d", "--no-deps", service + "-db", service);
         Stack.awaitReady(service, Duration.ofSeconds(180));
+        JsonNode components = new PublicApi(Stack.SERVICE_URLS.get(service)).get("/actuator/health").body().get("components");
+        assertEquals("UP", components.get("db").get("status").asText());
+        assertEquals("UP", components.get("kafka").get("status").asText());
+        if (!service.equals("catalog")) {
+          assertEquals("CURRENT", components.get("catalogProjection").get("details").get("state").asText(),
+              service + " caught up from the topic with Catalog stopped");
+        }
         if (service.equals("checkout")) {
-          JsonNode health = new PublicApi(Stack.SERVICE_URLS.get("checkout")).get("/actuator/health").body();
-          JsonNode components = health.get("components");
-          assertEquals("DOWN", components.get("inventory").get("status").asText(), "Inventory is stopped and must be reported as such");
-          assertEquals("UP", components.get("catalogProjection").get("status").asText(), "a stale projection never fails health");
-          assertTrue(components.get("catalogProjection").get("details").has("state"), "projection state is reported");
-          assertEquals("UP", components.get("db").get("status").asText());
+          assertTrue(components.get("inventory") == null, "Checkout has no Inventory dependency to report");
         }
         Stack.compose("stop", service, service + "-db");
       }

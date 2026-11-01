@@ -22,3 +22,11 @@ Results of the quickstart scenarios as they are run, newest last.
 
 | Date (UTC) | Scenario | Result | Notes |
 |---|---|---|---|
+| 2026-11-01 | Service integration tests (Testcontainers: ProductPublisherIT, ProductEventListenerIT, ReservationCommandListenerIT, ScanIngestIT, FinalizeIT, OutboxRelayIT, reservation ITs) | PASS | after fixing two ITs that still assumed 004 (lease column, stub Catalog) |
+| 2026-11-01 | Q2 boundaries (NoInterServiceHttpTest, ModuleBoundaryTest, PrivateStoreAccessTest) | PASS | |
+| 2026-11-01 | Q3 contract and completion suites (FullGatewayContractTest, partial, busy, preconditions, last unit, join) | PASS | |
+| 2026-11-01 | Q4 duplicate delivery, Q7 broker restart, Q8 poison messages | PASS | DuplicateDeliveryTest, BrokerRestartTest, PoisonMessageTest |
+| 2026-11-01 | Q5 outages (Catalog 60 s, Analytics 60 s, Inventory 20 s late reply, Inventory 45 s and 60 s) | PASS | ServiceOutageTest, LateReplyTest, InventoryOutageTest |
+| 2026-11-01 | Q6 crash points (AFTER_FREEZE, AFTER_RESERVED_APPLIED, AFTER_COMMITTED_APPLIED), cancel race, held Inventory replies | PASS | InterruptionRecoveryTest, CancelCommitRaceTest, LostResponseTest |
+| 2026-11-01 | Q1 independent startup with broker only, projection rebuilds; US5 views | PASS | IndependentStartupTest, ProjectionRebuildTest, LowStockViewTest, PopularItemsViewTest, ranking and replay tests |
+| 2026-11-01 | Full system suite (53 tests, `-Psystem-tests -Dstack.faults=true`) | PASS | after updating IndependentStartupTest and ordering PopularItemsViewTest for 005 |
