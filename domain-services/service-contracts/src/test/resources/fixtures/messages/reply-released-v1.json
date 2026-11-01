@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "messageId": "0192d0b2-1d10-7c44-8e55-0a1b2c3d4e60",
+  "messageType": "Released",
+  "attemptId": "0192d0b2-1c3a-7aa0-8b22-1d2e3f405162",
+  "command": "ReserveRequested",
+  "reservation": {
+    "attemptId": "0192d0b2-1c3a-7aa0-8b22-1d2e3f405162",
+    "transactionId": "7b1e2c94-3f0a-4c1d-9e2b-5a6b7c8d9e0f",
+    "state": "RELEASED",
+    "lines": [
+      { "sku": "SKU-000042", "requestedQuantity": 3, "reservedQuantity": 0 },
+      { "sku": "SKU-000107", "requestedQuantity": 1, "reservedQuantity": 0 }
+    ],
+    "createdAt": "2026-11-02T15:04:05.123456Z",
+    "resolvedAt": "2026-11-02T15:04:05.223456Z"
+  },
+  "error": null
+}

@@ -14,7 +14,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 /** Consumer side of the accepted-scan fixture (T099): Analytics reads v1 and tolerates added fields. */
 class AcceptedScanParsingTest {
   private final AcceptedScanListener listener = new AcceptedScanListener(null, null, new NoTransactions(),
-      Jackson2ObjectMapperBuilder.json().build(), new SimpleMeterRegistry());
+      Jackson2ObjectMapperBuilder.json().build(), new SimpleMeterRegistry(), null);
 
   @Test
   void parsesTheFixture() throws Exception {

@@ -1,18 +1,15 @@
 package edu.northeastern.cs6510.checkout.recovery;
 
-import edu.northeastern.cs6510.checkout.completion.AttemptDriver;
 import edu.northeastern.cs6510.checkout.completion.AttemptState;
 import edu.northeastern.cs6510.checkout.completion.CompletionAttempt;
 import edu.northeastern.cs6510.checkout.completion.CompletionAttemptRepository;
-import edu.northeastern.cs6510.checkout.completion.CompletionProperties;
+import edu.northeastern.cs6510.checkout.completion.CompletionSaga;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import java.net.InetAddress;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
@@ -20,16 +17,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionOperations;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Resolves completion attempts that a request left unresolved or a crash interrupted (FR-016–FR-018).
- * Each scan leases due attempts and drives them with the same saga steps as a request. An attempt
- * that is still RESERVING after a failure and older than {@code cancel-after} is cancelled; one
- * whose receipt intent is durable (COMMITTING) only ever moves forward. Survives restarts because
- * all of its state is in Checkout's database.
+ * The resend sweep (005 data-model rules 3–4, FR-013, FR-018). An attempt whose reply has not moved
+ * it on by its {@code next_retry_at} gets its current state's command written again, with backoff;
+ * the claim is a conditional update, so two sweeps (or replicas) never both resend. A RESERVING
+ * attempt older than {@code cancel-after} is cancelled instead; a COMMITTING one only ever has its
+ * commit resent. After {@code attention-after} sends the attempt is flagged and left to operators.
+ * Makes no remote calls and survives restarts: all of its state is in Checkout's database.
  */
 @Component
 public class RecoveryWorker {
@@ -37,33 +32,25 @@ public class RecoveryWorker {
   private static final int BATCH = 50;
 
   private final CompletionAttemptRepository attempts;
-  private final AttemptDriver driver;
-  private final TransactionOperations transactions;
+  private final CompletionSaga saga;
   private final RecoveryProperties recovery;
-  private final CompletionProperties completion;
   private final MeterRegistry meters;
   private final Clock clock;
-  private final String owner;
   private final Map<AttemptState, AtomicLong> byState = new EnumMap<>(AttemptState.class);
   private final AtomicBoolean accepting = new AtomicBoolean(true);
   private final AtomicBoolean scanning = new AtomicBoolean(false);
 
   @Autowired
-  public RecoveryWorker(CompletionAttemptRepository attempts, AttemptDriver driver, PlatformTransactionManager transactionManager,
-                        RecoveryProperties recovery, CompletionProperties completion, MeterRegistry meters) {
-    this(attempts, driver, new TransactionTemplate(transactionManager), recovery, completion, meters, Clock.systemUTC(), defaultOwner());
+  public RecoveryWorker(CompletionAttemptRepository attempts, CompletionSaga saga, RecoveryProperties recovery, MeterRegistry meters) {
+    this(attempts, saga, recovery, meters, Clock.systemUTC());
   }
 
-  RecoveryWorker(CompletionAttemptRepository attempts, AttemptDriver driver, TransactionOperations transactions,
-                 RecoveryProperties recovery, CompletionProperties completion, MeterRegistry meters, Clock clock, String owner) {
+  RecoveryWorker(CompletionAttemptRepository attempts, CompletionSaga saga, RecoveryProperties recovery, MeterRegistry meters, Clock clock) {
     this.attempts = attempts;
-    this.driver = driver;
-    this.transactions = transactions;
+    this.saga = saga;
     this.recovery = recovery;
-    this.completion = completion;
     this.meters = meters;
     this.clock = clock;
-    this.owner = owner;
     for (AttemptState state : AttemptState.values()) {
       AtomicLong count = new AtomicLong();
       byState.put(state, count);
@@ -76,59 +63,35 @@ public class RecoveryWorker {
     if (!accepting.get() || !scanning.compareAndSet(false, true)) return;
     try {
       attempts.countByState().forEach((state, n) -> byState.get(state).set(n));
-      for (String attemptId : attempts.findDueForRecovery(clock.instant(), BATCH)) {
+      for (CompletionAttempt attempt : attempts.findDueForResend(clock.instant(), BATCH)) {
         if (!accepting.get()) return;
-        recover(attemptId);
+        recover(attempt);
       }
     } catch (RuntimeException e) {
-      // A failed scan (e.g. own database briefly unavailable) is retried on the next tick.
-      log.warn("recovery scan failed: {}", e.toString());
+      // A failed sweep (e.g. own database briefly unavailable) is retried on the next tick.
+      log.warn("recovery sweep failed: {}", e.toString());
     } finally {
       scanning.set(false);
     }
   }
 
-  private void recover(String attemptId) {
-    Instant now = clock.instant();
-    if (!Boolean.TRUE.equals(transactions.execute(s -> attempts.acquireLease(attemptId, owner, now.plus(recovery.leaseDuration()), now)))) {
-      return;   // another driver (a request or replica) is working on it
+  void recover(CompletionAttempt attempt) {
+    if (attempt.commandSends() >= recovery.attentionAfter()) {
+      saga.park(attempt, attempt.commandSends() + " sends of the " + attempt.state() + " command got no reply");
+      return;
     }
-    try {
-      CompletionAttempt attempt = attempts.find(attemptId).orElseThrow();
-      AttemptState step = attempt.state();
-      if (step == AttemptState.RESERVING && attempt.stepFailures() > 0
-          && attempt.createdAt().isBefore(now.minus(recovery.cancelAfter()))) {
-        // Only before the receipt intent is durable may an attempt be abandoned (FR-017).
-        transactions.executeWithoutResult(s -> attempts.transition(attemptId, AttemptState.RESERVING, AttemptState.CANCELLING, now));
-        step = AttemptState.CANCELLING;
-      }
-      AttemptDriver.Outcome outcome = driver.drive(attemptId, now.plus(completion.requestDeadline()), owner);
-      meters.counter("checkout.recovery.steps", "step", step.name(), "result", outcome.name()).increment();
-      CompletionAttempt after = attempts.find(attemptId).orElseThrow();
-      if (!after.state().isTerminal() && !after.needsAttention() && after.stepFailures() >= recovery.attentionAfter()) {
-        Instant flaggedAt = clock.instant();
-        transactions.executeWithoutResult(s -> attempts.markNeedsAttention(attemptId,
-            after.stepFailures() + " consecutive failed steps, still retrying: " + after.lastError(), flaggedAt));
-      }
-    } finally {
-      transactions.executeWithoutResult(s -> attempts.releaseLease(attemptId, owner));
+    String sent = saga.resend(attempt, recovery.cancelAfter(), recovery.backoff(attempt.commandSends()));
+    if (sent != null) {
+      meters.counter("checkout.recovery.resends", "state", attempt.state().name()).increment();
+      log.info("attempt {}: no reply yet, sent {} again (send {})", attempt.attemptId(), sent, attempt.commandSends() + 1);
     }
   }
 
-  /** Stops picking new attempts; in-flight steps finish on their own. */
+  /** Stops picking new attempts; an in-flight resend finishes on its own. */
   void stopAccepting() { accepting.set(false); }
 
   boolean isScanning() { return scanning.get(); }
 
-  String owner() { return owner; }
-
-  private static String defaultOwner() {
-    String host;
-    try {
-      host = InetAddress.getLocalHost().getHostName();
-    } catch (Exception e) {
-      host = "checkout";
-    }
-    return host + "-" + UUID.randomUUID();
-  }
+  /** Due attempts at {@code now}, for tests. */
+  Instant now() { return clock.instant(); }
 }

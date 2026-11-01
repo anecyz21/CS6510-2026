@@ -104,7 +104,7 @@ public class OperationsController {
     v.put("state", a.state().name());
     v.put("createdAt", String.valueOf(a.createdAt()));
     v.put("updatedAt", String.valueOf(a.updatedAt()));
-    v.put("stepFailures", a.stepFailures());
+    v.put("commandSends", a.commandSends());
     v.put("nextRetryAt", String.valueOf(a.nextRetryAt()));
     v.put("needsAttention", a.needsAttention());
     v.put("lastError", a.lastError());

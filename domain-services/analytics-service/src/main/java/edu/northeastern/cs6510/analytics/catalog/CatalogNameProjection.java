@@ -1,110 +1,135 @@
 package edu.northeastern.cs6510.analytics.catalog;
 
-import edu.northeastern.cs6510.contracts.catalog.v1.ProductPageV1;
+import edu.northeastern.cs6510.contracts.catalog.v1.ProductEventV1;
 import jakarta.annotation.PostConstruct;
 import java.sql.Timestamp;
-import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Local, versioned copy of Catalog's product names (research R7), used so read views show real
- * names without calling Catalog per request. Derived data: deleting its rows forces a reload.
+ * Local copy of Catalog's product names, built from {@code catalog.products.v1} (005 research R3), so
+ * read views show real names without asking Catalog. {@code projection_state.topic_offset} records
+ * the last applied record in the same transaction as the rows. Derived data: a rebuild deletes it
+ * and replays the topic from the beginning.
  */
 @Component
 public class CatalogNameProjection {
-  public enum State { EMPTY, CURRENT, STALE }
+  /** REPLAYING until the end offset captured at assignment is reached and a name is held. */
+  public enum State { REPLAYING, CURRENT }
+  private record Named(String name, long catalogVersion) { }
 
   private final JdbcTemplate db;
   private final TransactionTemplate transactions;
-  private final Duration maxStaleness;
-  private final Clock clock = Clock.systemUTC();
-  private volatile Map<String, String> names = Map.of();
-  private volatile Long loadedVersion;
-  private volatile Instant lastVerifiedAt;
+  private volatile Map<String, Named> names = Map.of();
+  private volatile Long topicOffset;
+  private volatile Long catalogVersion;
+  /** End offset of the topic when the listener was assigned it; -1 while unknown. */
+  private volatile long catchUpTarget = -1;
 
-  public CatalogNameProjection(JdbcTemplate db, PlatformTransactionManager transactionManager,
-                               @Value("${catalog.projection.max-staleness:60s}") Duration maxStaleness) {
+  public CatalogNameProjection(JdbcTemplate db, PlatformTransactionManager transactionManager) {
     this.db = db;
     this.transactions = new TransactionTemplate(transactionManager);
-    this.maxStaleness = maxStaleness;
   }
 
   @PostConstruct
   void loadFromStore() {
-    db.query("SELECT catalog_version, last_verified_at FROM projection_state WHERE id = 1", rs -> {
+    db.query("SELECT catalog_version, topic_offset FROM projection_state WHERE id = 1", rs -> {
       long version = rs.getLong(1);
-      loadedVersion = rs.wasNull() ? null : version;
-      Timestamp verified = rs.getTimestamp(2);
-      lastVerifiedAt = verified == null ? null : verified.toInstant();
+      catalogVersion = rs.wasNull() ? null : version;
+      long offset = rs.getLong(2);
+      topicOffset = rs.wasNull() ? null : offset;
     });
-    Map<String, String> rows = new HashMap<>();
-    db.query("SELECT sku, name FROM catalog_names", rs -> { rows.put(rs.getString(1), rs.getString(2)); });
+    Map<String, Named> rows = new HashMap<>();
+    db.query("SELECT sku, name, catalog_version FROM catalog_names", rs -> { rows.put(rs.getString(1), new Named(rs.getString(2), rs.getLong(3))); });
     names = Map.copyOf(rows);
   }
 
-  public State state() {
-    if (loadedVersion == null) return State.EMPTY;
-    Instant verified = lastVerifiedAt;
-    if (verified == null || Duration.between(verified, clock.instant()).compareTo(maxStaleness) > 0) return State.STALE;
-    return State.CURRENT;
+  /** The product name, or empty when the copy does not hold the SKU. Never falls back to the SKU (finding F4). */
+  public Optional<String> name(String sku) {
+    Named named = names.get(sku);
+    return named == null ? Optional.empty() : Optional.of(named.name());
   }
 
-  /** The product name, or empty when the projection does not know the SKU. Never falls back to the SKU (finding F4). */
-  public Optional<String> name(String sku) { return Optional.ofNullable(names.get(sku)); }
-
-  public Long loadedVersion() { return loadedVersion; }
-
-  public Instant lastVerifiedAt() { return lastVerifiedAt; }
-
-  public int storedRowCount() {
-    Integer count = db.queryForObject("SELECT COUNT(*) FROM catalog_names", Integer.class);
-    return count == null ? 0 : count;
+  /** Caught up with the topic as it was at assignment, and holding at least one name. */
+  public boolean caughtUp() {
+    long target = catchUpTarget;
+    if (target < 0 || names.isEmpty()) return false;
+    Long offset = topicOffset;
+    return (offset == null ? 0 : offset + 1) >= target;
   }
 
-  /** Atomically replaces every name with a complete load taken at one catalog version. */
-  public synchronized void replaceAll(long version, List<ProductPageV1.Item> items) {
-    Instant now = clock.instant();
-    transactions.executeWithoutResult(status -> {
-      db.update("DELETE FROM catalog_names");
-      db.batchUpdate("INSERT INTO catalog_names (sku, name, catalog_version) VALUES (?, ?, ?)", items, 500, (ps, item) -> {
-        ps.setString(1, item.sku());
-        ps.setString(2, item.name());
-        ps.setLong(3, version);
-      });
-      db.update("UPDATE projection_state SET catalog_version = ?, loaded_at = ?, last_verified_at = ? WHERE id = 1",
-          version, Timestamp.from(now), Timestamp.from(now));
-    });
-    Map<String, String> next = new HashMap<>();
-    for (ProductPageV1.Item item : items) next.put(item.sku(), item.name());
-    names = Map.copyOf(next);
-    loadedVersion = version;
-    lastVerifiedAt = now;
-  }
+  public State state() { return caughtUp() ? State.CURRENT : State.REPLAYING; }
+
+  public Long topicOffset() { return topicOffset; }
+
+  public Long catalogVersion() { return catalogVersion; }
+
+  public long catchUpTarget() { return catchUpTarget; }
+
+  public int size() { return names.size(); }
+
+  void catchUpTo(long endOffset) { catchUpTarget = endOffset; }
 
   /**
-   * Forgets every name after the stored rows were deleted, so views stop serving names the store no
-   * longer holds; the loader then reloads from Catalog when it can.
+   * Applies one batch in one local transaction and records {@code lastOffset}, the offset of the
+   * batch's last record. An event is applied only if its version is not older than the stored one
+   * for that SKU; {@code active=false} deletes the SKU.
    */
-  public synchronized void clear() {
-    db.update("UPDATE projection_state SET catalog_version = NULL, loaded_at = NULL, last_verified_at = NULL WHERE id = 1");
-    names = Map.of();
-    loadedVersion = null;
-    lastVerifiedAt = null;
+  public synchronized void apply(List<ProductEventV1> events, long lastOffset) {
+    Map<String, Named> next = new HashMap<>(names);
+    List<Object[]> upserts = new ArrayList<>();
+    List<Object[]> deletes = new ArrayList<>();
+    long highest = catalogVersion == null ? 0 : catalogVersion;
+    for (ProductEventV1 event : events) {
+      highest = Math.max(highest, event.catalogVersion());
+      Named stored = next.get(event.sku());
+      if (stored != null && stored.catalogVersion() > event.catalogVersion()) continue;
+      if (event.active()) {
+        next.put(event.sku(), new Named(event.name(), event.catalogVersion()));
+        upserts.add(new Object[] {event.sku(), event.name(), event.catalogVersion()});
+      } else if (stored != null) {
+        next.remove(event.sku());
+        deletes.add(new Object[] {event.sku()});
+      }
+    }
+    long version = highest;
+    transactions.executeWithoutResult(status -> {
+      if (!upserts.isEmpty()) {
+        db.batchUpdate("INSERT INTO catalog_names (sku, name, catalog_version) VALUES (?, ?, ?) "
+            + "ON DUPLICATE KEY UPDATE name = VALUES(name), catalog_version = VALUES(catalog_version)", upserts);
+      }
+      if (!deletes.isEmpty()) db.batchUpdate("DELETE FROM catalog_names WHERE sku = ?", deletes);
+      db.update("UPDATE projection_state SET topic_offset = ?, catalog_version = ?, loaded_at = ? WHERE id = 1",
+          lastOffset, version == 0 ? null : version, Timestamp.from(Instant.now()));
+    });
+    names = Map.copyOf(next);
+    topicOffset = lastOffset;
+    catalogVersion = version == 0 ? null : version;
   }
 
-  public void markVerified() {
-    Instant now = clock.instant();
-    db.update("UPDATE projection_state SET last_verified_at = ? WHERE id = 1", Timestamp.from(now));
-    lastVerifiedAt = now;
+  /** Forgets the stored position (keeping the rows) so the next assignment replays from the beginning. */
+  public synchronized void forgetPosition() {
+    db.update("UPDATE projection_state SET topic_offset = NULL WHERE id = 1");
+    topicOffset = null;
+  }
+
+  /** Deletes the copy and its position in one transaction (operator rebuild); the listener then replays. */
+  public synchronized void clear() {
+    transactions.executeWithoutResult(status -> {
+      db.update("DELETE FROM catalog_names");
+      db.update("UPDATE projection_state SET topic_offset = NULL, catalog_version = NULL, loaded_at = NULL WHERE id = 1");
+    });
+    names = Map.of();
+    topicOffset = null;
+    catalogVersion = null;
+    catchUpTarget = -1;
   }
 }

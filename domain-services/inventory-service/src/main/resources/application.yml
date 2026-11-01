@@ -11,7 +11,9 @@ spring:
     hikari: { maximum-pool-size: "${DB_POOL_SIZE:10}" }
   flyway: { enabled: true }
   lifecycle: { timeout-per-shutdown-phase: 20s }
-  # The name-projection poll and the sale applier must not wait on each other.
+  kafka:
+    bootstrap-servers: "${KAFKA_BOOTSTRAP:localhost:9092}"
+  # The sale applier and the projection's catch-up check must not wait on each other.
   task:
     scheduling:
       pool:
@@ -21,19 +23,15 @@ management:
     health:
       probes: { enabled: true }
       show-details: always
-      # Readiness covers this service's own database only; Flyway has finished before it can be UP.
+      # Readiness covers this service's own database and the broker (005 research R9); Flyway has
+      # finished before it can be UP. Nothing routes on readiness while running.
       group:
         readiness:
-          include: readinessState,db
+          include: readinessState,db,kafka,catalogProjection
   endpoints:
     web:
       exposure:
         include: health,metrics
-catalog:
-  url: "${CATALOG_URL:http://localhost:8081}"
-  projection:
-    poll-interval: 15s
-    max-staleness: 60s
 inventory:
   # Committed sales are applied to stock in batches this often (SaleApplier).
   sales:

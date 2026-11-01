@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 /** Quickstart V7 g: concurrent completions of one transaction join one attempt and get the same answer (A5, US2-4). */
 @Tag("system")
+@Tag("needs-us2")   // Toxiproxy-based until 005 task T051 re-points it at the messaging faults
 class DuplicateCompletionJoinTest {
   private static final String SKU = "SKU-000080";
   private final PublicApi api = new PublicApi();

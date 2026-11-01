@@ -1,6 +1,5 @@
 package edu.northeastern.cs6510.checkout.fault;
 
-import edu.northeastern.cs6510.checkout.inventory.InventoryUnavailableException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -10,8 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Test-only injector ({@code fault-injection} profile). Armed points live in memory, so a process
- * restarted after a halt does not halt again. A HALT point fires once; a LOSE point keeps
- * discarding the Inventory response until it is disarmed.
+ * restarted after a halt does not halt again. A HALT point fires once.
  */
 @Component
 @Profile("fault-injection")
@@ -30,9 +28,6 @@ public class HaltingFaultInjector implements FaultInjector {
     if (action == Action.HALT && armed.remove(point, Action.HALT)) {
       log.warn("fault injection: halting the JVM at {}", point);
       Runtime.getRuntime().halt(137);
-    }
-    if (action == Action.LOSE) {
-      throw new InventoryUnavailableException("fault injection: response lost at " + point);
     }
   }
 }

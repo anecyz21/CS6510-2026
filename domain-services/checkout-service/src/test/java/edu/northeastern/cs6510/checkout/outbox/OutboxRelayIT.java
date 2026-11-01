@@ -156,7 +156,7 @@ class OutboxRelayIT {
   @SuppressWarnings("unchecked")
   private static OutboxRelay relay(AnnotationConfigApplicationContext context) {
     return new OutboxRelay(dataSource, context.getBean("acceptedScanTemplate", KafkaTemplate.class), context.getBean(KafkaAdmin.class),
-        mapper, null, Duration.ofMillis(200), Duration.ofHours(24));
+        mapper, null, Duration.ofMillis(200), Duration.ofHours(24), false);
   }
 
   private static String accept(String sku) {

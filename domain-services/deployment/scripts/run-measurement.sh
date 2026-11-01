@@ -2,8 +2,14 @@
 # Runs measured workloads against one topology (research R14, quickstart V10).
 #
 # Usage:
-#   run-measurement.sh --topology baseline|redesign --compose-file FILE --stock-sql FILE \
-#       --profile normal|stress --report-dir DIR [--runs 3] [--project NAME] [--env-file FILE]
+#   run-measurement.sh --topology baseline|redesign|pre-event-driven|event-driven --compose-file FILE \
+#       --stock-sql FILE --profile normal|stress|default|stress100 --report-dir DIR [--runs 3] \
+#       [--project NAME] [--env-file FILE]
+#
+# Profiles: normal = 10 x 60 s and stress = 200 x 180 s (004). default passes no workload flags,
+# so the client uses its built-in defaults (exactly `java -cp out Main`); stress100 passes exactly
+# `--stations=100 --duration=120` (005 research R11). pre-event-driven and event-driven take the
+# redesign path, reconciled by the reconcile.sh of the tree under test.
 #
 # For each run: reset every volume, rebuild and start the stack, wait for readiness, apply the
 # stock seed with the inventory owner's credentials, warm up for 30 s (report discarded), run the
@@ -32,12 +38,18 @@ done
 for v in topology compose_file stock_sql profile report_dir; do
   [ -n "${!v}" ] || { echo "missing --${v//_/-}" >&2; exit 2; }
 done
+# workload holds the exact client flags; duration is only used to size the observation window.
 case "$profile" in
-  normal) stations=10; duration=60 ;;
-  stress) stations=200; duration=180 ;;
-  *) echo "--profile must be normal or stress" >&2; exit 2 ;;
+  normal) workload=(--stations=10 --duration=60); duration=60 ;;
+  stress) workload=(--stations=200 --duration=180); duration=180 ;;
+  default) workload=(); duration=60 ;;
+  stress100) workload=(--stations=100 --duration=120); duration=120 ;;
+  *) echo "--profile must be normal, stress, default or stress100" >&2; exit 2 ;;
 esac
-[ "$topology" = baseline ] || [ "$topology" = redesign ] || { echo "--topology must be baseline or redesign" >&2; exit 2; }
+case "$topology" in
+  baseline|redesign|pre-event-driven|event-driven) ;;
+  *) echo "--topology must be baseline, redesign, pre-event-driven or event-driven" >&2; exit 2 ;;
+esac
 project="${project:-perf-$topology}"
 
 [ -n "${JAVA_HOME:-}" ] && export PATH="$JAVA_HOME/bin:$PATH"
@@ -110,6 +122,8 @@ reconcile() { # file
       if [ -z "$rows" ]; then echo "violating SKUs: none"; echo "RECONCILIATION PASS"
       else echo "violating SKUs (sku, initial, available, completed):"; echo "$rows"; echo "RECONCILIATION FAIL"; fi
     } > "$1"
+  elif [ "$topology" = pre-event-driven ] || [ "$topology" = event-driven ]; then
+    "$tree/domain-services/deployment/scripts/reconcile.sh" --wait-settled 60 > "$1" 2>&1 || true
   elif [ -x "$here/reconcile.sh" ]; then
     "$here/reconcile.sh" --wait-settled 60 > "$1" 2>&1 || true
   else
@@ -146,10 +160,10 @@ for run in $(seq 1 "$runs"); do
     --stop-file "$stop" --stock-seed "$(basename "$stock_sql")" --profile "$profile" > "$obs_tmp/path" &
   capture_pid=$!
 
-  log "measured run: $stations stations x $duration s"
+  log "measured run: profile $profile, client flags: ${workload[*]:-(none)}"
   before=$(ls "$report_dir"/report-*.json 2>/dev/null | sort || true)
   set +e
-  "$repo/load-client/run.sh" --stations="$stations" --duration="$duration" --reportDir="$(native "$report_dir")" \
+  "$repo/load-client/run.sh" "${workload[@]}" --reportDir="$(native "$report_dir")" \
     > "$obs_tmp/client.log" 2>&1
   client_status=$?
   set -e

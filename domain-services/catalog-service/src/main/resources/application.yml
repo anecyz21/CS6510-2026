@@ -11,15 +11,18 @@ spring:
     hikari: { maximum-pool-size: "${DB_POOL_SIZE:10}" }
   flyway: { enabled: true }
   lifecycle: { timeout-per-shutdown-phase: 20s }
+  kafka:
+    bootstrap-servers: "${KAFKA_BOOTSTRAP:localhost:9092}"
 management:
   endpoint:
     health:
       probes: { enabled: true }
       show-details: always
-      # Readiness covers this service's own database only; Flyway has finished before it can be UP.
+      # Readiness covers this service's own database and the broker (005 research R9); Flyway has
+      # finished before it can be UP. Nothing routes on readiness while running.
       group:
         readiness:
-          include: readinessState,db
+          include: readinessState,db,kafka
   endpoints:
     web:
       exposure:

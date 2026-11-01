@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
  * FINALIZED with a COMMITTED reservation, or CANCELLED with nothing committed (FR-017).
  */
 @Tag("system")
+@Tag("needs-us2")   // Toxiproxy-based until 005 task T051 re-points it at the messaging faults
 class CancelCommitRaceTest {
   private final PublicApi api = new PublicApi();
 

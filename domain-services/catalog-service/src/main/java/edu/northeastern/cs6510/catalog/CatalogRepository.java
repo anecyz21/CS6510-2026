@@ -1,8 +1,8 @@
 package edu.northeastern.cs6510.catalog;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -16,24 +16,32 @@ public class CatalogRepository {
         (rs, row) -> new CatalogItem(rs.getString(1), rs.getString(2), rs.getLong(3)));
   }
 
-  /** Up to {@code limit} active items with a SKU greater than {@code afterSku} (null = from the start), in SKU order. */
-  public List<CatalogItem> activeItemsAfter(String afterSku, int limit) {
-    return db.query("SELECT sku,name,price_cents FROM catalog_items WHERE active=TRUE AND sku > ? ORDER BY sku LIMIT ?",
-        (rs, row) -> new CatalogItem(rs.getString(1), rs.getString(2), rs.getLong(3)), afterSku == null ? "" : afterSku, limit);
+  /** Every item, for sale or not, in SKU order: one catalog.products.v1 record each (005 research R2). */
+  public List<PublishedItem> allItems() {
+    return db.query("SELECT sku,name,price_cents,active FROM catalog_items ORDER BY sku",
+        (rs, row) -> new PublishedItem(new CatalogItem(rs.getString(1), rs.getString(2), rs.getLong(3)), rs.getBoolean(4)));
   }
 
-  public Optional<CatalogItem> activeItem(String sku) {
-    return db.query("SELECT sku,name,price_cents FROM catalog_items WHERE active=TRUE AND sku = ?",
-        (rs, row) -> new CatalogItem(rs.getString(1), rs.getString(2), rs.getLong(3)), sku).stream().findFirst();
+  public long catalogVersion() {
+    Long version = db.queryForObject("SELECT catalog_version FROM catalog_metadata WHERE id = 1", Long.class);
+    return version == null ? 0 : version;
   }
 
-  public CatalogVersion version() {
-    return db.queryForObject(
-        "SELECT m.catalog_version, m.updated_at, (SELECT COUNT(*) FROM catalog_items WHERE active=TRUE) FROM catalog_metadata m WHERE m.id = 1",
-        (rs, row) -> new CatalogVersion(rs.getLong(1), rs.getTimestamp(2).toInstant(), rs.getInt(3)));
+  /** The last version every item was acknowledged for, or null when nothing was ever published. */
+  public Long publishedVersion() {
+    return db.queryForObject("SELECT published_version FROM catalog_publication WHERE id = 1", Long.class);
   }
 
-  public record CatalogVersion(long catalogVersion, Instant updatedAt, int activeItemCount) { }
+  public void markPublished(long version, Instant at) {
+    db.update("UPDATE catalog_publication SET published_version = ?, published_at = ? WHERE id = 1", version, Timestamp.from(at));
+  }
+
+  /** Makes the next publisher pass republish every item (operator republish). */
+  public void resetPublication() {
+    db.update("UPDATE catalog_publication SET published_version = NULL, published_at = NULL WHERE id = 1");
+  }
+
+  public record PublishedItem(CatalogItem item, boolean active) { }
 
   public record CatalogItem(String sku, String name, long priceCents) {
     public CatalogItem {

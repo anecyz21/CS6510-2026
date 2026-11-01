@@ -13,7 +13,7 @@ spring:
   lifecycle: { timeout-per-shutdown-phase: 20s }
   kafka:
     bootstrap-servers: "${KAFKA_BOOTSTRAP:localhost:9092}"
-  # The catalog projection poll and the recovery worker must not wait on each other.
+  # The recovery worker and the projection's catch-up check must not wait on each other.
   task:
     scheduling:
       pool:
@@ -23,35 +23,26 @@ management:
     health:
       probes: { enabled: true }
       show-details: always
-      # Readiness covers this service's own database only; Flyway has finished before it can be UP.
+      # Readiness covers this service's own database and the broker (005 research R9); Flyway has
+      # finished before it can be UP. Nothing routes on readiness while running.
       group:
         readiness:
-          include: readinessState,db
+          include: readinessState,db,kafka,catalogProjection
   endpoints:
     web:
       exposure:
         include: health,metrics
-catalog:
-  url: "${CATALOG_URL:http://localhost:8081}"
-  projection:
-    poll-interval: 15s
-    max-staleness: 60s
-inventory:
-  url: "${INVENTORY_URL:http://localhost:8083}"
 checkout:
   completion:
     # Public completion returns 503 SERVICE_UNAVAILABLE once this passes without a confirmed outcome (A4).
     request-deadline: "${CHECKOUT_COMPLETION_REQUEST_DEADLINE:5s}"
-  # Recovery and retry budgets (research R9); environment overrides exist for fault tests.
+  # Resend and recovery budgets (005 research R5); environment overrides exist for fault tests.
   recovery:
     scan-interval: "${CHECKOUT_RECOVERY_SCAN_INTERVAL:1s}"
     cancel-after: "${CHECKOUT_RECOVERY_CANCEL_AFTER:30s}"
     attention-after: "${CHECKOUT_RECOVERY_ATTENTION_AFTER:20}"
-    lease-duration: "${CHECKOUT_RECOVERY_LEASE_DURATION:10s}"
     backoff-base: 250ms
     backoff-cap: 5s
-    in-request-retries: 3
-    in-request-backoff: 100ms,200ms,400ms
   # Accepted-scan outbox relay (research R4).
   relay:
     poll-interval: 200ms

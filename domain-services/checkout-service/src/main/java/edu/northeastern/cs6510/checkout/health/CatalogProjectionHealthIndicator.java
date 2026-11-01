@@ -5,11 +5,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.stereotype.Component;
 
 /**
- * Reports the catalog projection's freshness as detail under {@code catalogProjection}. Always UP:
- * a STALE or EMPTY projection is handled by the documented scan policy, never by failing health.
+ * Readiness of the catalog copy, under {@code catalogProjection} (005 research R3, FR-007):
+ * {@code OUT_OF_SERVICE} while it is replaying, {@code UP} once it has caught up with the topic as it
+ * was at assignment and holds at least one product. The scan path enforces the same rule itself.
  */
 @Component
 public class CatalogProjectionHealthIndicator implements HealthIndicator {
@@ -21,8 +23,10 @@ public class CatalogProjectionHealthIndicator implements HealthIndicator {
   public Health health() {
     Map<String, Object> details = new LinkedHashMap<>();
     details.put("state", projection.state().name());
-    details.put("catalogVersion", projection.loadedVersion());
-    details.put("lastVerifiedAt", projection.lastVerifiedAt() == null ? null : projection.lastVerifiedAt().toString());
-    return Health.up().withDetails(details).build();
+    details.put("products", projection.size());
+    details.put("catalogVersion", projection.catalogVersion());
+    details.put("topicOffset", projection.topicOffset());
+    details.put("catchUpTarget", projection.catchUpTarget());
+    return Health.status(projection.caughtUp() ? Status.UP : Status.OUT_OF_SERVICE).withDetails(details).build();
   }
 }

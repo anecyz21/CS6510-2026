@@ -18,16 +18,12 @@ management:
     health:
       probes: { enabled: true }
       show-details: always
-      # Readiness covers this service's own database only; Flyway has finished before it can be UP.
+      # Readiness covers this service's own database and the broker (005 research R9); Flyway has
+      # finished before it can be UP. Nothing routes on readiness while running.
       group:
         readiness:
-          include: readinessState,db
+          include: readinessState,db,kafka,catalogProjection
   endpoints:
     web:
       exposure:
         include: health,metrics
-catalog:
-  url: "${CATALOG_URL:http://localhost:8081}"
-  projection:
-    poll-interval: 15s
-    max-staleness: 60s

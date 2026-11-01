@@ -6,8 +6,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import edu.northeastern.cs6510.checkout.outbox.AcceptedScanEventMapper.OutboxRow;
 import edu.northeastern.cs6510.contracts.Fixtures;
 import edu.northeastern.cs6510.contracts.events.v1.AcceptedScanV1;
+import edu.northeastern.cs6510.contracts.messaging.Envelope;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -40,6 +43,18 @@ class AcceptedScanSerializationTest {
     assertEquals(row.eventId(), header(record, "eventId"));
     assertEquals("AcceptedScan", header(record, "eventType"));
     assertEquals("1", header(record, "schemaVersion"));
+  }
+
+  @Test
+  void carriesTheSharedEnvelope() {
+    ProducerRecord<String, String> record = mapper.record(row);
+    assertEquals(row.eventId(), header(record, "messageId"));
+    assertEquals("AcceptedScan", header(record, "messageType"));
+    assertEquals("checkout", header(record, "producer"));
+    assertEquals(row.acceptedAt(), Instant.parse(header(record, "occurredAt")));
+    Map<String, byte[]> headers = new HashMap<>();
+    record.headers().forEach(h -> headers.put(h.key(), h.value()));
+    assertEquals(row.eventId(), Envelope.fromHeaders(headers).messageId());
   }
 
   private static String header(ProducerRecord<String, String> record, String name) {

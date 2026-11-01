@@ -29,10 +29,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Reservation commands keyed by Checkout's attempt id (contracts/inventory-internal-api.md).
+ * Reservation commands keyed by Checkout's attempt id (005 contracts/inventory-reservation-messages.md).
  * Each command is one Inventory local transaction and may be repeated any number of times: a
  * repeat returns the stored outcome and never applies a second stock effect. Reservations never
- * expire on their own.
+ * expire on their own. A {@link ReplySink} lets the caller record the outcome in the same
+ * transaction as the change, which is how the reply to a broker command commits atomically with it.
  */
 @Service
 public class ReservationService {
@@ -59,11 +60,18 @@ public class ReservationService {
   /** Outcome of a reserve command: the stored resource and whether this call created it. */
   public record ReserveResult(ReservationV1 reservation, boolean created) { }
 
-  public ReserveResult reserve(String attemptId, ReserveRequestV1 request) {
+  public ReserveResult reserve(String attemptId, ReserveRequestV1 request) { return reserve(attemptId, request, ReplySink.NONE); }
+
+  /** As {@link #reserve(String, ReserveRequestV1)}, calling {@code sink} inside the transaction with the stored outcome. */
+  public ReserveResult reserve(String attemptId, ReserveRequestV1 request, ReplySink sink) {
     // INSERT IGNORE would silently truncate an oversized key, so reject it up front.
     if (attemptId == null || attemptId.isBlank() || attemptId.length() > 64) throw invalid();
     NavigableMap<String, Integer> requested = validate(request);
-    return withLockRetries("reserve", () -> transactions.execute(status -> reserveOnce(attemptId, request.transactionId(), requested)));
+    return withLockRetries("reserve", () -> transactions.execute(status -> {
+      ReserveResult result = reserveOnce(attemptId, request.transactionId(), requested);
+      sink.reply(result.reservation());
+      return result;
+    }));
   }
 
   /**
@@ -99,8 +107,11 @@ public class ReservationService {
     return new ReserveResult(new ReservationV1(attemptId, transactionId, ReservationStateV1.RESERVED, lines, now, null), true);
   }
 
-  public ReservationV1 commit(String attemptId) {
-    return withLockRetries("commit", () -> transactions.execute(status -> commitOnce(attemptId)));
+  public ReservationV1 commit(String attemptId) { return commit(attemptId, ReplySink.NONE); }
+
+  /** As {@link #commit(String)}, calling {@code sink} inside the transaction with the stored outcome. */
+  public ReservationV1 commit(String attemptId, ReplySink sink) {
+    return withLockRetries("commit", () -> transactions.execute(status -> sink.replied(commitOnce(attemptId))));
   }
 
   /**
@@ -135,8 +146,11 @@ public class ReservationService {
    * that arrives later for the same id reserves nothing. Locks like commit (reservation row first,
    * then each position by a single-row update), so commit and cancel of one id are mutually exclusive.
    */
-  public ReservationV1 cancel(String attemptId) {
-    return withLockRetries("cancel", () -> transactions.execute(status -> cancelOnce(attemptId)));
+  public ReservationV1 cancel(String attemptId) { return cancel(attemptId, ReplySink.NONE); }
+
+  /** As {@link #cancel(String)}, calling {@code sink} inside the transaction with the stored outcome. */
+  public ReservationV1 cancel(String attemptId, ReplySink sink) {
+    return withLockRetries("cancel", () -> transactions.execute(status -> sink.replied(cancelOnce(attemptId))));
   }
 
   private ReservationV1 cancelOnce(String attemptId) {

@@ -6,15 +6,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.MessageListenerContainer;
 
 /**
- * Detail-only health for the ingest consumer ({@code kafkaConsumer}) and the name projection
- * ({@code catalogProjection}). Both stay outside readiness: Analytics serves its last published
- * window while Kafka or Catalog is away.
+ * Health for the ingest consumer ({@code kafkaConsumer}, detail only: Analytics serves its last
+ * published window while Kafka is away) and the name projection ({@code catalogProjection}, part of
+ * readiness since 005).
  */
 @Configuration
 public class AnalyticsHealthIndicators {
@@ -32,14 +33,21 @@ public class AnalyticsHealthIndicators {
     };
   }
 
+  /**
+   * Readiness of the name copy (005 research R3, FR-007): {@code OUT_OF_SERVICE} while it replays
+   * {@code catalog.products.v1}, {@code UP} once caught up. The popular-items view answers 503 itself
+   * for a missing name, so readiness is the only thing this changes.
+   */
   @Bean
   HealthIndicator catalogProjectionHealthIndicator(CatalogNameProjection projection) {
     return () -> {
       Map<String, Object> details = new LinkedHashMap<>();
       details.put("state", projection.state().name());
-      details.put("catalogVersion", projection.loadedVersion());
-      details.put("lastVerifiedAt", projection.lastVerifiedAt() == null ? null : projection.lastVerifiedAt().toString());
-      return Health.up().withDetails(details).build();
+      details.put("names", projection.size());
+      details.put("catalogVersion", projection.catalogVersion());
+      details.put("topicOffset", projection.topicOffset());
+      details.put("catchUpTarget", projection.catchUpTarget());
+      return Health.status(projection.caughtUp() ? Status.UP : Status.OUT_OF_SERVICE).withDetails(details).build();
     };
   }
 }

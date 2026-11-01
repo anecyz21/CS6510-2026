@@ -82,10 +82,9 @@ class FinalizeIT {
   private static CompletionAttempt finalizeWith(String tx, Map<String, Integer> granted) {
     String attemptId = UuidV7.next();
     Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
-    transactions.executeWithoutResult(s -> attempts.insertAttemptWithLines(attemptId, tx, attempts.basketLines(tx), now, "test",
-        now.plusSeconds(10)));
+    transactions.executeWithoutResult(s -> attempts.insertAttemptWithLines(attemptId, tx, attempts.basketLines(tx), now, now.plusSeconds(1)));
     transactions.executeWithoutResult(s -> {
-      assertTrue(attempts.transition(attemptId, AttemptState.RESERVING, AttemptState.COMMITTING, now));
+      assertTrue(attempts.transition(attemptId, AttemptState.RESERVING, AttemptState.COMMITTING, now, now.plusSeconds(1)));
       attempts.storeReserved(attemptId, granted);
     });
     CompletionAttempt prepared = attempts.find(attemptId).orElseThrow();

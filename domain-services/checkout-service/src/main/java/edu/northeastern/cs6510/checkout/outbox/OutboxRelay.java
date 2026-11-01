@@ -55,6 +55,8 @@ public class OutboxRelay implements SmartLifecycle {
   private final AcceptedScanEventMapper mapper;
   private final Duration pollInterval;
   private final Duration retention;
+  /** Fault injection (005 research R13): send every record twice. */
+  private final boolean duplicateSends;
   private final AtomicLong pending = new AtomicLong();
   /** Test hook: runs after the broker acknowledged a batch and before it is marked. */
   volatile Runnable afterAcknowledged = () -> { };
@@ -70,7 +72,8 @@ public class OutboxRelay implements SmartLifecycle {
   public OutboxRelay(DataSource dataSource, KafkaTemplate<String, String> acceptedScanTemplate, KafkaAdmin admin,
                      AcceptedScanEventMapper mapper, MeterRegistry meters,
                      @Value("${checkout.relay.poll-interval:200ms}") Duration pollInterval,
-                     @Value("${checkout.relay.retention:24h}") Duration retention) {
+                     @Value("${checkout.relay.retention:24h}") Duration retention,
+                     @Value("${messaging.faults.duplicate-sends:false}") boolean duplicateSends) {
     this.dataSource = dataSource;
     this.db = new JdbcTemplate(dataSource);
     this.kafka = acceptedScanTemplate;
@@ -78,6 +81,7 @@ public class OutboxRelay implements SmartLifecycle {
     this.mapper = mapper;
     this.pollInterval = pollInterval;
     this.retention = retention;
+    this.duplicateSends = duplicateSends;
     if (meters != null) Gauge.builder("checkout.outbox.pending", pending, AtomicLong::get).register(meters);
   }
 
@@ -141,7 +145,10 @@ public class OutboxRelay implements SmartLifecycle {
             rs.getTimestamp(6).toInstant()), BATCH);
     if (rows.isEmpty()) return 0;
     List<CompletableFuture<SendResult<String, String>>> sends = new ArrayList<>(rows.size());
-    for (OutboxRow row : rows) sends.add(kafka.send(mapper.record(row)));
+    for (OutboxRow row : rows) {
+      sends.add(kafka.send(mapper.record(row)));
+      if (duplicateSends) kafka.send(mapper.record(row));
+    }
     kafka.flush();
     List<Long> acknowledged = new ArrayList<>(rows.size());
     RuntimeException failure = null;

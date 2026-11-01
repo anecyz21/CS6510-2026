@@ -37,12 +37,11 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
   }
 
   @Override
-  public void insertAttemptWithLines(String attemptId, String transactionId, List<AttemptLine> lines, Instant now,
-                                     String leaseOwner, Instant leaseUntil) {
+  public void insertAttemptWithLines(String attemptId, String transactionId, List<AttemptLine> lines, Instant now, Instant resendAt) {
     Timestamp at = Timestamp.from(now);
-    db.update("INSERT INTO completion_attempts (attempt_id, transaction_id, state, created_at, updated_at, next_retry_at, lease_owner, lease_until) "
-            + "VALUES (?, ?, 'RESERVING', ?, ?, ?, ?, ?)",
-        attemptId, transactionId, at, at, at, leaseOwner, Timestamp.from(leaseUntil));
+    db.update("INSERT INTO completion_attempts (attempt_id, transaction_id, state, created_at, updated_at, next_retry_at, last_command_at, command_sends) "
+            + "VALUES (?, ?, 'RESERVING', ?, ?, ?, ?, 1)",
+        attemptId, transactionId, at, at, Timestamp.from(resendAt), at);
     db.batchUpdate("INSERT INTO completion_attempt_lines (attempt_id, sku, requested_quantity, unit_price_cents, name) VALUES (?, ?, ?, ?, ?)",
         lines, lines.size(), (ps, line) -> {
           ps.setString(1, attemptId);
@@ -59,7 +58,7 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
     List<AttemptLine> lines = db.query(
         "SELECT sku, requested_quantity, unit_price_cents, name, reserved_quantity FROM completion_attempt_lines WHERE attempt_id = ? ORDER BY sku",
         (rs, row) -> new AttemptLine(rs.getString(1), rs.getInt(2), rs.getLong(3), rs.getString(4), (Integer) rs.getObject(5)), attemptId);
-    return db.query("SELECT attempt_id, transaction_id, state, created_at, updated_at, finalized_at, step_failures, next_retry_at, needs_attention, last_error "
+    return db.query("SELECT attempt_id, transaction_id, state, created_at, updated_at, finalized_at, command_sends, next_retry_at, needs_attention, last_error "
         + "FROM completion_attempts WHERE attempt_id = ?", (rs, row) -> attempt(rs, lines), attemptId).stream().findFirst();
   }
 
@@ -71,9 +70,10 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
   }
 
   @Override
-  public boolean transition(String attemptId, AttemptState from, AttemptState to, Instant now) {
-    return db.update("UPDATE completion_attempts SET state = ?, updated_at = ?, step_failures = 0 WHERE attempt_id = ? AND state = ?",
-        to.name(), Timestamp.from(now), attemptId, from.name()) == 1;
+  public boolean transition(String attemptId, AttemptState from, AttemptState to, Instant now, Instant resendAt) {
+    Timestamp at = Timestamp.from(now);
+    return db.update("UPDATE completion_attempts SET state = ?, updated_at = ?, last_command_at = ?, command_sends = 1, next_retry_at = ? "
+        + "WHERE attempt_id = ? AND state = ?", to.name(), at, at, Timestamp.from(resendAt), attemptId, from.name()) == 1;
   }
 
   /** One statement for every line: {@code SET reserved_quantity = CASE sku WHEN ? THEN ? ... END}. */
@@ -102,16 +102,15 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
 
   /**
    * Set-based, so the statement count does not grow with the basket: the purchased quantities are
-   * read from the stored receipt intent ({@code completion_attempt_lines.reserved_quantity}). The
-   * terminal attempt's lease is cleared in the same statement that finalizes it.
+   * read from the stored receipt intent ({@code completion_attempt_lines.reserved_quantity}).
    */
   @Override
   public boolean finalizeAttempt(CompletionAttempt attempt, Instant now) {
     Timestamp at = Timestamp.from(now);
     String attemptId = attempt.attemptId();
     String transactionId = attempt.transactionId();
-    if (db.update("UPDATE completion_attempts SET state = 'FINALIZED', finalized_at = ?, updated_at = ?, step_failures = 0, "
-        + "lease_owner = NULL, lease_until = NULL WHERE attempt_id = ? AND state = 'COMMITTING'", at, at, attemptId) != 1) {
+    if (db.update("UPDATE completion_attempts SET state = 'FINALIZED', finalized_at = ?, updated_at = ? "
+        + "WHERE attempt_id = ? AND state = 'COMMITTING'", at, at, attemptId) != 1) {
       return false;
     }
     db.update("INSERT INTO receipts (attempt_id, transaction_id, completed_at) VALUES (?, ?, ?)", attemptId, transactionId, at);
@@ -142,15 +141,11 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
   }
 
   @Override
-  public void recordStepFailure(String attemptId, String error, Instant nextRetryAt, Instant now) {
-    db.update("UPDATE completion_attempts SET step_failures = step_failures + 1, last_error = ?, next_retry_at = ?, updated_at = ? WHERE attempt_id = ?",
-        truncate(error), Timestamp.from(nextRetryAt), Timestamp.from(now), attemptId);
-  }
-
-  @Override
-  public void markNeedsAttention(String attemptId, String error, Instant now) {
-    db.update("UPDATE completion_attempts SET needs_attention = TRUE, last_error = ?, updated_at = ? WHERE attempt_id = ?",
-        truncate(error), Timestamp.from(now), attemptId);
+  public boolean claimResend(String attemptId, AttemptState state, Instant dueAt, Instant now, Instant nextResendAt) {
+    Timestamp at = Timestamp.from(now);
+    return db.update("UPDATE completion_attempts SET command_sends = command_sends + 1, last_command_at = ?, next_retry_at = ?, updated_at = ? "
+            + "WHERE attempt_id = ? AND state = ? AND next_retry_at = ? AND needs_attention = FALSE",
+        at, Timestamp.from(nextResendAt), at, attemptId, state.name(), Timestamp.from(dueAt)) == 1;
   }
 
   @Override
@@ -161,27 +156,10 @@ public class JdbcCompletionAttemptRepository implements CompletionAttemptReposit
   }
 
   @Override
-  public boolean acquireLease(String attemptId, String owner, Instant leaseUntil, Instant now) {
-    return db.update("UPDATE completion_attempts SET lease_owner = ?, lease_until = ? "
-            + "WHERE attempt_id = ? AND (lease_until IS NULL OR lease_until < ? OR lease_owner = ?)",
-        owner, Timestamp.from(leaseUntil), attemptId, Timestamp.from(now), owner) == 1;
-  }
-
-  @Override
-  public void releaseLease(String attemptId, String owner) {
-    db.update("UPDATE completion_attempts SET lease_owner = NULL, lease_until = NULL WHERE attempt_id = ? AND lease_owner = ?", attemptId, owner);
-  }
-
-  @Override
-  public void releaseLeasesOwnedBy(String owner) {
-    db.update("UPDATE completion_attempts SET lease_owner = NULL, lease_until = NULL WHERE lease_owner = ?", owner);
-  }
-
-  @Override
-  public List<String> findDueForRecovery(Instant now, int limit) {
-    Timestamp at = Timestamp.from(now);
-    return db.queryForList("SELECT attempt_id FROM completion_attempts WHERE state IN ('RESERVING', 'COMMITTING', 'CANCELLING') "
-        + "AND next_retry_at <= ? AND (lease_until IS NULL OR lease_until < ?) ORDER BY next_retry_at LIMIT ?", String.class, at, at, limit);
+  public List<CompletionAttempt> findDueForResend(Instant now, int limit) {
+    List<String> ids = db.queryForList("SELECT attempt_id FROM completion_attempts WHERE state IN ('RESERVING', 'COMMITTING', 'CANCELLING') "
+        + "AND needs_attention = FALSE AND next_retry_at <= ? ORDER BY next_retry_at LIMIT ?", String.class, Timestamp.from(now), limit);
+    return ids.stream().map(this::find).flatMap(Optional::stream).toList();
   }
 
   @Override

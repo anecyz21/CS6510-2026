@@ -1,27 +1,21 @@
 package edu.northeastern.cs6510.checkout.recovery;
 
-import edu.northeastern.cs6510.checkout.completion.CompletionAttemptRepository;
 import java.time.Duration;
 import java.time.Instant;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
 
 /**
- * Graceful shutdown for recovery (research R17): stop picking attempts, let the in-flight scan
- * finish (every step ends in a durable state), then hand this process's leases back so another
- * replica or the restarted process can continue at once instead of waiting for them to expire.
+ * Graceful shutdown for recovery (research R17): stop picking attempts and let the in-flight sweep
+ * finish. Every resend is one local transaction, so nothing is left half done.
  */
 @Component
 public class RecoveryLifecycle implements SmartLifecycle {
   private static final Duration DRAIN_TIMEOUT = Duration.ofSeconds(15);
   private final RecoveryWorker worker;
-  private final CompletionAttemptRepository attempts;
   private volatile boolean running;
 
-  public RecoveryLifecycle(RecoveryWorker worker, CompletionAttemptRepository attempts) {
-    this.worker = worker;
-    this.attempts = attempts;
-  }
+  public RecoveryLifecycle(RecoveryWorker worker) { this.worker = worker; }
 
   @Override
   public void start() { running = true; }
@@ -38,7 +32,6 @@ public class RecoveryLifecycle implements SmartLifecycle {
         break;
       }
     }
-    attempts.releaseLeasesOwnedBy(worker.owner());
     running = false;
   }
 

@@ -6,15 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import edu.northeastern.cs6510.contracts.inventory.v1.InventoryReplyV1;
 import edu.northeastern.cs6510.support.InventoryProvisioning;
+import edu.northeastern.cs6510.support.Messaging;
 import edu.northeastern.cs6510.support.PublicApi;
 import edu.northeastern.cs6510.support.Stack;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -25,8 +25,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * US4-1 and FR-026: the low-stock view reports physical stock with the catalog name, ignores
- * reservations, and answers 503 rather than a SKU when it has no name to show.
+ * US4-1, FR-026 and 005 FR-019: the low-stock view reports physical stock with the catalog name, ignores
+ * reservations, and keeps its names from the event-built copy, through a Catalog outage and a rebuild.
  */
 @Tag("system")
 class LowStockViewTest {
@@ -59,29 +59,25 @@ class LowStockViewTest {
     assertEquals(10, alert.get("threshold").asInt());
     assertNotNull(alert.get("triggeredAt").asText());
 
+    // Reservations arrive as broker commands since 005; the reservation HTTP API is gone.
     String attemptId = UUID.randomUUID().toString();
-    HttpResponse<String> reserved = inventory("PUT", "/internal/v1/reservations/" + attemptId,
-        "{\"transactionId\":\"" + UUID.randomUUID() + "\",\"lines\":[{\"sku\":\"" + SKU + "\",\"quantity\":3}]}");
-    assertEquals(200, reserved.statusCode() / 100 * 100, reserved.body());
+    InventoryReplyV1 reserved = Messaging.reserve(attemptId, SKU, 3);
+    assertEquals(InventoryReplyV1.RESERVED, reserved.messageType(), String.valueOf(reserved.error()));
     try {
       assertEquals(5, alertFor(api.lowStock(10)).get("currentStock").asInt(), "a reservation is not a decrement");
     } finally {
-      HttpResponse<String> cancelled = inventory("POST", "/internal/v1/reservations/" + attemptId + "/cancel", null);
-      assertEquals(200, cancelled.statusCode() / 100 * 100, cancelled.body());
+      assertEquals(InventoryReplyV1.RELEASED, Messaging.cancel(attemptId).messageType());
     }
 
-    // Catalog goes first, so the projection cannot reload between the delete and the stop.
+    // Names come from Inventory's copy of catalog.products.v1: Catalog being away changes nothing,
+    // and a rebuild replays the same names (005 US5, FR-019).
     Stack.stop("catalog");
-    try (Connection c = Stack.ownerConnection("inventory"); Statement s = c.createStatement()) {
-      s.executeUpdate("DELETE FROM catalog_names");
-    }
-    PublicApi.Response unavailable = awaitLowStock(r -> r.status() == 503, Duration.ofSeconds(45));
-    assertEquals("SERVICE_UNAVAILABLE", unavailable.error());
-
-    Stack.start("catalog");
-    Stack.awaitReady("catalog", Duration.ofSeconds(120));
-    PublicApi.Response reloaded = awaitLowStock(r -> r.status() == 200, Duration.ofSeconds(60));
-    assertEquals(catalogName, alertFor(reloaded).get("name").asText());
+    assertEquals(catalogName, alertFor(api.lowStock(10)).get("name").asText(), "no Catalog call at read time");
+    HttpResponse<String> rebuild = inventory("POST", "/internal/v1/ops/catalog-projection/rebuild", null);
+    assertEquals(202, rebuild.statusCode(), rebuild.body());
+    Stack.awaitProjectionCurrent("inventory", Duration.ofSeconds(60));
+    PublicApi.Response replayed = awaitLowStock(r -> r.status() == 200, Duration.ofSeconds(30));
+    assertEquals(catalogName, alertFor(replayed).get("name").asText());
   }
 
   private JsonNode alertFor(PublicApi.Response response) {

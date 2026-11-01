@@ -1,6 +1,7 @@
 package edu.northeastern.cs6510.analytics.ingest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.northeastern.cs6510.analytics.messaging.DeadLetterPublisher;
 import edu.northeastern.cs6510.contracts.events.v1.AcceptedScanV1;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -22,8 +23,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * Consumes accepted scans in batches. Valid events go through {@link ScanPipeline}; unreadable ones
  * and newer schema versions are recorded in {@code ingest_rejections}. Both happen in one local
- * transaction, and the offsets are acknowledged only after it commits. A failure is reported from the
- * first record, so the error handler seeks back and the same batch is redelivered.
+ * transaction. Rejected records are then copied to {@code analytics.dlt.v1} (005 contracts), and the
+ * offsets are acknowledged only after both. A failure is reported from the first record, so the
+ * error handler seeks back and the same batch is redelivered. The table and the pipeline ignore
+ * repeats; the dead-letter topic may then hold a rejected record twice, which is only diagnostic.
  */
 @Component
 public class AcceptedScanListener {
@@ -34,17 +37,22 @@ public class AcceptedScanListener {
   private final TransactionTemplate transactions;
   private final ObjectMapper json;
   private final Counter rejected;
+  private final DeadLetterPublisher deadLetters;
 
   public AcceptedScanListener(ScanPipeline pipeline, JdbcTemplate db, PlatformTransactionManager transactionManager,
-                              ObjectMapper json, MeterRegistry meters) {
+                              ObjectMapper json, MeterRegistry meters, DeadLetterPublisher deadLetters) {
     this.pipeline = pipeline;
     this.db = db;
     this.transactions = new TransactionTemplate(transactionManager);
     this.json = json;
     this.rejected = meters.counter("analytics.ingest.rejected");
+    this.deadLetters = deadLetters;
   }
 
-  private record Rejection(long offset, String reason, String raw) { }
+  private record Rejection(ConsumerRecord<String, String> record, String reason) {
+    long offset() { return record.offset(); }
+    String raw() { return record.value(); }
+  }
 
   // groupId must be explicit: otherwise Spring Kafka uses the listener id as the consumer group.
   @KafkaListener(id = "accepted-scan-ingest", groupId = KafkaConsumerConfig.GROUP, topics = AcceptedScanV1.TOPIC,
@@ -62,7 +70,7 @@ public class AcceptedScanListener {
         reason = "unparseable: " + e.getClass().getSimpleName();
       }
       if (reason == null) events.add(event);
-      else rejections.add(new Rejection(record.offset(), reason, record.value()));
+      else rejections.add(new Rejection(record, reason));
     }
     try {
       transactions.executeWithoutResult(status -> {
@@ -73,6 +81,7 @@ public class AcceptedScanListener {
         }
         pipeline.process(events);
       });
+      for (Rejection r : rejections) deadLetters.publish(r.record(), new IllegalArgumentException(r.reason()));
     } catch (RuntimeException e) {
       log.warn("accepted-scan batch of {} failed and will be redelivered: {}", records.size(), e.getMessage());
       throw new BatchListenerFailedException("accepted-scan batch failed", e, 0);

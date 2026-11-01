@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "messageId": "0192d0b2-1d10-7c44-8e55-0a1b2c3d4e63",
+  "messageType": "Conflict",
+  "attemptId": "0192d0b2-1c3a-7aa0-8b22-1d2e3f405162",
+  "command": "CancelRequested",
+  "reservation": {
+    "attemptId": "0192d0b2-1c3a-7aa0-8b22-1d2e3f405162",
+    "transactionId": "7b1e2c94-3f0a-4c1d-9e2b-5a6b7c8d9e0f",
+    "state": "COMMITTED",
+    "lines": [
+      { "sku": "SKU-000042", "requestedQuantity": 3, "reservedQuantity": 2 },
+      { "sku": "SKU-000107", "requestedQuantity": 1, "reservedQuantity": 1 }
+    ],
+    "createdAt": "2026-11-02T15:04:05.123456Z",
+    "resolvedAt": "2026-11-02T15:04:05.323456Z"
+  },
+  "error": { "code": "RESERVATION_COMMITTED", "message": "the reservation is already committed" }
+}

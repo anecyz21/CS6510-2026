@@ -5,14 +5,12 @@ package edu.northeastern.cs6510.checkout.fault;
  * Production runs use a no-op; only the {@code fault-injection} profile can act on a checkpoint.
  */
 public interface FaultInjector {
-  enum FaultPoint { AFTER_FREEZE, AFTER_RESERVE_RESPONSE, AFTER_PREPARE, AFTER_COMMIT_RESPONSE }
+  enum FaultPoint { AFTER_FREEZE, AFTER_RESERVED_APPLIED, AFTER_COMMITTED_APPLIED }
 
   /** What an armed checkpoint does. */
   enum Action {
     /** Halt the JVM at once, as a crash would: no shutdown hooks, nothing more is written. */
-    HALT,
-    /** Act as if the Inventory response just received was lost; stays armed until disarmed. */
-    LOSE
+    HALT
   }
 
   void checkpoint(FaultPoint point);

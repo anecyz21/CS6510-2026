@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.CsvSource;
  * exactly one purchase or one released attempt (US2-1, US2-2, SC-004). Needs the faults stack.
  */
 @Tag("system")
+@Tag("needs-us2")   // Toxiproxy-based until 005 task T051 re-points it at the messaging faults
 class InterruptionRecoveryTest {
   private final PublicApi api = new PublicApi();
 

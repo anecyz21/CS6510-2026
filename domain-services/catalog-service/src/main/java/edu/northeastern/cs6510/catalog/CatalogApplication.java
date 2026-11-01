@@ -2,11 +2,13 @@ package edu.northeastern.cs6510.catalog;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @SpringBootApplication
+@EnableScheduling
 public class CatalogApplication {
     public static void main(String[] args) { SpringApplication.run(CatalogApplication.class, args); }
     /** Owns catalog validation and exposes only the contract-compatible read model. */

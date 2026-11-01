@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
  * 503 within the deadline, recovery finalizes exactly once, and a retry never resells (US2-2, US2-3).
  */
 @Tag("system")
+@Tag("needs-us2")   // Toxiproxy-based until 005 task T051 re-points it at the messaging faults
 class LostResponseTest {
   private static final String SKU = "SKU-000060";
   private final PublicApi api = new PublicApi();

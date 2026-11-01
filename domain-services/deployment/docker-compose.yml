@@ -115,8 +115,9 @@ services:
       DB_USERNAME: ${CATALOG_DB_USERNAME:-catalog_service}
       DB_PASSWORD: ${CATALOG_DB_PASSWORD}
       DB_POOL_SIZE: ${CATALOG_DB_POOL_SIZE:-10}
+      KAFKA_BOOTSTRAP: kafka:29092
     ports: ["127.0.0.1:${CATALOG_HOST_PORT:-8081}:8081"]
-    depends_on: { catalog-db: { condition: service_healthy } }
+    depends_on: { catalog-db: { condition: service_healthy }, kafka: { condition: service_healthy } }
     healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness"] }
     stop_grace_period: 25s
 
@@ -130,11 +131,9 @@ services:
       # stress transactions and larger pools little more (reports/redesign/exploratory/throughput-methods/NOTES.md).
       # The measured comparison ran at 10 (reports/redesign/POOL-SIZING.md, task T118); 15 is a declared difference (F9).
       DB_POOL_SIZE: ${CHECKOUT_DB_POOL_SIZE:-15}
-      CATALOG_URL: http://catalog:8081
-      INVENTORY_URL: http://inventory:8083
       KAFKA_BOOTSTRAP: kafka:29092
     ports: ["127.0.0.1:${CHECKOUT_HOST_PORT:-8082}:8082"]
-    depends_on: { checkout-db: { condition: service_healthy } }
+    depends_on: { checkout-db: { condition: service_healthy }, kafka: { condition: service_healthy } }
     healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health/readiness"] }
     stop_grace_period: 25s
 
@@ -145,10 +144,10 @@ services:
       DB_USERNAME: ${INVENTORY_DB_USERNAME:-inventory_service}
       DB_PASSWORD: ${INVENTORY_DB_PASSWORD}
       DB_POOL_SIZE: ${INVENTORY_DB_POOL_SIZE:-10}
-      CATALOG_URL: http://catalog:8081
+      KAFKA_BOOTSTRAP: kafka:29092
       LOW_STOCK_THRESHOLD: ${LOW_STOCK_THRESHOLD:-10}
     ports: ["127.0.0.1:${INVENTORY_HOST_PORT:-8083}:8083"]
-    depends_on: { inventory-db: { condition: service_healthy } }
+    depends_on: { inventory-db: { condition: service_healthy }, kafka: { condition: service_healthy } }
     healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health/readiness"] }
     stop_grace_period: 25s
 
@@ -159,10 +158,9 @@ services:
       DB_USERNAME: ${ANALYTICS_DB_USERNAME:-analytics_service}
       DB_PASSWORD: ${ANALYTICS_DB_PASSWORD}
       DB_POOL_SIZE: ${ANALYTICS_DB_POOL_SIZE:-10}
-      CATALOG_URL: http://catalog:8081
       KAFKA_BOOTSTRAP: kafka:29092
     ports: ["127.0.0.1:${ANALYTICS_HOST_PORT:-8084}:8084"]
-    depends_on: { analytics-db: { condition: service_healthy } }
+    depends_on: { analytics-db: { condition: service_healthy }, kafka: { condition: service_healthy } }
     healthcheck: { <<: *app-health, test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health/readiness"] }
     stop_grace_period: 25s
 

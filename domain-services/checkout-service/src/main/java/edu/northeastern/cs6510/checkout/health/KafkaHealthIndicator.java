@@ -11,8 +11,8 @@ import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
 
 /**
- * Reports whether the broker is reachable, as detail under {@code kafka}. Outside readiness: scans
- * keep succeeding while Kafka is down and their events wait in the outbox (FR-025).
+ * Reports whether the broker is reachable, under {@code kafka}. Part of readiness (005 research R9),
+ * which only orders startup and feeds monitoring: requests keep being served while Kafka is down.
  */
 @Component
 public class KafkaHealthIndicator implements HealthIndicator, DisposableBean {

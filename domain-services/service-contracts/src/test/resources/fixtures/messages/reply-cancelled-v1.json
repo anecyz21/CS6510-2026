@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "messageId": "0192d0b2-1d10-7c44-8e55-0a1b2c3d4e62",
+  "messageType": "Cancelled",
+  "attemptId": "0192d0b2-1c3a-7aa0-8b22-1d2e3f405162",
+  "command": "CancelRequested",
+  "reservation": {
+    "attemptId": "0192d0b2-1c3a-7aa0-8b22-1d2e3f405162",
+    "transactionId": null,
+    "state": "CANCELLED",
+    "lines": [],
+    "createdAt": "2026-11-02T15:04:05.123456Z",
+    "resolvedAt": "2026-11-02T15:04:05.123456Z"
+  },
+  "error": null
+}
